@@ -5,3 +5,6 @@ PC Help Hub "Official" Main Repo
 
 ### Disable Windows Copilot:
 > https://github.com/PC-Help-Hub/pchh-main/blob/main/DisableWindowsCopilot.md
+
+### Windows Repair, DISM & SFC Guide from fg13
+> https://github.com/PC-Help-Hub/pchh-main/blob/main/WINDOWS_REPAIR_NOBOOT_DISMSFC_REPAIR.pdf
