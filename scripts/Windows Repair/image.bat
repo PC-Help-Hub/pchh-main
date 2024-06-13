@@ -1,3 +1,4 @@
+:: Copyright (c) 2024 ShinTheBean
 @echo off
 title DISM
 
