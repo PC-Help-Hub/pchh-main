@@ -51,7 +51,6 @@ echo.
 echo Working on the commands, this will take a few minutes.
 echo.
 DISM /Online /Cleanup-Image /CheckHealth > %USERPROFILE%\Downloads\resulthealth.txt 2>nul
-timeout 20
 
 set "corruption=false"
 set "nocorruption=false"
