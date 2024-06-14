@@ -26,6 +26,17 @@ if exist "%temp%\getadmin.vbs" ( del "%temp%\getadmin.vbs" )
 pushd "%CD%"
 CD /D "%~dp0"
 
+echo Testing network connection..
+timeout 3 > nul
+curl www.microsoft.com >nul 2>&1
+if %errorlevel% neq 0 (
+powershell -window minimized -Command ""
+powershell -Command "Add-Type -AssemblyName PresentationFramework; [System.Windows.MessageBox]::Show('No active Network Connection has been detected, therefore the script cannot continue.', 'Network Issue', 'OK', 'Information');"
+exit /b
+)
+echo Network Connection detected! Continuing with script..
+echo.
+
 del /q /f %USERPROFILE%\Downloads\resulthealth.txt 2>nul
 
 echo                    Created by shinthebean for PC Help Hub Discord
@@ -40,6 +51,7 @@ echo.
 echo Working on the commands, this will take a few minutes.
 echo.
 DISM /Online /Cleanup-Image /CheckHealth > %USERPROFILE%\Downloads\resulthealth.txt 2>nul
+timeout 20
 
 set "corruption=false"
 set "nocorruption=false"
@@ -79,10 +91,21 @@ echo -----------------------------------------
 echo           COMMANDS FINISHED
 echo -----------------------------------------
 echo.
-echo Prompted restart..
 goto restartpc
 
 :restartpc
-powershell -window minimized -command ""
-powershell -Command "Add-Type -AssemblyName PresentationFramework; [System.Windows.MessageBox]::Show('Press OK to Restart your Computer, this is recommended.', 'Restart Confirmation', 'OK', 'Warning');"
-shutdown /r /t 0
+powershell -window minimized -Command ""
+powershell -Command "Add-Type -AssemblyName PresentationFramework; $result = [System.Windows.MessageBox]::Show('Do you wish to restart your PC? (recommended)', 'Restart Confirmation', 'YesNo', 'Warning'); if ($result -eq 'Yes') { exit 0 } else { exit 1 }"
+
+if %errorlevel%==0 (
+    shutdown /r /t 0
+) else (
+	goto secondcheck
+)
+:secondcheck
+powershell -Command "Add-Type -AssemblyName PresentationFramework; $result = [System.Windows.MessageBox]::Show('Are you sure? Press No to Restart your PC', 'Restart Confirmation', 'YesNo', 'Warning'); if ($result -eq 'No') { exit 0 } else { exit 1 }"
+if %errorlevel%==0 (
+	shutdown /r /t 0
+) else (
+exit /b
+)
