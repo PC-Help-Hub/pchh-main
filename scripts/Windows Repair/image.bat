@@ -1,42 +1,13 @@
 :: Copyright (c) 2024 ShinTheBean
+
 @echo off
 title DISM
 
->nul 2>&1 "%SYSTEMROOT%\system32\cacls.exe" "%SYSTEMROOT%\system32\config\system"
+echo Press OK on the prompt to run as an Administrator!
+if not "%1"=="am_admin" (powershell -Command "Add-Type -AssemblyName PresentationFramework; [System.Windows.MessageBox]::Show('This script needs to be ran as an Admin. Press OK to run as Admin.', 'Admin Prompt', 'OK', 'Information');")
+if not "%1"=="am_admin" (powershell start -verb runas '%0' am_admin & exit /b)
 
-if '%errorlevel%' NEQ '0' (
-    echo Requesting administrative privileges...
-    goto UACPrompt
-) else (
-    goto gotAdmin
-)
-
-:UACPrompt
-echo Set UAC = CreateObject("Shell.Application") > "%temp%\getadmin.vbs"
-echo UAC.ShellExecute "%~s0", "", "", "runas", 1 >> "%temp%\getadmin.vbs"
-"%temp%\getadmin.vbs"
 cls
-echo Command Prompt needs to be run as Administrator for this to work.
-echo Closing in 3 seconds.
-timeout 3 > nul
-exit /B
-
-:gotAdmin
-if exist "%temp%\getadmin.vbs" ( del "%temp%\getadmin.vbs" )
-pushd "%CD%"
-CD /D "%~dp0"
-
-echo Testing network connection..
-timeout 3 > nul
-curl www.microsoft.com >nul 2>&1
-if %errorlevel% neq 0 (
-powershell -window minimized -Command ""
-powershell -Command "Add-Type -AssemblyName PresentationFramework; [System.Windows.MessageBox]::Show('No active Network Connection has been detected, therefore the script cannot continue.', 'Network Issue', 'OK', 'Information');"
-exit /b
-)
-echo Network Connection detected! Continuing with script..
-echo.
-
 del /q /f %USERPROFILE%\Downloads\resulthealth.txt 2>nul
 
 echo                    Created by shinthebean for PC Help Hub Discord
@@ -44,6 +15,17 @@ echo                  Any issues/queries contact shinthebean on Discord
 echo                               Credits to: jheden
 echo                      https://gitlab.com/shinthebean/batchfiles
 echo.
+:: tests network connection
+echo Testing network connection..
+curl www.microsoft.com >nul 2>&1
+if %errorlevel% neq 0 (
+powershell -window minimized -Command
+powershell -Command "Add-Type -AssemblyName PresentationFramework; [System.Windows.MessageBox]::Show('No active Network Connection has been detected, therefore the script cannot continue.', 'Network Issue', 'OK', 'Information');"
+exit /b
+)
+echo Network Connection detected! Continuing with script..
+echo.
+
 echo -------------------------------------------
 echo             STARTING COMMANDS
 echo -------------------------------------------
