@@ -24,9 +24,9 @@ if exist %onedrive%\Desktop (
 powershell Compress-Archive -Path %dmp_src% -DestinationPath %zip_tar%
 cls
 if exist %zip_tar% (
-    echo --------------------------
+    echo ------------------------------------------------------
     echo  FILES ARE READY TO BE SHARED, FIND THEM AT %zip_tar%
-    echo --------------------------
+    echo ------------------------------------------------------
     echo Press any key to exit...
     pause > nul
     exit 0
