@@ -20,25 +20,18 @@ goto sfc
 
 echo Network Connection detected! Continuing with script...
 echo.
-set filename=rslt_%random%.txt
 echo -------------------------------------------
 echo             STARTING COMMANDS
 echo -------------------------------------------
 echo.
 echo Working on the commands, this will take a few minutes.
 echo.
-DISM /Online /Cleanup-Image /CheckHealth > %temp%\%filename%
-findstr /c:"No component store corruption detected" %temp%\%filename% >nul 2>&1
+DISM /Online /Cleanup-Image /CheckHealth | findstr "No component store corruption detected" 
 if %errorlevel% EQU 0 (
-	set nocorruption=true
-)
-
-del /q /f %temp%\%filename% >nul
-if %nocorruption% EQU true (
-    echo No Corruption detected!
-    echo Running System File Check..
-    echo.
-    goto sfc
+	echo No Corruption detected!
+	echo Running System File Check..
+	echo.
+	goto sfc
 )
 
 echo Corruption Detected, pushing fix..
