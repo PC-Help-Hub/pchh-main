@@ -34,19 +34,17 @@ if %errorlevel% EQU 0 (
 del /q /f %temp%\%filename% >nul
 if %nocorruption% EQU true (
     echo No Corruption detected!
-    echo Running system file scan...
+    echo Running system file checker...
     echo.
     goto sfc
 )
 
 echo Corruption Detected, running proper commands..
-DISM /Online /Cleanup-Image /ScanHealth >nul 2>&1
-echo 1/3 Finished
-DISM /Online /Cleanup-Image /RestoreHealth >nul 2>&1
-echo 2/3 Finished
+DISM /Online /Cleanup-Image /ScanHealth
+DISM /Online /Cleanup-Image /RestoreHealth
+DISM /Online /Cleanup-Image /StartComponentCleanup
 :sfc
-sfc /scannow >nul 2>&1
-echo 3/3 Finished	
+sfc /scannow
 echo.
 echo -----------------------------------------
 echo           COMMANDS FINISHED
@@ -54,15 +52,13 @@ echo -----------------------------------------
 echo.
 powershell -Command "Add-Type -AssemblyName PresentationFramework; $result = [System.Windows.MessageBox]::Show('Do you wish to restart your PC? (recommended)', 'Restart Confirmation', 'YesNo', 'Warning'); if ($result -eq 'Yes') { exit 0 } else { exit 1 }"
 
-if %errorlevel%==0 (
-    shutdown /r /t 0
-) else (
-	goto secondcheck
+if %errorlevel% EQU 0 (
+    	shutdown /r /t 2
+	exit /B
 )
-:secondcheck
 powershell -Command "Add-Type -AssemblyName PresentationFramework; $result = [System.Windows.MessageBox]::Show('Are you sure? Press No to Restart your PC', 'Restart Confirmation', 'YesNo', 'Warning'); if ($result -eq 'No') { exit 0 } else { exit 1 }"
 if %errorlevel%==0 (
-	shutdown /r /t 0
-) else (
-exit /b
+	shutdown /r /t 2
 )
+exit /b
+
