@@ -5,10 +5,12 @@ title DISM
 
 echo Press OK on the prompt to run as an Administrator!
 if not "%1"=="am_admin" (powershell -Command "Add-Type -AssemblyName PresentationFramework; [System.Windows.MessageBox]::Show('This script needs to be ran as an Admin. Press OK to run as Admin.', 'Admin Prompt', 'OK', 'Information');")
+cls
+echo Starting script..
 if not "%1"=="am_admin" (powershell start -verb runas '%0' am_admin & exit /b)
 
 cls
-del /q /f %USERPROFILE%\Downloads\resulthealth.txt 2>nul
+del /f %USERPROFILE%\Downloads\resulthealth.txt >nul 2>&1
 
 echo                    Created by shinthebean for PC Help Hub Discord
 echo                  Any issues/queries contact shinthebean on Discord
@@ -19,8 +21,10 @@ echo.
 echo Testing network connection..
 curl www.microsoft.com >nul 2>&1
 if %errorlevel% neq 0 (
-powershell -window minimized -Command
-powershell -Command "Add-Type -AssemblyName PresentationFramework; [System.Windows.MessageBox]::Show('No active Network Connection has been detected, therefore the script cannot continue.', 'Network Issue', 'OK', 'Information');"
+echo No active Network Connection has been detected, corruption will not be scanned.
+echo Now running System File Scan..
+sfc /scannow >nul 2>&1
+:restartpc
 exit /b
 )
 echo Network Connection detected! Continuing with script..
@@ -32,7 +36,7 @@ echo -------------------------------------------
 echo.
 echo Working on the commands, this will take a few minutes.
 echo.
-DISM /Online /Cleanup-Image /CheckHealth > %USERPROFILE%\Downloads\resulthealth.txt 2>nul
+DISM /Online /Cleanup-Image /CheckHealth > %USERPROFILE%\Downloads\resulthealth.txt >nul 2>&1
 
 set "corruption=false"
 set "nocorruption=false"
@@ -47,8 +51,7 @@ if "%errorlevel%"=="0" (
     set "nocorruption=true"
 )
 
-del /q /f %USERPROFILE%\Downloads\resulthealth.txt >nul
-
+del /f %USERPROFILE%\Downloads\resulthealth.txt >nul 2>&1
 if "%corruption%"=="true" (
     goto scan
 ) else if "%nocorruption%"=="true" (
