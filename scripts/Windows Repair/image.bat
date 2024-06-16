@@ -28,9 +28,7 @@ echo Working on the commands, this will take a few minutes.
 echo.
 DISM /Online /Cleanup-Image /CheckHealth | findstr "No component store corruption detected" 
 if %errorlevel% EQU 0 (
-	echo No Corruption detected!
-	echo Running System File Check..
-	echo.
+	echo Running System File Check...
 	goto sfc
 )
 
@@ -52,7 +50,7 @@ if %errorlevel% EQU 0 (
 	exit /B
 )
 powershell -Command "Add-Type -AssemblyName PresentationFramework; $result = [System.Windows.MessageBox]::Show('Are you sure? Press No to Restart your PC', 'Restart Confirmation', 'YesNo', 'Warning'); if ($result -eq 'No') { exit 0 } else { exit 1 }"
-if %errorlevel%==0 (
+if %errorlevel% EQU 0 (
 	shutdown /r /t 2
 )
-exit /b
+exit /B
