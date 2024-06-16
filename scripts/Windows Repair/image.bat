@@ -14,7 +14,7 @@ echo Testing network connection...
 curl www.google.com >nul 2>&1
 if %errorlevel% neq 0 (
 	powershell -Command "Add-Type -AssemblyName PresentationFramework; [System.Windows.MessageBox]::Show('No active Network Connection has been detected, therefore the script cannot continue.', 'Network Issue', 'OK', 'Error');"
-	exit /b
+	goto sfc
 )
 echo Network Connection detected! Continuing with script...
 echo.
