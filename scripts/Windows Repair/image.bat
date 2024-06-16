@@ -20,25 +20,16 @@ goto sfc
 
 echo Network Connection detected! Continuing with script...
 echo.
-set filename=rslt_%random%.txt
 echo -------------------------------------------
 echo             STARTING COMMANDS
 echo -------------------------------------------
 echo.
 echo Working on the commands, this will take a few minutes.
 echo.
-DISM /Online /Cleanup-Image /CheckHealth > %temp%\%filename%
-findstr /c:"No component store corruption detected" %temp%\%filename% >nul 2>&1
+DISM /Online /Cleanup-Image /CheckHealth | findstr "No component store corruption detected" 
 if %errorlevel% EQU 0 (
-	set nocorruption=true
-)
-
-del /q /f %temp%\%filename% >nul
-if %nocorruption% EQU true (
-    echo No Corruption detected!
-    echo Running System File Check..
-    echo.
-    goto sfc
+	echo Running System File Check...
+	goto sfc
 )
 
 echo Corruption Detected, pushing fix..
@@ -59,7 +50,7 @@ if %errorlevel% EQU 0 (
 	exit /B
 )
 powershell -Command "Add-Type -AssemblyName PresentationFramework; $result = [System.Windows.MessageBox]::Show('Are you sure? Press No to Restart your PC', 'Restart Confirmation', 'YesNo', 'Warning'); if ($result -eq 'No') { exit 0 } else { exit 1 }"
-if %errorlevel%==0 (
+if %errorlevel% EQU 0 (
 	shutdown /r /t 2
 )
-exit /b
+exit /B
