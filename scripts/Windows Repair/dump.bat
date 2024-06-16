@@ -1,62 +1,37 @@
-
 :: Copyright (c) 2024 ShinTheBean
 @echo off
+:: setlocal enabledelayedexpansion
 title Minidump Folder Converter
-set dump_folder=%systemroot%\minidump
-dir /b "%dump_folder%\*.dmp" > nul 2>&1
-if errorlevel 1 (
-    echo Looking in %systemroot%\minidump for minidump files..
-    echo No dump files have been found.
-    echo Press any key to exit this prompt
+:: %[varname]:[char]=% for removing all occurences of a single char in a string
+:: source folder for the minidumps
+set dmp_src=%systemroot%\minidump\*.dmp
+echo Looking in %systemroot%\minidump for minidump files..
+dir /b "%dmp_src%" > nul 2>&1
+:: dir should only have error levels 1 and 0 but might as well make this a != 0 so it dies in literally any but 'working' case
+if %errorlevel% NEQ 0 (
+    echo No dump files have been found
+    echo Press any key to exit...
     pause > nul
-    exit /b
+    exit 
+)
+echo Dump files have been found! Zipping them up...
+:: figure out where Desktop is
+if exist %onedrive%\Desktop (
+    set zip_tar=%onedrive%\Desktop\dmp_%random%.zip
 ) else (
-    echo Dump files have been found!
-    goto filecheck
+    set zip_tar=%userprofile%\Desktop\dmp_%random%.zip
 )
-
-:filecheck
-rd /s /q %USERPROFILE%\Desktop\minidumps 2>nul
-rd /s /q %systemroot%\minidump\files 2>nul
-
-mkdir "%systemroot%\minidump\files"
-mkdir "%USERPROFILE%\Desktop\minidumps"
-timeout 1 > nul
-
-MOVE "%systemroot%\minidump\*.dmp" "%systemroot%\minidump\files" > nul 2>&1
-MOVE "%systemroot%\minidump\files\*.dmp" "%USERPROFILE%\Desktop\minidumps" > nul 2>&1
-timeout 1 > nul
-
-setlocal enabledelayedexpansion
-set folder="%USERPROFILE%\Desktop\minidumps"
-set zip="%USERPROFILE%\Desktop\minidumps.zip"
-if exist %zip% del %zip%
-
-powershell Compress-Archive -Path "%folder%\*" -DestinationPath %zip%
-
-if exist "%OneDrive%\Desktop\minidumps" (
-    MOVE "%OneDrive%\Desktop\minidumps" "%USERPROFILE%\Desktop\minidumps" > nul 2>&1
-)
-
+powershell Compress-Archive -Path %dmp_src% -DestinationPath %zip_tar%
 cls
-echo --------------------------
-echo  FILES READY TO BE SHARED
-echo --------------------------
-echo.
-echo Deleting excess files in a few seconds..
-timeout 2 > nul
-
-rd /s /q %USERPROFILE%\Desktop\minidumps 2>nul
-rd /s /q %systemroot%\minidump\files 2>nul
-echo.
-echo.
-echo --------------------------
-echo    EXCESS FILES DELETED
-echo --------------------------
-echo.
-goto EndScript
-
-:EndScript
-echo Now deleting batch file..
-timeout 3 > nul
-del "%~f0"
+if exist %zip_tar% (
+    echo --------------------------
+    echo  FILES ARE READY TO BE SHARED, FIND THEM AT %zip_tar%
+    echo --------------------------
+    echo Press any key to exit...
+    pause > nul
+    exit 0
+) 
+echo The files were not archived
+echo Press any key to exit...
+pause > nul
+exit 1
