@@ -6,16 +6,18 @@ if not "%1"=="am_admin" (powershell start -verb runas '%0' am_admin & exit /b)
 cls
 echo                    Created by shinthebean for PC Help Hub Discord
 echo                  Any issues/queries contact shinthebean on Discord
-echo                               Credits to: jheden
 echo                      https://gitlab.com/shinthebean/batchfiles
+echo                                Credits to: jheden
 echo.
-:: tests network connection
+:: Tests network connection for DISM /ONLINE
 echo Testing network connection...
 curl www.google.com >nul 2>&1
 if %errorlevel% neq 0 (
-	powershell -Command "Add-Type -AssemblyName PresentationFramework; [System.Windows.MessageBox]::Show('No active Network Connection has been detected, therefore the script cannot continue.', 'Network Issue', 'OK', 'Error');"
-	goto sfc
+echo No active Network Connection detected.. Script will not check for corruption.
+echo Running System File Check..
+goto sfc
 )
+
 echo Network Connection detected! Continuing with script...
 echo.
 set filename=rslt_%random%.txt
@@ -34,12 +36,12 @@ if %errorlevel% EQU 0 (
 del /q /f %temp%\%filename% >nul
 if %nocorruption% EQU true (
     echo No Corruption detected!
-    echo Running system file checker...
+    echo Running System File Check..
     echo.
     goto sfc
 )
 
-echo Corruption Detected, running proper commands..
+echo Corruption Detected, pushing fix..
 DISM /Online /Cleanup-Image /ScanHealth
 DISM /Online /Cleanup-Image /RestoreHealth
 DISM /Online /Cleanup-Image /StartComponentCleanup
@@ -61,4 +63,3 @@ if %errorlevel%==0 (
 	shutdown /r /t 2
 )
 exit /b
-
