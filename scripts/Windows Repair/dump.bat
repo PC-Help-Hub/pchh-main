@@ -1,7 +1,7 @@
 :: Copyright (c) 2024 ShinTheBean
 @echo off
-:: setlocal enabledelayedexpansion
 title Minidump Folder Converter
+if not "%1"=="am_admin" (powershell start -verb runas '%0' am_admin & exit /b)
 :: %[varname]:[char]=% for removing all occurences of a single char in a string
 :: source folder for the minidumps
 set dmp_src=%systemroot%\minidump\*.dmp
