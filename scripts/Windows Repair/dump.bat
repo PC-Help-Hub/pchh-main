@@ -16,11 +16,10 @@ if %errorlevel% NEQ 0 (
 )
 echo Dump files have been found! Zipping them up...
 :: figure out where Desktop is
-if exist %onedrive%\Desktop (
-    set zip_tar=%onedrive%\Desktop\dmp_%random%.zip
-) else (
-    set zip_tar=%userprofile%\Desktop\dmp_%random%.zip
+if exist %USERPROFILE%\OneDrive\Desktop (
+    set zip_tar=%USERPROFILE%\Desktop\dmp_%random%.zip
 )
+
 powershell Compress-Archive -Path %dmp_src% -DestinationPath %zip_tar%
 cls
 if exist %zip_tar% (
