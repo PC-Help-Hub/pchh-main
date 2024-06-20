@@ -71,7 +71,7 @@ echo 2/2 Complete
 echo.
 :sfc
 echo Performing System File Check...
-sfc /scannow | findstr "restart" >nul
+powershell -Command "$output = & {sfc /scannow}; if ($output -match 'restart') { set errorlevel=0 } else { exit 1 }"
 if %errorlevel% EQU 0 (
 	set restartneeded=true
 )
