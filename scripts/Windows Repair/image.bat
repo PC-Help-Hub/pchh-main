@@ -72,7 +72,7 @@ echo.
 :sfc
 echo Performing System File Check...
 powershell -ExecutionPolicy Bypass -Command "$output = & {sfc /scannow}; if ($output -match 'restart') { set errorlevel=0 } else { exit 1 }"
-if %errorlevel% EQU 1 (
+if %errorlevel% EQU 0 (
 	set restartneeded=true
 )
 echo System File Check has finished
