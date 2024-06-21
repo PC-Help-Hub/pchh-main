@@ -71,8 +71,8 @@ echo 2/2 Complete
 echo.
 :sfc
 echo Performing System File Check...
-powershell -Command "$output = & {sfc /scannow}; if ($output -match 'restart') { set errorlevel=0 } else { exit 1 }"
-if %errorlevel% EQU 0 (
+powershell -ExecutionPolicy Bypass -Command "$output = & {sfc /scannow}; if ($output -match 'restart') { set errorlevel=0 } else { exit 1 }"
+if %errorlevel% EQU 1 (
 	set restartneeded=true
 )
 echo System File Check has finished
@@ -82,8 +82,8 @@ echo           COMMANDS FINISHED
 echo -----------------------------------------
 echo.
 if "%restartneeded%"=="true" (
-    powershell -window minimized -Command ""
-    powershell -Command "Add-Type -AssemblyName PresentationFramework; $result = [System.Windows.MessageBox]::Show('Corruption has been fixed, but a restart is required for changes to apply; Press OK to Restart your PC', 'Restart Confirmation', [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Warning); if ($result -eq [System.Windows.MessageBoxResult]::OK) { shutdown /r /t 0 }"
+    echo Press OK on the prompt to restart your PC
+    powershell -ExecutionPolicy Bypass -Command "Add-Type -AssemblyName PresentationFramework; $result = [System.Windows.MessageBox]::Show('Corruption has been fixed, but a restart is required for changes to apply; Press OK to Restart your PC', 'Restart Confirmation', [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Warning); if ($result -eq [System.Windows.MessageBoxResult]::OK) { shutdown /r /t 0 }"
 )
 
 echo Press any key to exit...
