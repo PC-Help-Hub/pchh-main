@@ -14,6 +14,7 @@ __Pros__
 * up to 5 possible prefixes
 * ability to make custom commands also use /
 * pricing loophole regarding the new discord application purchase policies 
+* nicer and more reliable message and image logs
 __Cons__
 * custom / commands are private only as far as I can tell
 * custom pricing same or 2 eur more expensive depending on server size
@@ -23,3 +24,4 @@ __Cons__
 * Moving modlogs the second time will be convoluted
 * found no autopurge at the moment
 * automod yet to be tested
+* no support for command variables outside of built in discord ones
