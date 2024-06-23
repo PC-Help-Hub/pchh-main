@@ -39,9 +39,10 @@ goto :starts
 
 :scanhealth
 echo Performing a thorough scan for corruption..
-echo Keep in mind this will take some time to complete (~5 minutes depending on system specs)
-DISM /Online /Cleanup-Image /ScanHealth | findstr "No component store corruption detected"
+echo This will take some time to complete
+powershell -ExecutionPolicy Bypass -Command "$output = & {DISM /Online /Cleanup-Image /ScanHealth}; if ($output -match 'No component store corruption detected') { exit 0 } else { exit 1 }"
 if %errorlevel% EQU 0 (
+	echo No file corruption detected, checking windows integrity..
 	echo.
 	goto sfc
 ) else (
@@ -50,9 +51,10 @@ if %errorlevel% EQU 0 (
 )
 
 :checkhealth
-echo Performing a quick scan for corruption..
-DISM /Online /Cleanup-Image /CheckHealth | findstr "No component store corruption detected"
+echo Performing quick scan for corruption..
+powershell -ExecutionPolicy Bypass -Command "$output = & {DISM /Online /Cleanup-Image /CheckHealth}; if ($output -match 'No component store corruption detected') { exit 0 } else { exit 1 }"
 if %errorlevel% EQU 0 (
+	echo No file corruption detected, checking windows integrity..
 	echo.
 	goto sfc
 ) else (
@@ -71,7 +73,7 @@ echo 2/2 Complete
 echo.
 :sfc
 echo Performing System File Check...
-powershell -ExecutionPolicy Bypass -Command "$output = & {sfc /scannow}; if ($output -match 'restart') { set errorlevel=0 } else { exit 1 }"
+powershell -ExecutionPolicy Bypass -Command "$output = & {sfc /scannow}; if ($output -match 'restart') { exit 0 } else { exit 1 }"
 if %errorlevel% EQU 0 (
 	set restartneeded=true
 )
@@ -86,6 +88,7 @@ if "%restartneeded%"=="true" (
     powershell -ExecutionPolicy Bypass -Command "Add-Type -AssemblyName PresentationFramework; $result = [System.Windows.MessageBox]::Show('Corruption has been fixed, but a restart is required for changes to apply; Press OK to Restart your PC', 'Restart Confirmation', [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Warning); if ($result -eq [System.Windows.MessageBoxResult]::OK) { shutdown /r /t 0 }"
 )
 
+echo Your Windows Integrity is OK!
 echo Press any key to exit...
 pause > nul
 exit /b
