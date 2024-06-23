@@ -1,7 +1,9 @@
 :: Copyright (c) 2024 ShinTheBean
 @echo off
 title Minidump Folder Converter
+echo Promting UAC..
 if not "%1"=="am_admin" (powershell start -verb runas '%0' am_admin & exit /b)
+cls
 :: %[varname]:[char]=% for removing all occurences of a single char in a string
 :: source folder for the minidumps
 set dmp_src=%systemroot%\minidump\*.dmp
@@ -23,9 +25,9 @@ if exist %USERPROFILE%\OneDrive\Desktop (
 powershell Compress-Archive -Path %dmp_src% -DestinationPath %zip_tar%
 cls
 if exist %zip_tar% (
-    echo ------------------------------------------------------
-    echo  FILES ARE READY TO BE SHARED, FIND THEM AT %zip_tar%
-    echo ------------------------------------------------------
+    echo ----------------------------------------------------------
+    echo  FILES ARE READY TO BE SHARED, FIND THEM ON YOUR DESKTOP!
+    echo ----------------------------------------------------------
     echo Press any key to exit...
     pause > nul
     exit 0
