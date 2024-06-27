@@ -17,9 +17,9 @@ if %errorlevel% NEQ 0 (
     exit 
 )
 echo Dump files have been found! Zipping them up...
-set zip_tar=%OneDrive%\Desktop\dmp_%random%.zip
+set zip_tar=%userprofile%\Desktop\dmp_%random%.zip
 :: figure out where Desktop is
-if exist %USERPROFILE%\OneDrive\Desktop (
+if exist %onedrive%\Desktop (
     set zip_tar=%OneDrive%\Desktop\dmp_%random%.zip
 )
 
