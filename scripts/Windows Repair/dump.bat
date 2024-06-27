@@ -9,7 +9,7 @@ cls
 set dmp_src=%systemroot%\minidump\*.dmp
 :: target folder for the minidumps
 :: graciously provided by Anthony Miller @ https://stackoverflow.com/a/6362922 
-FOR /F "tokens=* USEBACKQ" %%F IN (`command`) DO (
+FOR /F "tokens=* USEBACKQ" %%F IN (`powershell -NoProfile -Command "[Environment]::GetFolderPath('Desktop')"`) DO (
     SET desktop=%%F
 )
 set "zip_tar=%desktop%\dmp_%random%.zip"
