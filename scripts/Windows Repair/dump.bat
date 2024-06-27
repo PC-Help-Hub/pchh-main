@@ -25,7 +25,7 @@ echo Dump files have been found! Zipping them up...
 powershell Compress-Archive -Path %dmp_src% -DestinationPath %zip_tar%
 if exist %zip_tar% (
     echo ----------------------------------------------------------
-    echo  FILES ARE READY TO BE SHARED (%zip_tar%)!
+    echo  FILES ARE READY TO BE SHARED: %zip_tar%
     echo ----------------------------------------------------------
     start explorer.exe %systemroot%\minidump
     echo Press any key to exit...
