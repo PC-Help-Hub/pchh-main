@@ -1,6 +1,7 @@
 :: Copyright (c) 2024 ShinTheBean
 @echo off
 title Minidump Folder Converter
+echo Promting UAC..
 if not "%1"=="am_admin" (powershell start -verb runas '%0' am_admin & exit /b)
 cls
 :: %[varname]:[char]=% for removing all occurences of a single char in a string
