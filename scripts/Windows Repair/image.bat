@@ -8,7 +8,7 @@ if not "%1"=="am_admin" (powershell start -verb runas '%0' am_admin & exit /b)
 cls
 echo                    Created by shinthebean for PC Help Hub Discord
 echo                  Any issues/queries contact shinthebean on Discord
-echo     https://github.com/PC-Help-Hub/pchh-main/blob/main/scripts/Windows%20Repair/image.bat
+echo              https://github.com/PC-Help-Hub/pchh-main/tree/main/scripts 
 echo                                Credits to: jheden
 echo.
 :: Tests network connection for DISM /ONLINE
