@@ -3,10 +3,10 @@ setlocal enabledelayedexpansion
 
 title System Event Grabber
 
-set logfile=%USERPROFILE%\Documents\eventlogs_%random%
+set logfile=%temp%\eventlogs_%random%
 set systemeventfile=%logfile%\SystemEvents.evtx
 set applicationeventfile=%logfile%\ApplicationEvents.evtx
-set zipfile=%logfile%.zip
+set ziptar=%temp%\EventLogs_%random%.zip
 
 if not exist %logfile% mkdir %logfile%
 
@@ -15,29 +15,29 @@ wevtutil epl System !systemeventfile! >nul 2>&1
 wevtutil epl Application !applicationeventfile! >nul 2>&1
 echo.
 
-powershell -ExecutionPolicy Bypass -Command "Compress-Archive -Path !logfile!\* -DestinationPath !zipfile!"
+powershell -ExecutionPolicy Bypass -Command "Compress-Archive -Path !logfile!\* -DestinationPath !ziptar!"
 
 :filecheck
-if exist !zipfile! (
+if exist !ziptar! (
     del /q /f !logfile!\*
     rmdir !logfile!
 ) else (
     goto filecheck
 )
 
-if exist %zipfile% (
-    powershell -ExecutionPolicy Bypass -Command "Set-Clipboard -Path !zipfile!"
+if exist %ziptar% (
+    powershell -ExecutionPolicy Bypass -Command "Set-Clipboard -Path !ziptar!"
     echo ------------------------------
     echo  FILES ARE READY TO BE SHARED
     echo ------------------------------
-    start explorer.exe !zipfile!
+    start explorer.exe !ziptar!
     echo Press any key to exit..
     pause > nul
     exit
 )
 
-if not exist !zipfile! (
-echo %zipfile% failed to create..
+if not exist !ziptar! (
+echo %ziptar% failed to create..
 echo Press any key to exit..
 pause > nul
 exit
