@@ -50,7 +50,7 @@ if not exist !systemeventfile! (
     exit
 )
 
-if not exist !applicationeventfile (
+if not exist !applicationeventfile! (
     echo Application Event Log failed to export..
     echo Press any key to exit..
     pause > nul
