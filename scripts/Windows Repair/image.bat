@@ -73,7 +73,7 @@ echo 2/2 Complete
 echo.
 :sfc
 echo Performing System File Check...
-powershell -ExecutionPolicy Bypass -Command "$output = & {sfc /scannow}; if ($output -match 'restart') { exit 0 } else { exit 1 }"
+powershell -ExecutionPolicy Bypass -Command "$output = & {sfc /scannow}; if ($output -match 'reboot') { exit 0 } else { exit 1 }"
 if %errorlevel% EQU 0 (
 	set restartneeded=true
 )
