@@ -1,5 +1,5 @@
 @echo off
-title Minidump Folder Converter
+title Minidump Grabber
 echo Prompting UAC...
 if not "%1"=="am_admin" (powershell start -verb runas '%0' am_admin & exit /b)
 cls
@@ -25,16 +25,16 @@ if %errorlevel% NEQ 0 (
 echo Dump files have been found! Zipping them up...
 echo.
 
-powershell Compress-Archive -Path "%dmp_src%" -DestinationPath "%zip_tar%"
+powershell -ExecutionPolicy Bypass -Command "Compress-Archive -Path "%dmp_src%" -DestinationPath "%zip_tar%""
 
 if exist "%zip_tar%" (
     wevtutil epl System "%log_path%"
     
     if exist "%log_path%" (
-        powershell Compress-Archive -Update -Path "%log_path%" -DestinationPath "%zip_tar%"
+        powershell -ExecutionPolicy Bypass -Command "Compress-Archive -Update -Path "%log_path%" -DestinationPath "%zip_tar%""
         del "%log_path%"
     )
-
+    powershell -ExecutionPolicy Bypass -Command "Set-Clipboard -Path %zip_tar%"
     echo FILES ARE READY TO BE SHARED
     echo FIND THEM AT: %zip_tar%
     start explorer.exe %systemroot%\minidump
