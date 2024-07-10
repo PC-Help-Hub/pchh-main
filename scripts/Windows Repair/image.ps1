@@ -51,8 +51,9 @@ function InternetCheck {
         Write-Host "Network Connection detected! Continuing with script..."
     }
     } catch {
-        Write-Host "No active Network Connection detected.."
-        Write-Host "Unable to check for corruption.."
+        Write-Host "No active Network Connection detected.." -ForegroundColor Red
+        Write-Host "Unable to check for corruption.." -ForegroundColor Red
+        Write-Host ""
         Write-Host "Performing an offline check for corrupted file integrity.."
         IntegCheck
     }
@@ -104,6 +105,8 @@ function ThoroughScan {
         Write-Host "Head to the PCHH discord for directions on how to reinstall windows." -ForegroundColor Red
         eof
      }
+
+    unexpecterror
 }
 
 function QuickScan {
@@ -130,6 +133,8 @@ function QuickScan {
         Write-Host "Head to the PCHH discord for directions on how to reinstall windows." -ForegroundColor Red
         eof
      }
+
+     unexpecterror
 }
 
 function corruption {
@@ -176,3 +181,11 @@ function eof {
 
 
 InternetCheck
+
+function unexpecterror {
+    Clear-Host
+    Write-Host "An unexpected result that isn't written to the script has occured!"
+    Write-Host "Ping @shinthebean for this issue, do not exit the script."
+    $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown") > $null
+    unexpecterror
+}
