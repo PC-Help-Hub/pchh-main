@@ -10,7 +10,8 @@ FOR /F "tokens=* USEBACKQ" %%F IN (`powershell -NoProfile -Command "(get-date).t
     SET dtm=%%F
 )
 set "zip_tar=%systemroot%\minidump\dmp_%dtm%.zip"
-set "log_path=%systemroot%\minidump\system.evtx"
+set "sys_log_path=%systemroot%\minidump\system.evtx"
+set "app_log_path=%systemroot%\minidump\application.evtx"
 
 echo Looking in %systemroot%\minidump for minidump files...
 dir /b "%dmp_src%" > nul 2>&1
@@ -28,11 +29,16 @@ echo.
 powershell -ExecutionPolicy Bypass -Command "Compress-Archive -Path "%dmp_src%" -DestinationPath "%zip_tar%""
 
 if exist "%zip_tar%" (
-    wevtutil epl System "%log_path%"
+    wevtutil epl System "%sys_log_path%"
+    wevtutil epl Application "%app_log_path%"
     
-    if exist "%log_path%" (
-        powershell -ExecutionPolicy Bypass -Command "Compress-Archive -Update -Path "%log_path%" -DestinationPath "%zip_tar%""
-        del "%log_path%"
+    if exist "%sys_log_path%" (
+        powershell -ExecutionPolicy Bypass -Command "Compress-Archive -Update -Path "%sys_log_path%" -DestinationPath "%zip_tar%""
+        del "%sys_log_path%"
+    )
+    if exist "%app_log_path%" (
+        powershell -ExecutionPolicy Bypass -Command "Compress-Archive -Update -Path "%app_log_path%" -DestinationPath "%zip_tar%""
+        del "%app_log_path%"
     )
     powershell -ExecutionPolicy Bypass -Command "Set-Clipboard -Path %zip_tar%"
     echo FILES ARE READY TO BE SHARED
