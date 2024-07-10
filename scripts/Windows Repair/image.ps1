@@ -55,7 +55,6 @@ function InternetCheck {
         Write-Host "Unable to check for corruption.."
         Write-Host "Performing an offline check for corrupted file integrity.."
         IntegCheck
-        eof
     }
     script
 }
