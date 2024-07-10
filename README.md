@@ -12,5 +12,5 @@ PC Help Hub "Official" Main Repo
 ### In-place Windows Upgrade Guide from shinthebean
 > https://github.com/PC-Help-Hub/pchh-main/blob/main/docs/ISO.md
 
-### Windows Repair Batch Files from shinthebean
-> https://github.com/PC-Help-Hub/pchh-main/releases/tag/Releases
+### Windows Repair Scripts from shinthebean
+> https://github.com/PC-Help-Hub/pchh-main/tree/main/scripts/Windows%20Repair
