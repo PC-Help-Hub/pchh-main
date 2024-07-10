@@ -7,7 +7,6 @@ if (-Not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdent
     Write-Host "Press any key to exit the script!"
     $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown") > $null
  }
-}
 
 Clear-Host
 
