@@ -1,7 +1,5 @@
 Set-ExecutionPolicy -ExecutionPolicy Unrestricted -Scope Process -Force
 
-Write-Host "Prompting UAC.."
-# Check if the script is running as Administrator
 if (-Not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] 'Administrator')) {
     Write-Host "Powershell needs to be ran as an Administrator in order for this to work."
     Write-Host "Press any key to exit the script!"
