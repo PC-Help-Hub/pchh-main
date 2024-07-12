@@ -172,7 +172,7 @@ function eof {
     Write-Host ""
     Write-Host "Press any key to exit the script!"
     $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown") > $null
-    exit
+    exit /B
 }
 
 
