@@ -8,6 +8,7 @@ $Host.UI.RawUI.WindowTitle = "Minidump Grabber"
     Write-Host "Retry with Powershell running as an Administrator.."
     Write-Host "Press any key to exit the script.."
     $null = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+    exit
 }
 
 Clear-Host
