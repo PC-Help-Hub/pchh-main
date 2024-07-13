@@ -1,5 +1,6 @@
 Set-ExecutionPolicy -ExecutionPolicy Unrestricted -Scope Process -Force
 
+Clear-Host
 $Host.UI.RawUI.WindowTitle = "Event Grab Script"
 
 $random = Get-Random -Minimum 1 -Maximum 1000
