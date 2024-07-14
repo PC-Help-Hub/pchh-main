@@ -1,14 +1,19 @@
 Set-ExecutionPolicy -ExecutionPolicy Unrestricted -Scope Process -Force
 
-if (-Not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] 'Administrator')) {
-    Write-Host "Powershell needs to be ran as an Administrator in order for this to work."
-    Write-Host "Press any key to exit the script!"
-    $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown") > $null
- }
+# if (-Not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] 'Administrator')) {
+    #Write-Host "Powershell needs to be ran as an Administrator in order for this to work."
+   # Write-Host "Press any key to exit the script!"
+  #  $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown") > $null
+ #}
+
+ if (-NOT ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator")) {
+    Write-Host "Prompting UAC.."
+    Start-Process powershell.exe "-NoProfile -ExecutionPolicy Bypass -File `"$PSCommandPath`"" -Verb RunAs
+    exit
+}
 
 Clear-Host
 
-# Invoke-WithoutProgress function from https://stackoverflow.com/questions/18770723/hide-progress-of-invoke-webrequest
 $null = New-Module {
     function Invoke-WithoutProgress {
         [CmdletBinding()]
@@ -16,16 +21,13 @@ $null = New-Module {
             [Parameter(Mandatory)] [scriptblock] $ScriptBlock
         )
 
-        # Save current progress preference and hide the progress
         $prevProgressPreference = $global:ProgressPreference
         $global:ProgressPreference = 'SilentlyContinue'
 
         try {
-            # Run the script block in the scope of the caller of this module function
             . $ScriptBlock
         }
         finally {
-            # Restore the original behavior
             $global:ProgressPreference = $prevProgressPreference
         }
     }
@@ -39,13 +41,12 @@ function InternetCheck {
     Write-Host "                        Credits of inspiration to: jheden"
     Write-Host ""
 
-    # checks for internet
     Write-Host "Testing for an internet connection.."
     try {
         Invoke-WithoutProgress {
-        Invoke-WebRequest google.com -ErrorAction Stop > $null
-        Write-Host "Network Connection detected! Continuing with script..."
-    }
+            Invoke-WebRequest google.com -ErrorAction Stop > $null
+            Write-Host "Network Connection detected! Continuing with script..."
+        }
     } catch {
         Write-Host "No active Network Connection detected.." -ForegroundColor Red
         Write-Host "Unable to check for corruption.." -ForegroundColor Red
@@ -78,59 +79,56 @@ function script {
 }
 
 function ThoroughScan {
-     Write-Host "Performing a thorough scan.."
-     try {
-     $thoroughOutput = DISM /Online /Cleanup-Image /ScanHealth
-     } catch {
+    Write-Host "Performing a thorough scan.."
+    Write-Host ""
+    try {
+        & "DISM.exe" "/Online" "/Cleanup-Image" "/ScanHealth" > $null
+        $exittCode = $LASTEXITCODE
+    } catch {
         Write-Host "There was an error while performing DISM Scanhealth" -ForegroundColor Red
         Write-Host "Retry the script or head to the discord and show them the error." -ForegroundColor Red
         eof
-     }
+    }
 
-     if ($thoroughOutput -like "*No component store corruption detected*") {
-        Write-Host "No file corruption detected, checking windows integrity.."
+    if ($exittCode -eq 1) {
+        Write-Host "No file corruption detected, checking windows integrity.." -ForegroundColor Green
         IntegCheck
-     }
-
-     if ($thoroughOutput -like "*The component store is repairable*") {
+    } elseif ($exittCode -eq 1) {
         corruption
-     }
-
-     if ($thoroughOutput -like "*The component store is not repairable*") {
-        Write-Host "The scan has indidcated that your windows image is not repairable, and can only be fixed with a Windows Reinstall." -ForegroundColor Red
+    } elseif ($exittCode -eq 2) {
+        Write-Host "The scan has indicated that your windows image is not repairable, and can only be fixed with a Windows Reinstall." -ForegroundColor Red
         Write-Host "Head to the PCHH discord for directions on how to reinstall windows." -ForegroundColor Red
         eof
-     }
-
-    unexpecterror
+    } else {
+        corruption
+    }
 }
+
 
 function QuickScan {
     Write-Host "Performing a quick scan.."
+    Write-Host ""
     try {
-        $quickOutput = DISM /Online /Cleanup-Image /Checkhealth
+        & "DISM.exe" "/Online" "/Cleanup-Image" "/CheckHealth" > $null
+        $exitCode = $LASTEXITCODE
     } catch {
-        Write-Host "There was an error while performing DISM Checkhealth" -ForegroundColor Red
+        Write-Host "There was an error while performing DISM CheckHealth" -ForegroundColor Red
         Write-Host "Retry the script or head to the discord and show them the error." -ForegroundColor Red
         eof
     }
 
-    if ($quickOutput -like "*No component store corruption detected*") {
-        Write-Host "No file corruption detected, checking windows integrity.."
+    if ($exitCode -eq 0) {
+        Write-Host "No file corruption detected, checking windows integrity.." -ForegroundColor Green
         IntegCheck
-    }
-
-    if ($quickOutput -like "*The component store is repairable*") {
+    } elseif ($exitCode -eq 1) {
         corruption
-    }
-
-    if ($thoroughOutput -like "*The component store is not repairable*") {
-        Write-Host "The scan has indidcated that your windows image is not repairable, and can only be fixed with a Windows Reinstall." -ForegroundColor Red
+    } elseif ($exitCode -eq 2) {
+        Write-Host "The scan has indicated that your windows image is not repairable, and can only be fixed with a Windows Reinstall." -ForegroundColor Red
         Write-Host "Head to the PCHH discord for directions on how to reinstall windows." -ForegroundColor Red
         eof
-     }
-
-     unexpecterror
+    } else {
+        corruption
+    }
 }
 
 function corruption {
@@ -159,29 +157,51 @@ function corruption {
 
 function IntegCheck {
     try {
-        sfc /scannow
+        & "sfc.exe" "/scannow" > $null
+        $exitCode = $LASTEXITCODE
+
     } catch {
-        Write-Host "There was an error while doing sfc /scannow" -ForegroundColor Red
+        Write-Host "There was an error while performing sfc /scannow" -ForegroundColor Red
         Write-Host "Retry the script or head to the discord and show them the error." -ForegroundColor Red
         eof
     }
-    eof
+
+    if ($exitCode -eq 0) {
+        Write-Host "Windows has found no corruption." -ForegroundColor Green
+        eof
+    } elseif ($exitCode -eq 1) {
+        Write-Host "Windows has detected corruption and has successfully repaired it!" -ForegroundColor Green
+        Write-Host "It is recommended to restart your computer for the changes to apply correctly." -ForegroundColor Green
+        Write-Host "Press OK on the prompt to restart your PC." -ForegroundColor Green
+        restart
+    } elseif ($exitCode -eq 2) {
+        Write-Host "Windows has detected corruption but was unable to repair it, a reinstallation of Windows is needed to repair these files." -ForegroundColor Red
+        eof
+    } else {
+        Write-Host "There was an output of SFC that isn't common, let's perform a restart of your computer." -ForegroundColor Yellow
+        restart
+    }
+
 }
 
 function eof {
     Write-Host ""
     Write-Host "Press any key to exit the script!"
     $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown") > $null
-    exit /B
+    exit
 }
-
-
-InternetCheck
 
 function unexpecterror {
     Clear-Host
-    Write-Host "An unexpected result that isn't written to the script has occured!"
+    Write-Host "An unexpected result that isn't written to the script has occurred!"
     Write-Host "Ping @shinthebean for this issue, do not exit the script."
     $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown") > $null
     unexpecterror
 }
+
+function restart {
+    Add-Type -AssemblyName PresentationFramework; $result = [System.Windows.MessageBox]::Show('A restart is required in order for Windows to apply the made changes correctly. Press OK to restart your computer.', 'Restart Confirmation', [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Warning); if ($result -eq [System.Windows.MessageBoxResult]::OK) { shutdown /r /t 0 }
+    pause > $null
+}
+
+InternetCheck
