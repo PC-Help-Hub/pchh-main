@@ -149,6 +149,7 @@ function corruption {
     }
     Write-Host "2/2 Complete"
     Write-Host ""
+    Write-Host "Checking file integrity.."
     IntegCheck
 }
 
