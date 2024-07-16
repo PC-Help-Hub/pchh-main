@@ -1,14 +1,11 @@
 Set-ExecutionPolicy -ExecutionPolicy Unrestricted -Scope Process -Force
 
-# if (-Not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] 'Administrator')) {
-    #Write-Host "Powershell needs to be ran as an Administrator in order for this to work."
-   # Write-Host "Press any key to exit the script!"
-  #  $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown") > $null
- #}
-
+ Write-Host "Checking if script is running as an administrator.."
  if (-NOT ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator")) {
-    Write-Host "Prompting UAC.."
-    Start-Process powershell.exe "-NoProfile -ExecutionPolicy Bypass -File `"$PSCommandPath`"" -Verb RunAs
+    Write-Host "Script must be ran as an Administrator for it to work correctly."
+    Write-Host "Retry with Powershell running as an Administrator.."
+    Write-Host "Press any key to exit the script.."
+    $null = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
     exit
 }
 
