@@ -1,5 +1,16 @@
 Set-ExecutionPolicy -ExecutionPolicy Unrestricted -Scope Process -Force
 
+$Host.UI.RawUI.WindowTitle = "Windows Update Fix Script"
+
+ Write-Host "Checking if script is running as an administrator.."
+ if (-NOT ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator")) {
+    Write-Host "Script must be ran as an Administrator for it to work correctly."
+    Write-Host "Retry with Powershell running as an Administrator.."
+    Write-Host "Press any key to exit the script.."
+    $null = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+    exit
+}
+
 Clear-Host
 Write-Host "                  Created by shinthebean for PC Help Hub Discord"
 Write-Host "                 Any issues/queries contact shinthebean on Discord"
