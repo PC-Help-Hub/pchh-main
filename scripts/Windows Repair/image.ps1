@@ -1,13 +1,10 @@
 Set-ExecutionPolicy -ExecutionPolicy Unrestricted -Scope Process -Force
 
- Write-Host "Checking if script is running as an administrator.."
- if (-NOT ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator")) {
-    Write-Host "Script must be ran as an Administrator for it to work correctly."
-    Write-Host "Retry with Powershell running as an Administrator.."
-    Write-Host "Press any key to exit the script.."
-    $null = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
-    exit
-}
+ if (-Not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] 'Administrator')) {
+    Write-Host "Powershell needs to be ran as an Administrator in order for this to work."
+    Write-Host "Press any key to exit the script!"
+    $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown") > $null
+ }
 
 Clear-Host
 
@@ -47,8 +44,6 @@ function InternetCheck {
     } catch {
         Write-Host "No active Network Connection detected.." -ForegroundColor Red
         Write-Host "Unable to check for corruption.." -ForegroundColor Red
-        Write-Host ""
-        Write-Host "Performing an offline check for corrupted file integrity.."
         IntegCheck
     }
     script
@@ -149,38 +144,47 @@ function corruption {
     }
     Write-Host "2/2 Complete"
     Write-Host ""
-    Write-Host "Checking file integrity.."
     IntegCheck
 }
 
 function IntegCheck {
-    try {
-        & "sfc.exe" "/scannow" > $null
+    Write-Host""
+    Write-Host "Checking file integrity.."
+    $job = Start-Job -ScriptBlock {
+        & "sfc.exe" "/scannow"
         $exitCode = $LASTEXITCODE
-
-    } catch {
-        Write-Host "There was an error while performing sfc /scannow" -ForegroundColor Red
-        Write-Host "Retry the script or head to the discord and show them the error." -ForegroundColor Red
-        eof
     }
 
-    if ($exitCode -eq 0) {
-        Write-Host "Windows has found no corruption." -ForegroundColor Green
-        eof
-    } elseif ($exitCode -eq 1) {
-        Write-Host "Windows has detected corruption and has successfully repaired it!" -ForegroundColor Green
-        Write-Host "It is recommended to restart your computer for the changes to apply correctly." -ForegroundColor Green
-        Write-Host "Press OK on the prompt to restart your PC." -ForegroundColor Green
-        restart
-    } elseif ($exitCode -eq 2) {
-        Write-Host "Windows has detected corruption but was unable to repair it, a reinstallation of Windows is needed to repair these files." -ForegroundColor Red
+    $result = Wait-Job -Job $job -Timeout 900
+
+    if ($null -eq $result) {
+        Stop-Job -Job $job
+        Remove-Job -Job $job
+        Write-Host "You have encountered a bug where SFC will take longer than usual and/or will never complete. This is pretty common.." -ForegroundColor Yellow
+        Write-Host "You will need to restart your computer and manually open Command Prompt or Powershell as an Administrator and run 'sfc /scannow'." -ForegroundColor Yellow
         eof
     } else {
-        Write-Host "There was an output of SFC that isn't common, let's perform a restart of your computer." -ForegroundColor Yellow
-        restart
-    }
+        Remove-Job -Job $job
 
+        if ($exitCode -eq 0) {
+            Write-Host "Windows has found no corruption." -ForegroundColor Green
+            eof
+        } elseif ($exitCode -eq 1) {
+            Write-Host "Windows has detected corruption and has successfully repaired it!" -ForegroundColor Green
+            Write-Host "It is recommended to restart your computer for the changes to apply correctly." -ForegroundColor Green
+            Write-Host "Press OK on the prompt to restart your PC." -ForegroundColor Green
+            restart
+        } elseif ($exitCode -eq 2) {
+            Write-Host "Windows has detected corruption but was unable to repair it, a reinstallation of Windows is needed to repair these files." -ForegroundColor Red
+            eof
+        } else {
+            Write-Host "There was an output of SFC that isn't common, let's perform a restart of your computer." -ForegroundColor Yellow   
+            restart
+        }
+    }
 }
+
+
 
 function eof {
     Write-Host ""
