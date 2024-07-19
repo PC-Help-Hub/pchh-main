@@ -2,8 +2,9 @@ Set-ExecutionPolicy -ExecutionPolicy Unrestricted -Scope Process -Force
 
 $Host.UI.RawUI.WindowTitle = "Windows Update Fix Script"
 
- Write-Host "Checking if script is running as an administrator.."
- if (-NOT ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator")) {
+Clear-Host
+Write-Host "Checking if script is running as an administrator.."
+if (-NOT ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator")) {
     Write-Host "Script must be ran as an Administrator for it to work correctly."
     Write-Host "Retry with Powershell running as an Administrator.."
     Write-Host "Press any key to exit the script.."
@@ -144,10 +145,12 @@ function Start-ServiceIfRunning {
         catch {
             Start-Service -Name $serviceName -Force > $null 2>&1
         }
-    } else {
+    }
+    else {
         try {
-        Restart-Service -Name $serviceName -Force > $null 2>&1
-        } catch {
+            Restart-Service -Name $serviceName -Force > $null 2>&1
+        }
+        catch {
             Restart-Service -Name $serviceName -Force > $null 2>&1
         }
     }
