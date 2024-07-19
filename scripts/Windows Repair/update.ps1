@@ -45,7 +45,7 @@ Stop-ServiceIfRunning -serviceName 'cryptsvc' > $null 2>&1
 
 Write-Host "Services stopped.."
 Write-Host ""
-Write-Host "Renaming windows update folders.."
+Write-Host "Renaming windows update folders & clearing cache.."
 try {
     Remove-Item -Path "$env:ALLUSERSPROFILE\Application Data\Microsoft\Network\Downloader\qmgr*.dat" -Force > $null 2>&1
 }
@@ -72,7 +72,10 @@ catch {
     Rename-Item -Path "$env:SystemRoot\System32\catroot2" -NewName "catroot2.bak" -Force > $null 2>&1
 }
 
-Write-Host "Folders have been renamed.."
+    Set-Location -Path "$env:windir\SoftwareDistribution"
+    Remove-Item -Path * -Recurse -Force | Out-NUll
+
+Write-Host "Folders have been renamed & cache has been cleared.."
 Write-Host ""
 Write-Host "Resetting BITS service & Update Service to default security descriptor.."
 try {
