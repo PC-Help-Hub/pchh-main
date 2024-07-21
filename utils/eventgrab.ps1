@@ -1,5 +1,6 @@
 Set-ExecutionPolicy -ExecutionPolicy Unrestricted -Scope Process -Force
 
+Clear-Host
 $Host.UI.RawUI.WindowTitle = "Event Grab Script"
 
 $random = Get-Random -Minimum 1 -Maximum 10000
@@ -9,38 +10,39 @@ $appeventfile = "$logfile\ApplicationEvents.evtx"
 $ziptar = "$env:TEMP\eventlogs_$random.zip"
 
 function filecreate {
-mkdir $logfile > $null 2>&1
+    mkdir $logfile -ErrorAction SilentlyContinue | Out-Null
 
-if (-not (Test-Path $logfile)) {
-    filecreate
+    if (-not (Test-Path $logfile)) {
+        filecreate
     } else {
         eventgrab
     }
 }
 
 function eventgrab {
-Write-Host "Grabbing your event logs.."
-wevtutil epl System $syseventfile > $null
-wevtutil epl Application $appeventfile > $null
-Write-Host ""
+    Write-Host "Grabbing your event logs.."
 
-if (-not (Test-Path $syseventfile)) {
-    functionerror
-}
+    $startDate = (Get-Date).AddDays(-14).ToString('s')
+    $filterQuery = "*[System[TimeCreated[@SystemTime>='$startDate']]]"
 
-if (-not (Test-Path $appeventfile)) {
-    functionerror
-}
+    wevtutil epl System $syseventfile /q:$filterQuery
+    wevtutil epl Application $appeventfile /q:$filterQuery
 
-compression
+    Write-Host ""
+
+    if (-not (Test-Path $syseventfile) -or -not (Test-Path $appeventfile)) {
+        functionerror
+    }
+
+    compression
 }
 
 function compression {
-Compress-Archive -Path $logfile\* -DestinationPath $ziptar
-timeout 2 > $null
+    Compress-Archive -Path "$logfile\*" -DestinationPath $ziptar
+    Start-Sleep -Seconds 2
 
     if (Test-Path $ziptar) {
-        Remove-Item $logfile\* -Force > $null
+        Remove-Item "$logfile\*" -Force
         eof
     } else {
         functionerror
@@ -48,22 +50,23 @@ timeout 2 > $null
 }
 
 function eof {
-if (Test-Path $ziptar) {
-    Set-Clipboard -Path $ziptar
-    Write-Host "------------------------------"
-    Write-Host " FILES ARE READY TO BE SHARED "
-    Write-Host "------------------------------"
-    Start-Process explorer.exe -ArgumentList $ziptar
-    Write-Host "Press any key to exit the script.."
-    $null = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
-    exit
-} else {
-    functionerror
-}
+    if (Test-Path $ziptar) {
+        Add-Type -AssemblyName System.Windows.Forms
+        $clipboard = [System.Windows.Forms.Clipboard]::SetFileDropList([System.Collections.Specialized.StringCollection]@($ziptar))
+        Write-Host "------------------------------"
+        Write-Host " FILES ARE READY TO BE SHARED "
+        Write-Host "------------------------------"
+        Start-Process explorer.exe -ArgumentList $ziptar
+        Write-Host "Press any key to exit the script.."
+        $null = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+        exit
+    } else {
+        functionerror
+    }
 }
 
 function functionerror {
-    Write-Host "An error has occured within the script.."
+    Write-Host "An error has occurred within the script.."
     Write-Host "Retry the script | Press any key to exit the script."
     $null = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
     exit
