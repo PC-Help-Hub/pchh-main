@@ -79,7 +79,7 @@ function ThoroughScan {
     Write-Host ""
     try {
         & "DISM.exe" "/Online" "/Cleanup-Image" "/ScanHealth" > $null
-        $exitCode = $LASTEXITCODE
+        $thoroughExit = $LASTEXITCODE
     }
     catch {
         Write-Host "There was an error while performing DISM ScanHealth" -ForegroundColor Red
@@ -87,14 +87,14 @@ function ThoroughScan {
         eof
     }
 
-    if ($exitCode -eq 0) {
+    if ($thoroughExit -eq 0) {
         Write-Host "No file corruption detected, checking windows integrity.." -ForegroundColor Green
         IntegCheck
     }
-    elseif ($exitCode -eq 1) {
+    elseif ($thoroughExit -eq 1) {
         corruption
     }
-    elseif ($exitCode -eq 2) {
+    elseif ($thoroughExit -eq 2) {
         Write-Host "The scan has indicated that your windows image is not repairable and can only be fixed with a Windows Reinstall." -ForegroundColor Red
         Write-Host "Head to the PCHH discord for directions on how to reinstall windows." -ForegroundColor Red
         eof
@@ -109,7 +109,7 @@ function QuickScan {
     Write-Host ""
     try {
         & "DISM.exe" "/Online" "/Cleanup-Image" "/CheckHealth" > $null
-        $exitCode = $LASTEXITCODE
+        $quickExit = $LASTEXITCODE
     }
     catch {
         Write-Host "There was an error while performing DISM CheckHealth" -ForegroundColor Red
@@ -117,14 +117,14 @@ function QuickScan {
         eof
     }
 
-    if ($exitCode -eq 0) {
+    if ($quickExit -eq 0) {
         Write-Host "No file corruption detected, checking windows integrity.." -ForegroundColor Green
         IntegCheck
     }
-    elseif ($exitCode -eq 1) {
+    elseif ($quickExit -eq 1) {
         corruption
     }
-    elseif ($exitCode -eq 2) {
+    elseif ($quickExit -eq 2) {
         Write-Host "The scan has indicated that your windows image is not repairable and can only be fixed with a Windows Reinstall." -ForegroundColor Red
         Write-Host "Head to the PCHH discord for directions on how to reinstall windows." -ForegroundColor Red
         eof
@@ -165,108 +165,112 @@ function IntegCheck {
     Write-Host "Checking file integrity.."
     Write-Host ""
 
-    $windowsDriveLetter = (Get-WmiObject -Query "SELECT * FROM Win32_OperatingSystem").SystemDrive
+    # Timeout script from: https://www.reddit.com/r/PowerShell/comments/82fl6g/how_do_you_set_timeouts_on_cmdlets/?rdt=53784
 
-    $disks = Get-PhysicalDisk
-    
-    $timeoutSeconds = 0
-    
-    foreach ($disk in $disks) {
-        $partitions = Get-Partition -DiskNumber $disk.DeviceId
-    
-        foreach ($partition in $partitions) {
-            $volumes = Get-Volume -Partition $partition
-            foreach ($volume in $volumes) {
-                if ($volume.DriveLetter -eq $windowsDriveLetter.TrimEnd(':')) {
-                    $mediaType = $disk.MediaType
-    
-                    if ($mediaType -eq 'SSD') {
-                        $timeoutSeconds = 1200
-                    }
-                    elseif ($mediaType -eq 'HDD') {
-                        $timeoutSeconds = 2700
-                    }
-                    else {
-                        $timeoutSeconds = 900
-                    }
-                    
-                    break
-                }
+    $InitialTimeout = 1500
+    $ExtendedTimeout = 4800
+
+    $job = Start-Job -ScriptBlock {
+        sfc /scannow
+        $exitCode = $LASTEXITCODE
+        [PSCustomObject]@{ ExitCode = $exitCode }
+    }
+
+    $JobTimer = 0
+    while ($job.State -eq "Running" -and $JobTimer -le $InitialTimeout) {
+        $JobTimer++
+        Start-Sleep -Milliseconds 1000 # Sleep for 1 second increments
+    }
+
+    if ($job.State -eq "Running") {
+        # Ask the user if they want to continue
+        Write-Host "The integrity check is taking longer than usual, you may have encountered a Windows Bug or the process is taking long to complete." -ForegroundColor Yellow
+        $userInput = Read-Host "Do you want to continue? It will timeout after 80 minutes; (Y/N)"
+        
+        if ($userInput -eq "Y" -or $userInput -eq "y") {
+            Write-Host ""
+            Write-Host "Continuing integrity check.."
+            while ($job.State -eq "Running" -and $JobTimer -le ($InitialTimeout + $ExtendedTimeout)) {
+                $JobTimer++
+                Start-Sleep -Milliseconds 1000 # Sleep for 1 second increments
             }
+        } else {
+            # User chose not to continue
+            Stop-Job -Job $job
+            Remove-Job -Job $job
+            timeout
         }
     }
 
-    $random = Get-Random -Minimum 1 -Maximum 1000
+    if ($job.State -eq "Running") {
+        # Job is still running after extended timeout or user chose not to continue
+        Stop-Job -Job $job
+        Remove-Job -Job $job
+        timeout
+    } else {
+        # Job completed within the allowed time, get the result
+        $result = Receive-Job -Job $job
+        Remove-Job -Job $job
 
-    Start-Process -FilePath "sfc.exe" -ArgumentList "/scannow" -NoNewWindow -Wait -RedirectStandardError "$env:TEMP\sfcerror_$random.txt" -RedirectStandardOutput "$env:TEMP\sfcoutput.txt"
-
-    Remove-Item "$env:TEMP\sfcerror.txt" -Force > $null 2>&1
-    Remove-Item "$env:TEMP\sfcoutput.txt" -Force > $null 2>&1
-
-    $startTime = Get-Date
-
-    while ($true) {
-        Start-Sleep -Seconds 1
-        $runningTime = (Get-Date) - $startTime
-
-        if ($runningTime.TotalSeconds -gt $timeoutSeconds) {
-            Timeout
-            break
-        }
-
-        $sfcProcess = Get-Process -Name "sfc" -ErrorAction SilentlyContinue
-        if ($null -eq $sfcProcess) {
-            $exitCode = $LASTEXITCODE
-
-            if ($exitCode -eq 0) {
-                Write-Host "Windows has found no corruption." -ForegroundColor Green
-                eof
-            }
-            elseif ($exitCode -eq 1) {
-                Write-Host "Windows has detected corruption and has successfully repaired it!" -ForegroundColor Green
-                Write-Host "It is recommended to restart your computer for the changes to apply correctly." -ForegroundColor Green
-                Write-Host "Press OK on the prompt to restart your PC." -ForegroundColor Green
-                restart
-            }
-            elseif ($exitCode -eq 2) {
-                Write-Host "Windows has detected corruption but was unable to repair it, a reinstallation of Windows is needed to repair these files." -ForegroundColor Red
-                eof
-            }
-            else {
-                Write-Host "There was an output of SFC that isn't common, let's perform a restart of your computer." -ForegroundColor Yellow   
-                restart
-            }
-            break
-        }
+        # Retrieve the exit code from the result
+        $exitCode = $result.ExitCode
+        exitcheck $exitCode
     }
 }
 
-function Timeout {
-    Write-Host "The SFC scan has exceeded the expected timeout duration." -ForegroundColor Yellow
-    Write-Host "You will need to restart your computer and manually open Command Prompt or PowerShell as an Administrator and run 'sfc /scannow'." -ForegroundColor Yellow
-    eof
+function exitcheck {
+    param (
+        [int]$exitCode
+    )
+
+    if ($exitCode -eq 0) {
+        Write-Host "Windows has found no corruption." -ForegroundColor Green
+        eof
+    }
+    elseif ($exitCode -eq 1) {
+        Write-Host "Windows has detected corruption and has successfully repaired it!" -ForegroundColor Green
+        Write-Host "It is recommended to restart your computer for the changes to apply correctly." -ForegroundColor Green
+        Write-Host "Press OK on the prompt to restart your PC." -ForegroundColor Green
+        restart
+    }
+    elseif ($exitCode -eq 2) {
+        Write-Host "Windows has detected corruption but was unable to repair it, a reinstallation of Windows is needed to repair these files." -ForegroundColor Red
+    }
+    else {
+        Write-Host "There was an output of SFC that isn't common, let's perform a restart of your computer." -ForegroundColor Yellow   
+        restart
+    }
 }
 
-function eof {
-    Write-Host ""
-    Write-Host "Press any key to exit the script!"
-    $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown") > $null
-    exit
-}
 
-function unexpecterror {
-    Clear-Host
-    Write-Host "An unexpected result that isn't written to the script has occurred!"
-    Write-Host "Ping @shinthebean for this issue, do not exit the script."
-    $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown") > $null
-    unexpecterror
-}
 
-function restart {
-    Add-Type -AssemblyName PresentationFramework; 
-    $result = [System.Windows.MessageBox]::Show('A restart is required in order for Windows to apply the made changes correctly. Press OK to restart your computer.', 'Restart Confirmation', [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Warning); 
-    if ($result -eq [System.Windows.MessageBoxResult]::OK) { shutdown /r /t 0 }
-    pause > $null
-}
+    function timeout {
+        Write-Host ""
+        Write-Host "The SFC scan has exceeded the expected timeout duration." -ForegroundColor Yellow
+        Write-Host "You will need to restart your computer and manually open Command Prompt or PowerShell as an Administrator and run 'sfc /scannow'." -ForegroundColor Yellow
+        eof
+    }
 
-InternetCheck
+    function eof {
+        Write-Host ""
+        Write-Host "Press any key to exit the script!"
+        $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown") > $null
+        exit
+    }
+
+    function unexpecterror {
+        Clear-Host
+        Write-Host "An unexpected result that isn't written to the script has occurred!"
+        Write-Host "Ping @shinthebean for this issue, do not exit the script."
+        $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown") > $null
+        unexpecterror
+    }
+
+    function restart {
+        Add-Type -AssemblyName PresentationFramework; 
+        $result = [System.Windows.MessageBox]::Show('A restart is required in order for Windows to apply the made changes correctly. Press OK to restart your computer.', 'Restart Confirmation', [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Warning); 
+        if ($result -eq [System.Windows.MessageBoxResult]::OK) { shutdown /r /t 0 }
+        pause > $null
+    }
+
+    InternetCheck
