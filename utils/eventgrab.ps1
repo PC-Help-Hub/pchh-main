@@ -1,15 +1,18 @@
 Set-ExecutionPolicy -ExecutionPolicy Unrestricted -Scope Process -Force
 
 Clear-Host
+Write-Host ""
 $Host.UI.RawUI.WindowTitle = "Event Grab Script"
 
 $random = Get-Random -Minimum 1 -Maximum 10000
-$logfile = "$env:TEMP\eventlogs_$random"
-$syseventfile = "$logfile\SystemEvents.evtx"
-$appeventfile = "$logfile\ApplicationEvents.evtx"
-$ziptar = "$env:TEMP\eventlogs_$random.zip"
+$tempFolder = "$env:TEMP\EventLogs"
+$logfile = Join-Path $tempFolder "eventlogs_$random"
+$syseventfile = Join-Path $logfile "SystemEvents.evtx"
+$appeventfile = Join-Path $logfile "ApplicationEvents.evtx"
+$ziptar = Join-Path $tempFolder "eventlogs_$random.zip"
 
 function filecreate {
+    Remove-Item -Path $tempFolder -Recurse -Force | Out-Null
     mkdir $logfile -ErrorAction SilentlyContinue | Out-Null
 
     if (-not (Test-Path $logfile)) {
@@ -42,7 +45,7 @@ function compression {
     Start-Sleep -Seconds 2
 
     if (Test-Path $ziptar) {
-        Remove-Item "$logfile\*" -Force
+        Remove-Item $logfile -Recurse -Force
         eof
     } else {
         functionerror
@@ -52,11 +55,13 @@ function compression {
 function eof {
     if (Test-Path $ziptar) {
         Add-Type -AssemblyName System.Windows.Forms
-        $clipboard = [System.Windows.Forms.Clipboard]::SetFileDropList([System.Collections.Specialized.StringCollection]@($ziptar))
+        [System.Windows.Forms.Clipboard]::SetFileDropList([System.Collections.Specialized.StringCollection]@($ziptar))
+    
+
         Write-Host "------------------------------"
         Write-Host " FILES ARE READY TO BE SHARED "
         Write-Host "------------------------------"
-        Start-Process explorer.exe -ArgumentList $ziptar
+        Start-Process explorer.exe -ArgumentList $tempFolder
         Write-Host "Press any key to exit the script.."
         $null = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
         exit
