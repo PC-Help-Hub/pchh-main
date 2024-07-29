@@ -2,8 +2,8 @@ Set-ExecutionPolicy -ExecutionPolicy Unrestricted -Scope Process -Force
 
 $Host.UI.RawUI.WindowTitle = "Minidump Grabber"
 
- Write-Host "Checking if script is running as an administrator.."
- if (-NOT ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator")) {
+Write-Host "Checking if script is running as an administrator.."
+if (-NOT ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator")) {
     Write-Host "Script must be ran as an Administrator for it to work correctly."
     Write-Host "Retry with Powershell running as an Administrator.."
     Write-Host "Press any key to exit the script.."
@@ -13,11 +13,18 @@ $Host.UI.RawUI.WindowTitle = "Minidump Grabber"
 
 Clear-Host
 
-$random = Get-Random -Minimum 1 -Maximum 500
-$source = Join-Path $env:systemroot "minidump\*.dmp"
-$ziptar = Join-Path $env:systemroot "minidump\dumps_$random.zip"
-$app_eventlog_path = Join-Path $env:systemroot "minidump\application_logs.evtx"
-$sys_eventlog_path = Join-Path $env:systemroot "minidump\system_logs.evtx"
+$random = Get-Random -Minimum 1 -Maximum 10000
+$minidumpFolder = Join-Path $env:systemroot "minidump"
+$dumpsFolder = Join-Path $minidumpFolder "Dumps"
+if (-not (Test-Path $dumpsFolder)) {
+    New-Item -Path $dumpsFolder -ItemType Directory | Out-Null
+}
+$source = Join-Path $minidumpFolder "*.dmp"
+$ziptar = Join-Path $dumpsFolder "Files_$random.zip"
+$app_eventlog_path = Join-Path $dumpsFolder "application_logs.evtx"
+$sys_eventlog_path = Join-Path $dumpsFolder "system_logs.evtx"
+
+remove-item -path $env:systemroot\minidump\Dumps\*
 
 Write-Host "Looking for any dump files.."
 
@@ -28,7 +35,7 @@ if (-not (Test-Path $source)) {
     exit
 }
 
-Write-Host "Dump files have been found at $env:SystemRoot\minidump"
+Write-Host "Dump files have been found at $minidumpFolder"
 Write-Host "Zipping them up!"
 Write-Host ""
 
@@ -47,17 +54,18 @@ if (Test-Path $ziptar) {
         Remove-Item $app_eventlog_path
     }
 
-    Set-Clipboard -Path $ziptar
+    Add-Type -AssemblyName System.Windows.Forms
+    [System.Windows.Forms.Clipboard]::SetFileDropList([System.Collections.Specialized.StringCollection]@($ziptar))
 
-    Start-Process explorer.exe -ArgumentList $env:systemroot\minidump
-
-    Write-Host "FOLDER AUTOMATICALLY COPIED TO YOUR CLIPBOARD"
-    Write-Host "FILES ARE READY TO BE SHARED"
-    Write-Host "FIND THEM AT: $ziptar"
+    Write-Host "------------------------------"
+    Write-Host " FILES ARE READY TO BE SHARED "
+    Write-Host "------------------------------"
+    Start-Process explorer.exe -ArgumentList $dumpsFolder
     Write-Host "Press any key to exit the script.."
     $null = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
     exit
-} else {
+}
+else {
     Write-Host "The files were unable to be archived.."
     Write-Host "Press any key to exit.."
     $null = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
