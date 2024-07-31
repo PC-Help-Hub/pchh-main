@@ -50,7 +50,7 @@ $minidumpFolder = Join-Path $env:systemroot "minidump"
 $dumpsFolder = Join-Path $minidumpFolder "Dumps"
 try {
     if (-not (Test-Path $dumpsFolder)) {
-        New-Item -Path $dumpsFolder -ItemType Directory -Force | Out-Nullrer
+        New-Item -Path $dumpsFolder -ItemType Directory -Force | Out-Null
         
     }
 } catch {
