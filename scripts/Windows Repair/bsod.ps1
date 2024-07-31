@@ -16,10 +16,11 @@ if (-NOT ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdent
 Write-Host ""
 
 # variable setup
-$random = Get-Random -Minimum 1 -Maximum 10000
+$random = Get-Random -Minimum 1 -Maximum 5000
 $dumpsFolder = "$env:SystemRoot\minidump\Dumps"
 $minidumpFolder = "$env:SystemRoot\minidump"
-$specsfile = "$env:SystemRoot\minidump\specsfile.txt"
+$specsfile = "$env:SystemRoot\minidump\specsfile_$random.txt"
+$programsfile = "$env:SystemRoot\minidump\InstalledPrograms_$random.txt"
 
 $source = "$env:SystemRoot\minidump\*.dmp"
 $ziptar = "$env:SystemRoot\minidump\Dumps\BSOD_FILES_$random.zip"
@@ -29,6 +30,7 @@ $app_eventlog_path = "$env:SystemRoot\minidump\application_eventlogs.evtx"
 
 $dumpsFolderErr = "false"
 $specsErr = "false"
+$programsErr = "false"
 $compressErr = "false"
 $syserror = "false"
 $apperror = "false"
@@ -58,15 +60,24 @@ function filecreation {
             New-Item -Path $dumpsFolder -ItemType Directory -Force | Out-Null
         }
         catch {
-             $dumpsFolderErr = "true"
+            $dumpsFolderErr = "true"
             functionerror
         }
     }
     
     try {
         New-Item -Path $specsfile -ItemType File -Force | Out-Null
-    } catch {
+    }
+    catch {
         $specsErr = "true"
+        functionerror
+    }
+
+    try {
+        New-Item -Path $programsfile -ItemType File -Force | Out-Null
+    }
+    catch {
+        $programsErr = "true"
         functionerror
     }
     
@@ -75,10 +86,10 @@ function filecreation {
 
 # grabbing specs
 function specscreate {
-    New-Item -Path $specsfile -ItemType File -Force | Out-Null
-    
+
     # grabbing sys info
     $cpu = Get-WmiObject Win32_Processor | Select-Object -ExpandProperty Name
+    $gpu = Get-WmiObject Win32_VideoController | Select-Object -ExpandProperty Name
     $motherboardModel = Get-WmiObject Win32_BaseBoard | Select-Object -ExpandProperty Product
     $bios = Get-WmiObject Win32_BIOS
     $biosVersion = $bios | Select-Object -ExpandProperty SMBIOSBIOSVersion
@@ -90,12 +101,12 @@ function specscreate {
     $systemDirectory = $os | Select-Object -ExpandProperty SystemDirectory
     $secureBootState = Confirm-SecureBootUEFI
     $installedMemory = Get-WmiObject Win32_ComputerSystem | Select-Object -ExpandProperty TotalPhysicalMemory
-    $gpu = Get-WmiObject Win32_VideoController | Select-Object -ExpandProperty Name
     $ramSpeed = Get-WmiObject Win32_PhysicalMemory | Select-Object -ExpandProperty Speed
 
     if ($secureBootState -eq "True") {
         $secureBootEnabled = "Enabled"
-    } else {
+    }
+    else {
         $secureBootEnabled = "False"
     }
 
@@ -112,6 +123,17 @@ function specscreate {
     specs "`nRam Capacity: $([math]::Round($installedMemory/1GB)) GB"
     specs "RAM Speed: $ramSpeed MT/s"
 
+    programs
+}
+
+function programs {
+    $installedPrograms = Get-ItemProperty HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*,
+    HKLM:\Software\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\* |
+    Select-Object DisplayName | 
+    Where-Object { $_.DisplayName -ne $null }
+
+    $installedPrograms | Format-Table -AutoSize | Out-File -FilePath $programsfile
+    
     Write-Host "File creation complete.." -ForegroundColor Green
 
     eventlogexport
@@ -130,14 +152,16 @@ function eventlogexport {
 
     try {
         wevtutil epl System $sys_eventlog_path
-    } catch {
+    }
+    catch {
         $syserror = "true"
         functionerror
     }
 
     try {
         wevtutil epl Application $app_eventlog_path
-    } catch {
+    }
+    catch {
         $apperror = "true"
         functionerror
     }
@@ -158,34 +182,20 @@ function compression {
     # Compress the .dmp files
     try {
         Compress-Archive -Path $source -DestinationPath $ziptar -Force | Out-Null
-    } catch {
-        $compressErr = "true"
-        functionerror
-    }
-
-    try {
         Compress-Archive -Path $specsfile -Update -DestinationPath $ziptar | Out-Null
-        Remove-Item -Path $specsfile -Force -ErrorAction SilentlyContinue > $null 2>&1
-    } catch {
-        $compressErr = "true"
-        functionerror
-    }
-
-    try {
         Compress-Archive -Path $sys_eventlog_path -Update -DestinationPath $ziptar | Out-Null
-        Remove-Item -Path $sys_eventlog_path -Force -ErrorAction SilentlyContinue > $null 2>&1
-    } catch {
+        Compress-Archive -Path $app_eventlog_path -Update -DestinationPath $ziptar | Out-Null
+        Compress-Archive -Path $programsfile -Update -DestinationPath $ziptar | Out-Null
+    }
+    catch {
         $compressErr = "true"
         functionerror
     }
 
-    try {
-        Compress-Archive -Path $app_eventlog_path -Update -DestinationPath $ziptar | Out-Null
-        Remove-Item -Path $app_eventlog_path -Force -ErrorAction SilentlyContinue > $null 2>&1
-    } catch {
-        $compressErr = "true"
-        functionerror
-    }
+    Remove-Item -Path $specsfile -Force -ErrorAction SilentlyContinue > $null 2>&1
+    Remove-Item -Path $sys_eventlog_path -Force -ErrorAction SilentlyContinue > $null 2>&1
+    Remove-Item -Path $app_eventlog_path -Force -ErrorAction SilentlyContinue > $null 2>&1
+    Remove-Item -Path $programsfile -Force -ErrorAction SilentlyContinue > $null 2>&1
 
     Write-Host "File compression complete.." -ForegroundColor Green
 
@@ -196,7 +206,7 @@ function compression {
 
 function eof {
     Add-Type -AssemblyName System.Windows.Forms
-        [System.Windows.Forms.Clipboard]::SetFileDropList([System.Collections.Specialized.StringCollection]@($ziptar))
+    [System.Windows.Forms.Clipboard]::SetFileDropList([System.Collections.Specialized.StringCollection]@($ziptar))
 
     Write-Host ""
     
@@ -212,15 +222,28 @@ function eof {
 function functionerror {
     if ($dumpsFolderErr -eq "true") {
         Write-Host "There was an error while creating the dumps folder.." -ForegroundColor Red
-    } elseif ($specsErr -eq "true") {
+    } elseif ($programsErr -eq "true") {
+        Write-Host "There was an error while creating the programs file.." -ForegroundColor Red
+    }
+    elseif ($specsErr -eq "true") {
         Write-Host "There was an error while creating the specs file.." -ForegroundColor Red
-    } elseif ($compressErr -eq "true") {
+    }
+    elseif ($compressErr -eq "true") {
         Write-Host "There was an error during compression.." -ForegroundColor Red
-    } elseif ($syserror -eq "true") {
+    }
+    elseif ($syserror -eq "true") {
         Write-Host "There was an error while exporting the system event logs.." -ForegroundColor Red
-    } elseif ($apperror -eq "true") {
+    }
+    elseif ($apperror -eq "true") {
         Write-Host "There was an error while exporting the application event logs.." -ForegroundColor Red
     }
+    Write-Host "Cleaning up files.."
+
+    Remove-Item -Path $specsfile -Force -ErrorAction SilentlyContinue > $null 2>&1
+    Remove-Item -Path $sys_eventlog_path -Force -ErrorAction SilentlyContinue > $null 2>&1
+    Remove-Item -Path $app_eventlog_path -Force -ErrorAction SilentlyContinue > $null 2>&1
+    Remove-Item -Path $programsfile -Force -ErrorAction SilentlyContinue > $null 2>&1
+    Write-Host "File cleanup complete."
 
     endmessage
 }
