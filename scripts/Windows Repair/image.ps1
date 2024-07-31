@@ -82,7 +82,7 @@ function ThoroughScan {
         eof
     }
 
-    if ($exittCode -eq 1) {
+    if ($exittCode -eq 0) {
         Write-Host "No file corruption detected, checking windows integrity.." -ForegroundColor Green
         IntegCheck
     } elseif ($exittCode -eq 1) {
