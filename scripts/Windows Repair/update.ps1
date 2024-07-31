@@ -1,5 +1,7 @@
 Set-ExecutionPolicy -ExecutionPolicy Unrestricted -Scope Process -Force
 
+Start-Transcript -Path C:\transcript.txt
+
 $Host.UI.RawUI.WindowTitle = "Windows Update Fix Script"
 
 Clear-Host
@@ -45,51 +47,18 @@ Stop-ServiceIfRunning -serviceName 'cryptsvc' > $null 2>&1
 
 Write-Host "Services stopped.."
 Write-Host ""
-Write-Host "Renaming windows update folders & clearing cache.."
-try {
-    Remove-Item -Path "$env:ALLUSERSPROFILE\Application Data\Microsoft\Network\Downloader\qmgr*.dat" -Force > $null 2>&1
-}
-catch {
-    Remove-Item -Path "$env:ALLUSERSPROFILE\Application Data\Microsoft\Network\Downloader\qmgr*.dat" -Force > $null 2>&1
-}
+Write-Host "Clearing update cache.."
 
-try {
-    Rename-Item -Path "$env:SystemRoot\SoftwareDistribution\DataStore" -NewName "DataStore.bak" -Force > $null 2>&1
-}
-catch {
-    Rename-Item -Path "$env:SystemRoot\SoftwareDistribution\DataStore" -NewName "DataStore.bak" -Force > $null 2>&1
-}
-try {
-    Rename-Item -Path "$env:SystemRoot\SoftwareDistribution\Download" -NewName "Download.bak" -Force > $null 2>&1
-}
-catch {
-    Rename-Item -Path "$env:SystemRoot\SoftwareDistribution\Download" -NewName "Download.bak" -Force > $null 2>&1
-}
-try {
-    Rename-Item -Path "$env:SystemRoot\System32\catroot2" -NewName "catroot2.bak" -Force > $null 2>&1
-}
-catch {
-    Rename-Item -Path "$env:SystemRoot\System32\catroot2" -NewName "catroot2.bak" -Force > $null 2>&1
-}
-
-    Set-Location -Path "$env:windir\SoftwareDistribution"
-    Remove-Item -Path * -Recurse -Force | Out-NUll
+    Remove-Item -Path "$env:ALLUSERSPROFILE\Application Data\Microsoft\Network\Downloader\qmgr*.dat" -Force > $null 2>&1
+    Remove-Item -Path "$env:SystemRoot\SoftwareDistribution" -Recurse -Force > $null 2>&1
+    Remove-Item -Path "$env:SystemRoot\System32\catroot2" -Recurse -Force > $null 2>&1
 
 Write-Host "Folders have been renamed & cache has been cleared.."
 Write-Host ""
 Write-Host "Resetting BITS service & Update Service to default security descriptor.."
-try {
+
     Start-Process -FilePath "sc.exe" -ArgumentList "sdset bits D:(A;CI;CCDCLCSWRPWPDTLOCRSDRCWDWO;;;SY)(A;;CCDCLCSWRPWPDTLOCRSDRCWDWO;;;BA)(A;;CCLCSWLOCRRC;;;IU)(A;;CCLCSWLOCRRC;;;SU)" -NoNewWindow -Wait | Out-Null
-}
-catch {
-    Start-Process -FilePath "sc.exe" -ArgumentList "sdset bits D:(A;CI;CCDCLCSWRPWPDTLOCRSDRCWDWO;;;SY)(A;;CCDCLCSWRPWPDTLOCRSDRCWDWO;;;BA)(A;;CCLCSWLOCRRC;;;IU)(A;;CCLCSWLOCRRC;;;SU)" -NoNewWindow -Wait | Out-Null
-}
-try {
     Start-Process -FilePath "sc.exe" -ArgumentList "sdset wuauserv D:(A;;CCLCSWRPLORC;;;AU)(A;;CCDCLCSWRPWPDTLOCRSDRCWDWO;;;BA)(A;;CCDCLCSWRPWPDTLOCRSDRCWDWO;;;SY)" -NoNewWindow -Wait | Out-Null
-}
-catch {
-    Start-Process -FilePath "sc.exe" -ArgumentList "sdset wuauserv D:(A;;CCLCSWRPLORC;;;AU)(A;;CCDCLCSWRPWPDTLOCRSDRCWDWO;;;BA)(A;;CCDCLCSWRPWPDTLOCRSDRCWDWO;;;SY)" -NoNewWindow -Wait | Out-Null
-}
 
 Write-Host "Successfully reset services to default security descriptor.."
 Write-Host ""
@@ -149,14 +118,6 @@ function Start-ServiceIfRunning {
             Start-Service -Name $serviceName -Force > $null 2>&1
         }
     }
-    else {
-        try {
-            Restart-Service -Name $serviceName -Force > $null 2>&1
-        }
-        catch {
-            Restart-Service -Name $serviceName -Force > $null 2>&1
-        }
-    }
 }
 
 Start-ServiceIfRunning -serviceName 'BITS' > $null 2>&1
@@ -173,5 +134,6 @@ Write-Host "2/3 Complete"
 sfc /scannow > $null 2>&1
 Write-Host "3/3 Complete"
 Write-Host "Press OK on the prompt to restart your computer."
+Stop-Transcript
 Add-Type -AssemblyName PresentationFramework; $result = [System.Windows.MessageBox]::Show('The Windows Update script has completed and will need a restart for it to work correctly. Press OK to restart your Computer.', 'Restart Confirmation', [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Warning); if ($result -eq [System.Windows.MessageBoxResult]::OK) { shutdown /r /t 0 }
 pause > $null
