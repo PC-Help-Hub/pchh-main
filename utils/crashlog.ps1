@@ -115,7 +115,6 @@ function specscreate {
     specs "Secure Boot State: $secureBootEnabled"
     specs "`nRam Capacity: $([math]::Round($installedMemory/1GB)) GB"
     specs "RAM Speed: $ramSpeed MT/s"
-    specs "TPM Version: $tpmVersion"
     specs "----------"
     specs "Minidumps Found: $dmpfound"
 
