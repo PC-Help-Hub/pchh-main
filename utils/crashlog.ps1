@@ -6,8 +6,12 @@ $Host.UI.RawUI.WindowTitle = "Information Grab Script"
 
 # admin check
 if (-NOT ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator")) {
-    Write-Host "Script must be run as an Administrator for it to work correctly." -ForegroundColor Yellow
-    Write-Host "Retry with PowerShell running as an Administrator.." -ForegroundColor Yellow
+    #  Admin text from https://christitus.com/windows-tool/
+    Write-Host "============================================" -ForegroundColor Red
+    Write-Host "-- Script must be ran as an Administrator --" -ForegroundColor Red
+    Write-Host "-- Right-Click Start -> Terminal(Admin)   --" -ForegroundColor Red
+    Write-Host "============================================" -ForegroundColor Red
+    Write-Host ""
     Write-Host "Press any key to exit the script.." -ForegroundColor Yellow
     $null = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
     exit
