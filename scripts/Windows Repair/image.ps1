@@ -1,5 +1,12 @@
 Set-ExecutionPolicy -ExecutionPolicy Unrestricted -Scope Process -Force
 
+$Host.UI.RawUI.WindowTitle = "SFREP Script"
+
+$Host.UI.RawUI.BackgroundColor = "Black"
+$Host.UI.RawUI.ForegroundColor = "White"
+
+Clear-Host
+
 if (-NOT ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator")) {
     #  Admin text from https://christitus.com/windows-tool/
     Write-Host "============================================" -ForegroundColor Red
@@ -11,8 +18,6 @@ if (-NOT ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdent
     $null = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
     exit
 }
-
-Clear-Host
 
 $null = New-Module {
     function Invoke-WithoutProgress {

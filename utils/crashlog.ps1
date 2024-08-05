@@ -1,8 +1,11 @@
 Set-ExecutionPolicy -ExecutionPolicy Unrestricted -Scope Process -Force
 
+$Host.UI.RawUI.BackgroundColor = "Black"
+$Host.UI.RawUI.ForegroundColor = "White"
+
 Clear-Host
 
-$Host.UI.RawUI.WindowTitle = "Information Grab Script"
+$Host.UI.RawUI.WindowTitle = "Crashlog Script"
 
 # admin check
 if (-NOT ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator")) {
