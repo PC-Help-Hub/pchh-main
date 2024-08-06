@@ -36,30 +36,23 @@ $app_eventlog_path = "$File\application_eventlogs_$random.evtx"
 $dmpfound = $false
 
 $errors = @{
-    Specs = $false
-    EventsFolder = $false
-    Programs = $false
+    fileCreate = $false
     Compress = $false
-    SysError = $false
-    AppError = $false
+    event = $false
 }
 
 function dmpcheck {
-    Write-Host "Checking for any .dmp files.."
+    $limit = (Get-Date).AddDays(-60)
 
-    if (-not (Test-Path $source)) {
-        Write-Host ""
-        Write-Host "No .dmp files have been detected."
-        Write-Host "The script will still grab the event logs."
-        Write-Host ""
-    } else {
-        Write-Host "Dumps have been found!"
-        Write-Host ""
+    Get-ChildItem -Path $source -Recurse -Force | Where-Object { !$_.PSIsContainer -and $_.LastWriteTime -lt $limit } | Remove-Item -Force -ErrorAction SilentlyContinue > $null 2>&1
+
+    if (Test-Path $source) {
         $dmpfound = $true
     }
 
     filecreation
 }
+
 
 # initial file creation
 function filecreation {
@@ -68,30 +61,17 @@ function filecreation {
 
     try {
         New-Item -Path $File -ItemType Directory -Force | Out-Null
-    } catch {
-        $errors.EventsFolder = $true
-        functionerror
-    }
-
-    try {
         New-Item -Path $specsfile -ItemType File -Force | Out-Null
-    } catch {
-        $errors.Specs = $true
-        functionerror
-    }
-
-    try {
         New-Item -Path $programsfile -ItemType File -Force | Out-Null
     } catch {
-        $errors.Programs = $true
-        functionerror
+        $errors.fileCreate = $true
     }
     
-    specscreate
+    fileadd
 }
 
 # grabbing specs
-function specscreate {
+function fileadd {
     # grabbing sys info
     $cpu = Get-WmiObject Win32_Processor | Select-Object -ExpandProperty Name
     $gpu = Get-WmiObject Win32_VideoController | Select-Object -ExpandProperty Name
@@ -125,17 +105,8 @@ function specscreate {
     specs "----------"
     specs "Minidumps Found: $dmpfound"
 
-    programs
-}
+    # grabbing programs
 
-function specs {
-    param (
-        [string]$value
-    )
-    Add-Content -Path $specsfile -Value "$value"
-}
-
-function programs {
     $installedPrograms = Get-ItemProperty HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*,
     HKLM:\Software\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\* |
     Select-Object DisplayName |
@@ -148,25 +119,24 @@ function programs {
     eventlogexport
 }
 
+function specs {
+    param (
+        [string]$value
+    )
+    Add-Content -Path $specsfile -Value "$value"
+}
+
 function eventlogexport {
     Write-Host ""
     Write-Host "Grabbing event logs.."
 
-    try {
+        try {
         wevtutil epl System $sys_eventlog_path
-    }
-    catch {
-        $errors.SysError = $true
-        functionerror
-    }
-
-    try {
         wevtutil epl Application $app_eventlog_path
-    }
-    catch {
-        $errors.AppError = $true
-        functionerror
-    }
+        } catch {
+            $errors.event = $true
+            functionerror
+        }
 
     Write-Host "Event grab complete.." -ForegroundColor Green
 
@@ -213,19 +183,15 @@ function eof {
 }
 
 function functionerror {
-    if ($errors.EventsFolder) {
-        Write-Host "There was an error while creating the events folder.." -ForegroundColor Red
-    } elseif ($errors.Programs) {
-        Write-Host "There was an error while creating the programs file.." -ForegroundColor Red
-    } elseif ($errors.Specs) {
-        Write-Host "There was an error while creating the specs file.." -ForegroundColor Red
-    } elseif ($errors.Compress) {
-        Write-Host "There was an error during compression.." -ForegroundColor Red
-    } elseif ($errors.SysError) {
-        Write-Host "There was an error while exporting the system event logs.." -ForegroundColor Red
-    } elseif ($errors.AppError) {
-        Write-Host "There was an error while exporting the application event logs.." -ForegroundColor Red
+    if ($errors.Compress -eq "true") {
+        Write-Host "There was an error while compressing the files.." -ForegroundColor Red
+    } elseif ($errors.event -eq "true") {
+        Write-Host "There was an error while exporting the event logs.." -ForegroundColor Red
+    } elseif ($errors.fileCreate -eq "true") {
+        Write-Host "There was an error while creating the required files.." -ForegroundColor Red
     }
+
+    Remove-Item -Path $specsfile, $programsfile, $sys_eventlog_path, $app_eventlog_path -Force -ErrorAction SilentlyContinue > $null 2>&1
 
     endmessage
 }
