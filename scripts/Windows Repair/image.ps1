@@ -61,7 +61,7 @@ function InternetCheck {
 
     try {
         Invoke-WithoutProgress {
-            Invoke-WebRequest -UseBasicParsing www.google.com -ErrorAction Stop > $null
+            Invoke-WebRequest -UseBasicParsing -Uri www.google.com -ErrorAction Stop > $null
             Write-Host "A network connection has been detected, continuing with script.." -ForegroundColor Green
             Write-Host ""
         }
