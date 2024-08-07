@@ -158,3 +158,14 @@ cython_debug/
 #  and can be added to the global gitignore or merged into this file.  For a more nuclear
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
+My Scripts/learn.cs
+Nexawave/package-lock.json
+Nexawave/package.json
+Nexawave/node_modules/.package-lock.json
+Nexawave/node_modules/dotenv/CHANGELOG.md
+Nexawave/node_modules/dotenv/config.d.ts
+Nexawave/node_modules/dotenv/config.js
+Nexawave/node_modules/dotenv/LICENSE
+Nexawave/node_modules/dotenv/package.json
+Nexawave/node_modules/dotenv/README-es.md
+Nexawave/node_modules/dotenv/README.md
