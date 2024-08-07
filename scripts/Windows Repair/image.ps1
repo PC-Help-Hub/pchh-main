@@ -1,22 +1,31 @@
 Set-ExecutionPolicy -ExecutionPolicy Unrestricted -Scope Process -Force
 
-$Host.UI.RawUI.WindowTitle = "SFREP Script"
-
 $Host.UI.RawUI.BackgroundColor = "Black"
 $Host.UI.RawUI.ForegroundColor = "White"
 
 Clear-Host
 
+$Host.UI.RawUI.WindowTitle = "System File Repair Script"
+
+
+# admin check
 if (-NOT ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator")) {
     #  Admin text from https://christitus.com/windows-tool/
+    Write-Host ""
     Write-Host "============================================" -ForegroundColor Red
     Write-Host "-- Script must be ran as an Administrator --" -ForegroundColor Red
-    Write-Host "-- Right-Click Start -> Terminal(Admin)   --" -ForegroundColor Red
+    Write-Host "--  Right-Click Start -> Terminal(Admin)  --" -ForegroundColor Red
     Write-Host "============================================" -ForegroundColor Red
     Write-Host ""
-    Write-Host "Press any key to exit the script.." -ForegroundColor Yellow
-    $null = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
-    exit
+    endmessage
+}
+
+
+$errors = @{
+    dism       = $false
+    timeout    = $false
+    scan       = $false
+    nointernet = $false
 }
 
 $null = New-Module {
@@ -38,189 +47,173 @@ $null = New-Module {
     }
 }
 
+
 function InternetCheck {
-    Clear-Host
-    Write-Host "                  Created by shinthebean for PC Help Hub Discord"
-    Write-Host "                 Any issues/queries contact shinthebean on Discord"
-    Write-Host "             https://github.com/PC-Help-Hub/pchh-main/tree/main/scripts"
-    Write-Host "                        Credits of inspiration to: jheden"
+    Clear-Host 
+    Write-Host ""
+    Write-Host "============================================" -ForegroundColor DarkGreen
+    Write-Host "-- Script is running as an Administrator --" -ForegroundColor DarkGreen
+    Write-Host "--         Made by ShinTheBean           --" -ForegroundColor DarkGreen
+    Write-Host "============================================" -ForegroundColor DarkGreen
     Write-Host ""
 
     Write-Host "Testing for an internet connection.."
+
     try {
         Invoke-WithoutProgress {
-            Invoke-WebRequest google.com -ErrorAction Stop > $null
-            Write-Host "Network Connection detected! Continuing with script..."
+            Invoke-WebRequest www.google.com -ErrorAction Stop > $null
+            Write-Host "A network connection has been detected, continuing with script.." -ForegroundColor Green
+            Write-Host ""
         }
     } catch {
-        Write-Host "No active Network Connection detected.." -ForegroundColor Red
-        Write-Host "Unable to check for corruption.." -ForegroundColor Red
-        IntegCheck
+        $errors.nointernet = "true"
+        scripterror
     }
-    script
+
+    scan
 }
 
-function script {
-    Write-Host ""
-    Write-Host "---------------------------------"
-    Write-Host "        STARTING COMMANDS        "
-    Write-Host "---------------------------------"
-    Write-Host ""
-    $scanprompt = Read-Host "Do you wish to do a thorough scan for corruption? (Y for thorough scan | N for quick scan)"
 
-    if ($scanprompt -eq "Y" -or $scanprompt -eq "y") {
-        Write-Host ""
-        ThoroughScan
-    } elseif ($scanprompt -eq "N" -or $scanprompt -eq "n") {
-        Write-Host ""
-        QuickScan
-    } else {
-        Write-Host "The option you have chosen isn't valid, press any key to go back to the menu."
-        $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown") > $null
-        InternetCheck
-    }
-}
-
-function ThoroughScan {
-    Write-Host "Performing a thorough scan.."
+function scan {
+    Write-Host "Performing a thorough scan for corruption.."
+    Write-Host "This will take a few minutes.."
     Write-Host ""
+
     try {
-        & "DISM.exe" "/Online" "/Cleanup-Image" "/ScanHealth" > $null
-        $exittCode = $LASTEXITCODE
-    } catch {
-        Write-Host "There was an error while performing DISM Scanhealth" -ForegroundColor Red
-        Write-Host "Retry the script or head to the discord and show them the error." -ForegroundColor Red
-        eof
-    }
-
-    if ($exittCode -eq 0) {
-        Write-Host "No file corruption detected, checking windows integrity.." -ForegroundColor Green
-        IntegCheck
-    } elseif ($exittCode -eq 1) {
-        corruption
-    } elseif ($exittCode -eq 2) {
-        Write-Host "The scan has indicated that your windows image is not repairable, and can only be fixed with a Windows Reinstall." -ForegroundColor Red
-        Write-Host "Head to the PCHH discord for directions on how to reinstall windows." -ForegroundColor Red
-        eof
-    } else {
-        corruption
-    }
-}
-
-
-function QuickScan {
-    Write-Host "Performing a quick scan.."
-    Write-Host ""
-    try {
-        & "DISM.exe" "/Online" "/Cleanup-Image" "/CheckHealth" > $null
+        DISM /Online /Cleanup-Image /CheckHealth > $null 2>&1
         $exitCode = $LASTEXITCODE
     } catch {
-        Write-Host "There was an error while performing DISM CheckHealth" -ForegroundColor Red
-        Write-Host "Retry the script or head to the discord and show them the error." -ForegroundColor Red
-        eof
+        $errors.dism = "true"
+        scripterror
     }
 
-    if ($exitCode -eq 0) {
-        Write-Host "No file corruption detected, checking windows integrity.." -ForegroundColor Green
+    if ($exitCode -eq "1") {
+        Write-Host "Windows has found no corruption on your system." -ForegroundColor Green
+        Write-Host "Performing a final check for file integrity.."
         IntegCheck
-    } elseif ($exitCode -eq 1) {
-        corruption
-    } elseif ($exitCode -eq 2) {
-        Write-Host "The scan has indicated that your windows image is not repairable, and can only be fixed with a Windows Reinstall." -ForegroundColor Red
-        Write-Host "Head to the PCHH discord for directions on how to reinstall windows." -ForegroundColor Red
-        eof
+    } elseif ($exitCode -eq "2") {
+        Write-Host "Windows has detected corruption on your system but it will be unrepairable.." -ForegroundColor Red
+        Write-Host "A reinstallation of windows will be required to resolve this issue.." -ForegroundColor Red
+        endmessage
     } else {
+        Write-Host "Windows has found corruption on your system, attempting to resolve.." -ForegroundColor Yellow
+        Write-Host "This will take some time to complete.." -ForegroundColor Yellow
         corruption
     }
 }
 
 function corruption {
-    Write-Host "Corruption Detected, pushing fix.."
-    Write-Host "Keep in mind this will take some time to complete (~15 minutes depending on system specs)"
+    $corruption = "true"
+
     Write-Host ""
     try {
-        DISM /Online /Cleanup-Image /StartComponentCleanup > $null
+        DISM /Online /Cleanup-Image /StartComponentCleanup /ResetBase > $null 2>&1
+        Write-Host "1/3 Complete" -ForegroundColor Green
+        DISM /Online /Cleanup-Image /RestoreHealth > $null 2>&1
+        Write-Host "2/3 Complete" -ForegroundColor Green
+        IntegCheck
     } catch {
-        Write-Host "There was an error while performing StartComponentCleanup" -ForegroundColor Red
-        Write-Host "Retry the script or head to the discord and show them the error." -ForegroundColor Red
-        eof
+        $errors.dism = "true"
+        scripterror
     }
-    Write-Host "1/2 Complete"
-    try {
-        DISM /Online /Cleanup-Image /RestoreHealth > $null
-    } catch {
-        Write-Host "There was an error while performing RestoreHealth" -ForegroundColor Red
-        Write-Host "Retry the script or head to the discord and show them the error." -ForegroundColor Red
-        eof
-    }
-    Write-Host "2/2 Complete"
-    Write-Host ""
-    IntegCheck
 }
 
 function IntegCheck {
-    Write-Host""
-    Write-Host "Checking file integrity.."
-    $job = Start-Job -ScriptBlock {
-        & "sfc.exe" "/scannow"
-        $exitCode = $LASTEXITCODE
+
+    if ($corruption = "false") {
+        Write-Host ""
     }
 
-    $result = Wait-Job -Job $job -Timeout 900
 
+    $windowsDrive = (Get-WmiObject Win32_OperatingSystem | Select-Object -ExpandProperty SystemDrive).TrimEnd(':')
+    $mediaType = Get-PhysicalDisk | ForEach-Object {
+        $physicalDisk = $_
+        $partition = $physicalDisk | Get-Disk | Get-Partition | Where-Object { $_.DriveLetter -eq $windowsDrive }
+        if ($partition) {
+            $physicalDisk.MediaType
+        }
+    }
+
+    if ($mediaType -eq "SSD") {
+        $timeoutSeconds = 1800
+    } else {
+        $timeoutSeconds = 3600
+    }
+
+    $job = Start-Job -ScriptBlock {
+        try {
+         sfc /scannow
+        $exitCode = $LASTEXITCODE
+        } catch {
+            $errors.scan = "true"
+            scripterror
+        }
+    }
+    
+    $result = Wait-Job -Job $job -Timeout $timeoutSeconds
+    
     if ($null -eq $result) {
         Stop-Job -Job $job
         Remove-Job -Job $job
-        Write-Host "You have encountered a bug where SFC will take longer than usual and/or will never complete. This is pretty common.." -ForegroundColor Yellow
-        Write-Host "You will need to restart your computer and manually open Command Prompt or Powershell as an Administrator and run 'sfc /scannow'." -ForegroundColor Yellow
-        eof
+        $errors.timeout = "true"
+        scripterror
     } else {
-        Remove-Job -Job $job
 
-        if ($exitCode -eq 0) {
-            Write-Host "Windows has found no corruption." -ForegroundColor Green
-        } elseif ($exitCode -eq 1) {
-            Write-Host "Windows has detected corruption and has successfully repaired it!" -ForegroundColor Green
-        } elseif ($exitCode -eq 2) {
-            Write-Host "Windows has detected corruption but was unable to repair it, a reinstallation of Windows is needed to repair these files." -ForegroundColor Red
-        } else {
-            Write-Host "There was an output of SFC that isn't common." -ForegroundColor Yellow   
+        if ($corruption -eq "true") {
+            Write-Host "3/3 Complete" -ForegroundColor Green
+            Write-Host ""
         }
-        regre
+ 
+        if ($exitCode -eq "0") {
+            Write-Host "No corruption was detected on your system." -ForegroundColor Green
+            endmessage
+        } else {
+            Write-Host "Windows has repaired all corruption detected on your system." -ForegroundColor Green
+            restart
+        }
     }
-}
-
-
-function regre {
-    Write-Host ""
-    Write-Host "Registering all .DLL's to the registry, this can take some time.."
-    $osArchitecture = (Get-WmiObject -Class Win32_OperatingSystem).OSArchitecture
-
-    if ($osArchitecture -eq "64-bit") {
-        Get-ChildItem -Path "$env:windir\SysWOW64" -Filter *.dll -Recurse | ForEach-Object {
-            Invoke-Expression "regsvr32.exe /s `"$($_.FullName)`""
-    }
-    } else {
-        Get-ChildItem -Path "$env:SystemRoot\System32" -Filter *.dll -Recurse | ForEach-Object {
-            Invoke-Expression "regsvr32.exe /s `"$($_.FullName)`""
-    }
-    }
-    Write-Host ".DLL registration complete.." -ForegroundColor Green
-    eof
-}
-
-function eof {
-    Write-Host ""
-    Write-Host "Press any key to exit the script!"
-    $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown") > $null
-    exit
 }
 
 function restart {
-    Write-Host "It is recommended to restart your computer for the changes to apply correctly." -ForegroundColor Green
-    Write-Host "Press OK on the prompt to restart your PC." -ForegroundColor Green
-    Add-Type -AssemblyName PresentationFramework; $result = [System.Windows.MessageBox]::Show('A restart is required in order for Windows to apply the made changes correctly. Press OK to restart your computer.', 'Restart Confirmation', [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Warning); if ($result -eq [System.Windows.MessageBoxResult]::OK) { shutdown /r /t 0 }
-    pause > $null
+    Write-Host ""
+    Write-Host "A restart of your system will be required to correctly apply the changes that the repair has made."
+    Write-Host "Press any key to restart your system."
+    $null = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+    Write-Host "Restarting your system in 60 seconds.."
+    shutdown /r /t 60 > $null
+    exit
+}
+
+function scripterror {
+    Write-Host ""
+    if ($errors.dism -eq "true") {
+        Write-Host "There was an error while running DISM within the script." -ForegroundColor Red
+    } elseif ($errors.timeout -eq "true") {
+        Write-Host "You have encountered a Windows bug where running 'sfc /scannow' takes infinitely long to run." -ForegroundColor Red
+        Write-Host "A restart of your system will be needed to perform the command." -ForegroundColor Red
+        Write-Host ""
+        $prompt = Read-Host "Would you like to restart your system? (Y/N)"
+        if ($prompt -eq "Y" -or $prompt -eq "y") {
+            Write-Host "Restarting your system in 60 seconds.."
+            shutdown /r /t 60 > $null
+        }  else {
+            endmessage
+        }
+    } elseif ($errors.scan -eq "true") {
+        Write-Host "There was an error while running 'sfc /scannow'" -ForegroundColor Red
+    } elseif ($errors.nointernet -eq "true") {
+        Write-Host "No internet connection was detected." -ForegroundColor Yellow
+        Write-Host "This script requires an active internet connection, retry the script when you meet the requirements." -ForegroundColor Yellow
+    }
+
+    endmessage
+}
+
+function endmessage {
+    Write-Host ""
+    Write-Host "Press any key to exit.."
+    $null = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+    exit
 }
 
 InternetCheck
