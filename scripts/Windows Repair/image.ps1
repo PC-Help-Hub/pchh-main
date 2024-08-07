@@ -87,7 +87,7 @@ function scan {
         scripterror
     }
 
-    if ($exitCode -eq "1") {
+    if ($exitCode -eq "0") {
         Write-Host "Windows has found no corruption on your system." -ForegroundColor Green
         Write-Host "Performing a final check for file integrity.."
         IntegCheck
