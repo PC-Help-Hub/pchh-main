@@ -1,17 +1,22 @@
 Set-ExecutionPolicy -ExecutionPolicy Unrestricted -Scope Process -Force
 
-$Host.UI.RawUI.WindowTitle = "Windows Update Fix Script"
-
 $Host.UI.RawUI.BackgroundColor = "Black"
 $Host.UI.RawUI.ForegroundColor = "White"
 
 Clear-Host
 
+$Host.UI.RawUI.WindowTitle = "PCHH Update Fix Script"
+
+Remove-Item -Path "$env:temp\update-transcript.txt" -Force > $null 2>&1
+Start-Transcript -Path "$env:temp\update-transcript.txt" -Force -ErrorAction SilentlyContinue > $null 2>&1
+
+# admin check
 if (-NOT ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator")) {
     #  Admin text from https://christitus.com/windows-tool/
+    Write-Host ""
     Write-Host "============================================" -ForegroundColor Red
     Write-Host "-- Script must be ran as an Administrator --" -ForegroundColor Red
-    Write-Host "-- Right-Click Start -> Terminal(Admin)   --" -ForegroundColor Red
+    Write-Host "--  Right-Click Start -> Terminal(Admin)  --" -ForegroundColor Red
     Write-Host "============================================" -ForegroundColor Red
     Write-Host ""
     Write-Host "Press any key to exit the script.." -ForegroundColor Yellow
@@ -19,126 +24,247 @@ if (-NOT ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdent
     exit
 }
 
-Clear-Host
-Write-Host "                  Created by shinthebean for PC Help Hub Discord"
-Write-Host "                 Any issues/queries contact shinthebean on Discord"
-Write-Host "             https://github.com/PC-Help-Hub/pchh-main/tree/main/scripts"
-Write-Host "                        Credits of inspiration to: jheden"
-Write-Host ""
-Write-Host "---------------------------------"
-Write-Host "        STARTING COMMANDS        "
-Write-Host "---------------------------------"
-Write-Host ""
-Write-Host "Stopping the Windows Update services.."
+$null = New-Module {
+    function Invoke-WithoutProgress {
+        [CmdletBinding()]
+        param (
+            [Parameter(Mandatory)] [scriptblock] $ScriptBlock
+        )
 
-function Stop-ServiceIfRunning {
-    param (
-        [string]$serviceName
-    )
-    $service = Get-Service -Name $serviceName
-    if ($service.Status -eq 'Running') {
+        $prevProgressPreference = $global:ProgressPreference
+        $global:ProgressPreference = 'SilentlyContinue'
+
         try {
-            Stop-Service -Name $serviceName -Force > $null 2>&1
+            . $ScriptBlock
         }
-        catch {
-            Stop-Service -Name $serviceName -Force > $null 2>&1
+        finally {
+            $global:ProgressPreference = $prevProgressPreference
         }
     }
 }
 
-Stop-ServiceIfRunning -serviceName 'BITS' > $null 2>&1
-Stop-ServiceIfRunning -serviceName 'wuauserv' > $null 2>&1
-Stop-ServiceIfRunning -serviceName 'cryptsvc' > $null 2>&1
+$random = Get-Random -Minimum 1 -Maximum 10000
 
-Write-Host "Services stopped.."
-Write-Host ""
-Write-Host "Clearing update cache.."
-
-    Remove-Item -Path "$env:ALLUSERSPROFILE\Application Data\Microsoft\Network\Downloader\qmgr*.dat" -Force > $null 2>&1
-    Remove-Item -Path "$env:SystemRoot\SoftwareDistribution" -Recurse -Force > $null 2>&1
-    Remove-Item -Path "$env:SystemRoot\System32\catroot2" -Recurse -Force > $null 2>&1
-
-Write-Host "Folders have been renamed & cache has been cleared.."
-Write-Host ""
-Write-Host "Resetting BITS service & Update Service to default security descriptor.."
-
-    Start-Process -FilePath "sc.exe" -ArgumentList "sdset bits D:(A;CI;CCDCLCSWRPWPDTLOCRSDRCWDWO;;;SY)(A;;CCDCLCSWRPWPDTLOCRSDRCWDWO;;;BA)(A;;CCLCSWLOCRRC;;;IU)(A;;CCLCSWLOCRRC;;;SU)" -NoNewWindow -Wait | Out-Null
-    Start-Process -FilePath "sc.exe" -ArgumentList "sdset wuauserv D:(A;;CCLCSWRPLORC;;;AU)(A;;CCDCLCSWRPWPDTLOCRSDRCWDWO;;;BA)(A;;CCDCLCSWRPWPDTLOCRSDRCWDWO;;;SY)" -NoNewWindow -Wait | Out-Null
-
-Write-Host "Successfully reset services to default security descriptor.."
-Write-Host ""
-Write-Host "Reregistering BITS & Windows Update files to the registry.."
-Set-Location $env:windir\system32
-regsvr32.exe /s atl.dll | Out-Null
-regsvr32.exe /s urlmon.dll | Out-Null
-regsvr32.exe /s mshtml.dll | Out-Null
-regsvr32.exe /s shdocvw.dll | Out-Null
-regsvr32.exe /s browseui.dll | Out-Null
-regsvr32.exe /s jscript.dll | Out-Null
-regsvr32.exe /s vbscript.dll | Out-Null
-regsvr32.exe /s scrrun.dll | Out-Null
-regsvr32.exe /s msxml.dll | Out-Null
-regsvr32.exe /s msxml3.dll | Out-Null
-regsvr32.exe /s msxml6.dll | Out-Null
-regsvr32.exe /s actxprxy.dll | Out-Null
-regsvr32.exe /s softpub.dll | Out-Null
-regsvr32.exe /s wintrust.dll | Out-Null
-regsvr32.exe /s dssenh.dll | Out-Null
-regsvr32.exe /s rsaenh.dll | Out-Null
-regsvr32.exe /s gpkcsp.dll | Out-Null
-regsvr32.exe /s sccbase.dll | Out-Null
-regsvr32.exe /s slbcsp.dll | Out-Null
-regsvr32.exe /s cryptdlg.dll | Out-Null
-regsvr32.exe /s oleaut32.dll | Out-Null
-regsvr32.exe /s ole32.dll | Out-Null
-regsvr32.exe /s shell32.dll | Out-Null
-regsvr32.exe /s initpki.dll | Out-Null
-regsvr32.exe /s wuapi.dll | Out-Null
-regsvr32.exe /s wuaueng.dll | Out-Null
-regsvr32.exe /s wuaueng1.dll | Out-Null
-regsvr32.exe /s wucltui.dll | Out-Null
-regsvr32.exe /s wups.dll | Out-Null
-regsvr32.exe /s wups2.dll | Out-Null
-regsvr32.exe /s wuweb.dll | Out-Null
-regsvr32.exe /s qmgr.dll | Out-Null
-regsvr32.exe /s qmgrprxy.dll | Out-Null
-regsvr32.exe /s wucltux.dll | Out-Null
-regsvr32.exe /s muweb.dll | Out-Null
-regsvr32.exe /s wuwebv.dll | Out-Null
-Write-Host "Files have been rewritten to the registry.."
-Write-Host ""
-Write-Host "Resetting winsock then restarting the update services.."
-netsh winsock reset > $null 2>&1
-
-function Start-ServiceIfRunning {
-    param (
-        [string]$serviceName
-    )
-    $service = Get-Service -Name $serviceName
-    if ($service.Status -eq 'Stopped') {
-        try {
-            Start-Service -Name $serviceName -Force > $null 2>&1
-        }
-        catch {
-            Start-Service -Name $serviceName -Force > $null 2>&1
-        }
-    }
+$errors = @{
+    repair     = $false
+    service    = $false
+    file       = $false
+    nointernet = $false
 }
 
-Start-ServiceIfRunning -serviceName 'BITS' > $null 2>&1
-Start-ServiceIfRunning -serviceName 'wuauserv' > $null 2>&1
-Start-ServiceIfRunning -serviceName 'cryptsvc' > $null 2>&1
+function InternetCheck {
+    Clear-Host 
+    Write-Host ""
+    Write-Host "============================================" -ForegroundColor DarkGreen
+    Write-Host "-- Script is running as an Administrator --" -ForegroundColor DarkGreen
+    Write-Host "--         Made by ShinTheBean           --" -ForegroundColor DarkGreen
+    Write-Host "============================================" -ForegroundColor DarkGreen
+    Write-Host ""
 
-Write-Host "Successfully reset winsock & restarted the update services.."
-Write-Host ""
-Write-Host "Peforming SFC & DISM.. (This will take a few minutes..)"
-DISM /Online /Cleanup-Image /StartComponentCleanup > $null 2>&1
-Write-Host "1/3 Complete"
-DISM /Online /Cleanup-Image /RestoreHealth > $null 2>&1
-Write-Host "2/3 Complete"
-sfc /scannow > $null 2>&1
-Write-Host "3/3 Complete"
-Write-Host "Press OK on the prompt to restart your computer."
-Stop-Transcript
-Add-Type -AssemblyName PresentationFramework; $result = [System.Windows.MessageBox]::Show('The Windows Update script has completed and will need a restart for it to work correctly. Press OK to restart your Computer.', 'Restart Confirmation', [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Warning); if ($result -eq [System.Windows.MessageBoxResult]::OK) { shutdown /r /t 0 }
-pause > $null
+    Write-Host "Testing for an internet connection.."
+
+    try {
+        #Invoke-WebRequest -UseBasicParsing -Uri www.google.com -ErrorAction Stop > $null
+        Test-Connection -ComputerName "www.google.com" -ErrorAction SilentlyContinue > $null 2>&1
+        Write-Host "A network connection has been detected, continuing with script.." -ForegroundColor Green
+        Write-Host ""
+    }
+    catch {
+        $errors.nointernet = "true"
+        scripterror
+    }
+
+    restore-point
+}
+
+function restore-point {
+    Write-Host "Creating a restore point before proceeding.."
+
+    # enables system protection to have restorepoint on all drives
+    $driveSpecs = 
+    Get-CimInstance -Class Win32_LogicalDisk -ErrorAction SilentlyContinue |
+    Where-Object { $_.DriveType -eq 3 } | 
+    ForEach-Object { $_.Name + '\' }
+  
+    Enable-ComputerRestore $driveSpecs -ErrorAction SilentlyContinue
+
+    # disables restorepoint frequency
+    Remove-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SystemRestore" -Name "SystemRestorePointCreationFrequency" -Force > $null
+    New-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SystemRestore\" -Name "SystemRestorePointCreationFrequency" -Value 0 -Force > $null
+        
+      Invoke-WithoutProgress {
+        Checkpoint-Computer -Description "UPDATE_SCRIPT_$random" -RestorePointType MODIFY_SETTINGS
+     }
+    
+    Write-Host "Successfully created a restore point." -ForegroundColor Green
+    Write-Host ""
+    servicecache
+}
+
+function servicecache {
+    Write-Host "Stopping windows update services.."
+
+    try {
+        Stop-Service -Name 'BITS' -Force > $null 2>&1
+        Stop-Service -Name 'msiserver' -Force > $null 2>&1
+        Stop-Service -Name 'CryptSvc' -Force > $null 2>&1
+        Stop-Service -Name 'wuauserv' -Force > $null 2>&1
+    }
+    catch {
+        $errors.service = "true"
+        scripterror
+    }
+
+    Write-Host "Successfully stopped the windows update services." -ForegroundColor Green
+    Write-Host ""
+    Write-Host "Clearing windows update cache.."
+
+    try {
+        Remove-Item -Path "$env:SystemRoot\SoftwareDistribution" -Recurse -Force > $null 2>&1
+        Remove-Item -Path "$env:SystemRoot\System32\catroot2" -Recurse -Force > $null 2>&1
+        Remove-Item -Path "$env:ALLUSERSPROFILE\Application Data\Microsoft\Network\Downloader\qmgr*.dat" -Recurse -Force > $null 2>&1
+    }
+    catch {
+        $errors.file = "true"
+        scripterror
+    }
+
+    Write-Host "Successfully cleared the update cache." -ForegroundColor Green
+    Write-Host ""
+    registrysecurity
+}
+
+function registrysecurity {
+    Write-Host "Resetting update services to default security descriptor.."
+    Start-Process -FilePath "sc.exe" -ArgumentList "sdset bits D:(A;CI;CCDCLCSWRPWPDTLOCRSDRCWDWO;;;SY)(A;;CCDCLCSWRPWPDTLOCRSDRCWDWO;;;BA)(A;;CCLCSWLOCRRC;;;IU)(A;;CCLCSWLOCRRC;;;SU)" -ErrorAction SilentlyContinue > $null 2>&1
+    Start-Process -FilePath "sc.exe" -ArgumentList "sdset wuauserv D:(A;;CCLCSWRPLORC;;;AU)(A;;CCDCLCSWRPWPDTLOCRSDRCWDWO;;;BA)(A;;CCDCLCSWRPWPDTLOCRSDRCWDWO;;;SY)" -ErrorAction SilentlyContinue > $null 2>&1
+    Write-Host "Successfully set security descriptor to default.." -ForegroundColor Green
+    Write-Host ""
+    Write-Host "Registering files to the registry.."
+
+    regsvr32.exe /s atl.dll | Out-Null
+    regsvr32.exe /s urlmon.dll | Out-Null
+    regsvr32.exe /s mshtml.dll | Out-Null
+    regsvr32.exe /s shdocvw.dll | Out-Null
+    regsvr32.exe /s browseui.dll | Out-Null
+    regsvr32.exe /s jscript.dll | Out-Null
+    regsvr32.exe /s vbscript.dll | Out-Null
+    regsvr32.exe /s scrrun.dll | Out-Null
+    regsvr32.exe /s msxml.dll | Out-Null
+    regsvr32.exe /s msxml3.dll | Out-Null
+    regsvr32.exe /s msxml6.dll | Out-Null
+    regsvr32.exe /s actxprxy.dll | Out-Null
+    regsvr32.exe /s softpub.dll | Out-Null
+    regsvr32.exe /s wintrust.dll | Out-Null
+    regsvr32.exe /s dssenh.dll | Out-Null
+    regsvr32.exe /s rsaenh.dll | Out-Null
+    regsvr32.exe /s gpkcsp.dll | Out-Null
+    regsvr32.exe /s sccbase.dll | Out-Null
+    regsvr32.exe /s slbcsp.dll | Out-Null
+    regsvr32.exe /s cryptdlg.dll | Out-Null
+    regsvr32.exe /s oleaut32.dll | Out-Null
+    regsvr32.exe /s ole32.dll | Out-Null
+    regsvr32.exe /s shell32.dll | Out-Null
+    regsvr32.exe /s initpki.dll | Out-Null
+    regsvr32.exe /s wuapi.dll | Out-Null
+    regsvr32.exe /s wuaueng.dll | Out-Null
+    regsvr32.exe /s wuaueng1.dll | Out-Null
+    regsvr32.exe /s wucltui.dll | Out-Null
+    regsvr32.exe /s wups.dll | Out-Null
+    regsvr32.exe /s wups2.dll | Out-Null
+    regsvr32.exe /s wuweb.dll | Out-Null
+    regsvr32.exe /s qmgr.dll | Out-Null
+    regsvr32.exe /s qmgrprxy.dll | Out-Null
+    regsvr32.exe /s wucltux.dll | Out-Null
+    regsvr32.exe /s muweb.dll | Out-Null
+    regsvr32.exe /s wuwebv.dll | Out-Null
+
+    Write-Host "Successfully registered files to the registry.. " -ForegroundColor Green
+    Write-Host ""
+    startservicewinsock
+}
+
+function startservicewinsock {
+    Write-Host "Resetting winsock.."
+
+    netsh winsock reset > $null 2>&1
+    Write-Host "Successfully reset the winsock.." -ForegroundColor Green 
+    Write-Host ""
+    Write-Host "Starting windows update services.."
+    
+    try {
+        Start-Service -Name 'BITS' -ErrorAction SilentlyContinue > $null 2>&1
+        Start-Service -Name 'CryptSvc' -ErrorAction SilentlyContinue > $null 2>&1
+        Start-Service -Name 'msiserver' -ErrorAction SilentlyContinue > $null 2>&1
+        Start-Service -Name 'wuauserv' -ErrorAction SilentlyContinue > $null 2>&1
+    }
+    catch {
+        $errors.service = "true"
+        scripterror
+    }
+
+    Write-Host "Successfully started the update services.." -ForegroundColor Green
+    Write-Host ""
+
+    repair
+}
+
+function repair {
+    Write-Host "Performing DISM & System File Repair.."
+    Write-Host "This will take some time to complete."
+    Write-Host ""
+
+    try {
+        DISM /Online /Cleanup-Image /StartComponentCleanup /ResetBase > $null 2>&1
+        Write-Host "1/3 Complete" -ForegroundColor Green
+        DISM /Online /Cleanup-Image /RestoreHealth > $null 2>&1
+        Write-Host "2/3 Complete" -ForegroundColor Green
+        sfc /scannow > $null 2>&1
+        Write-Host "3/3 Complete" -ForegroundColor Green
+    } catch {
+        $errors.repair = "true"
+        scripterror
+    }
+
+    Write-Host ""
+    Stop-Transcript | Out-Null
+    Write-Host "Successfully performed the commands.." -ForegroundColor Green
+    restart
+}
+
+function restart {
+    Write-Host ""
+    Write-Host "A restart of your system will be required to correctly apply the changes that the script has made."
+    Write-Host "Press any key to restart your system."
+    $null = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+    Write-Host "Restarting your system in 60 seconds.."
+    shutdown /r /t 60 > $null
+    exit
+}
+
+function scripterror {
+    if ($errors.repair = "true") {
+        Write-Host "There was an error while performing DISM/SFC.." -ForegroundColor Red
+    } elseif ($errors.service = "true") {
+        Write-Host "There was an error while starting/stopping a windows update service." -ForegroundColor Red
+        Write-Host "Rerun the script." -ForegroundColor Red
+    } elseif ($errors.file = "true") {
+        Write-Host "There was an error while clearing the windows update cache.." -ForegroundColor Red
+        Write-Host "Rerun the script." -ForegroundColor Red
+    } elseif ($errors.nointernet = "true") {
+        Write-Host "No internet connection was detected." -ForegroundColor Yellow
+        Write-Host "This script requires an active internet connection, retry the script when you meet the requirements." -ForegroundColor Yellow
+    }
+
+    endmessage
+}
+
+function endmessage {
+    Write-Host ""
+    Write-Host "Press any key to exit the script.." -ForegroundColor Yellow
+    $null = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+    Stop-Transcript | Out-Null
+    exit
+}
+
+InternetCheck
