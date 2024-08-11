@@ -5,7 +5,7 @@ $Host.UI.RawUI.ForegroundColor = "White"
 
 Clear-Host
 
-$Host.UI.RawUI.WindowTitle = "Crashlog Script"
+$Host.UI.RawUI.WindowTitle = "PCHH Crashlog Script"
 
 # admin check
 if (-NOT ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator")) {
@@ -42,6 +42,14 @@ $errors = @{
 }
 
 function dmpcheck {
+    Clear-Host 
+    Write-Host ""
+    Write-Host "============================================" -ForegroundColor DarkGreen
+    Write-Host "-- Script is running as an Administrator --" -ForegroundColor DarkGreen
+    Write-Host "--         Made by ShinTheBean           --" -ForegroundColor DarkGreen
+    Write-Host "============================================" -ForegroundColor DarkGreen
+    Write-Host ""
+
     $limit = (Get-Date).AddDays(-60)
 
     Get-ChildItem -Path $source -Recurse -Force | Where-Object { !$_.PSIsContainer -and $_.LastWriteTime -lt $limit } | Remove-Item -Force -ErrorAction SilentlyContinue > $null 2>&1
@@ -102,8 +110,6 @@ function fileadd {
     specs "Secure Boot State: $secureBootEnabled"
     specs "`nRam Capacity: $([math]::Round($installedMemory/1GB)) GB"
     specs "RAM Speed: $ramSpeed MT/s"
-    specs "----------"
-    specs "Minidumps Found: $dmpfound"
 
     # grabbing programs
 
@@ -130,13 +136,17 @@ function eventlogexport {
     Write-Host ""
     Write-Host "Grabbing event logs.."
 
-        try {
-        wevtutil epl System $sys_eventlog_path
-        wevtutil epl Application $app_eventlog_path
-        } catch {
-            $errors.event = $true
-            functionerror
-        }
+    $startTime = (Get-Date).AddDays(-14).ToString("yyyy-MM-ddTHH:mm:ss")
+
+    try {
+
+        wevtutil epl System $sys_eventlog_path /q:"*[System[TimeCreated[@SystemTime>='$startTime']]]"
+        wevtutil epl Application $app_eventlog_path /q:"*[System[TimeCreated[@SystemTime>='$startTime']]]"
+
+    } catch {
+        $errors.event = $true
+        functionerror
+    }
 
     Write-Host "Event grab complete.." -ForegroundColor Green
 
