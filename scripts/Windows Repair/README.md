@@ -24,3 +24,12 @@ Open Powershell as an Administrator (Win + X & select Terminal(admin)
 ```
 iwr -useb https://raw.githubusercontent.com/PC-Help-Hub/pchh-main/main/scripts/Windows%20Repair/crashlog.ps1 | iex
 ```
+
+# Using OScheck.ps1
+Instructions on how to use OScheck.ps1
+
+Open Powershell as an Administrator (Win + X & select Terminal(admin)
+
+```
+iwr -useb https://github.com/PC-Help-Hub/pchh-main/blob/main/scripts/Windows%20Repair/OScheck.ps1 | iex
+```
