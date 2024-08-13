@@ -29,7 +29,7 @@ if (-NOT ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdent
     $secure = "false"
     $uefi = "false"
 
-#Start-Transcript "$env:temp\winos.txt" -Force | Out-Null
+Start-Transcript "$env:temp\winos.txt" -Force | Out-Null
 
 function CheckMark {
     return [char]0x2705
@@ -38,9 +38,6 @@ function CheckMark {
 function XMark {
     return [char]0x274C
 }
-
-#Write-Host "$(Get-CheckMark) Success" -ForegroundColor Green
-#Write-Host "$(Get-XMark) Denied" -ForegroundColor Red
 
 function info {
     Clear-Host 
@@ -274,6 +271,7 @@ function userprompt {
     Write-Host ""
     
     $prompt = Read-Host "Do you want to open an article on how to install the Operating System? (Y/N)"
+    Write-Host ""
 
     if ($prompt -eq "Y" -or $prompt -eq "y") {
         Write-Host "Read the article that has opened up on your browser."
@@ -286,6 +284,7 @@ function userprompt {
 }
 
 function endmessage {
+    Stop-Transcript | Out-Null
     Write-Host ""
     Write-Host "Press any key to exit.."
     $null = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
