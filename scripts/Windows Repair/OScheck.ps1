@@ -29,7 +29,29 @@ if (-NOT ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdent
     $secure = "false"
     $uefi = "false"
 
+    $w10URL = "https://go.microsoft.com/fwlink/?LinkId=2265055"
+    $w11URL = "https://go.microsoft.com/fwlink/?linkid=2156295"
+
 Start-Transcript "$env:temp\winos.txt" -Force | Out-Null
+
+$null = New-Module {
+    function Invoke-WithoutProgress {
+        [CmdletBinding()]
+        param (
+            [Parameter(Mandatory)] [scriptblock] $ScriptBlock
+        )
+
+        $prevProgressPreference = $global:ProgressPreference
+        $global:ProgressPreference = 'SilentlyContinue'
+
+        try {
+            . $ScriptBlock
+        }
+        finally {
+            $global:ProgressPreference = $prevProgressPreference
+        }
+    }
+}
 
 function CheckMark {
     return [char]0x2705
@@ -268,20 +290,49 @@ function results {
 }
 
 function userprompt {
+    $env:documents = [Environment]::GetFolderPath("mydocuments")
     Write-Host ""
     
-    $prompt = Read-Host "Do you want to open an article on how to install the Operating System? (Y/N)"
+    if ($w10 -eq "true") {
+        $prompt = Read-Host "Would you like to download the installer for Windows 10? (Y/N)"
+    } else {
+        $prompt = Read-Host "Would you like to download the installer for Windows 11? (Y/N)"
+    }
+
+    
     Write-Host ""
 
-    if ($prompt -eq "Y" -or $prompt -eq "y") {
-        Write-Host "Read the article that has opened up on your browser."
-        Start-Process "https://pchelphub.com/kbase/windows-in-place-install-upgrade-iso/"
+    if ($prompt -eq "Y" -or $prompt -eq "y") { 
+        if ($w10 -eq "true") {
+            Invoke-WithoutProgress {
+                Invoke-WebRequest -Uri $w10URL -OutFile "$env:documents\MediaCreationTool_22H2.exe"
+            }
+            if (Test-Path -Path "$env:documents\MediaCreationTool_22H2.exe") {
+                Write-Host "Successfully downloaded the installer, starting up the software.."
+                Start-Process -FilePath "$env:documents\MediaCreationTool_22H2.exe"
+            } else {
+                Write-Host "Unable to download the installer."
+            }
+        } else {
+            Invoke-WithoutProgress {
+                Invoke-WebRequest -Uri $w11URL -OutFile "$env:documents\MediaCreationTool_23H2.exe"
+            }
+                if (Test-Path -Path "$env:documents\MediaCreationTool_23H2.exe") {
+                    Write-Host "Successfully downloaded the installer, starting up the software.."
+                    Start-Process -FilePath "$env:documents\MediaCreationTool_23H2.exe"
+                } else {
+                    Write-Host "Unable to download the installer."
+                }
+            }
+            
+    
+        } else {
+            Write-Host "The script will not open the download page.."
+        }
+
         endmessage
-    } else {
-        Write-Host "The script will not open the article."
-        endmessage
+    
     }
-}
 
 function endmessage {
     Stop-Transcript | Out-Null
