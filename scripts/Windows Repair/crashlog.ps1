@@ -26,12 +26,12 @@ Write-Host ""
 $random = Get-Random -Minimum 1 -Maximum 5000
 $source = "$env:SystemRoot\minidump\*.dmp"
 $File = "$env:TEMP\Crash-LOGS"
-$specsfile = "$File\specs_$random.txt"
-$programsfile = "$File\InstalledPrograms_$random.txt"
+$specsfile = "$File\specs.txt"
+$programsfile = "$File\InstalledPrograms.txt"
 $ziptar = "$File\Crashlog-Files_$random.zip"
 
-$sys_eventlog_path = "$File\system_eventlogs_$random.evtx"
-$app_eventlog_path = "$File\application_eventlogs_$random.evtx"
+$sys_eventlog_path = "$File\system_eventlogs.evtx"
+$app_eventlog_path = "$File\application_eventlogs.evtx"
 
 $dmpfound = $false
 
