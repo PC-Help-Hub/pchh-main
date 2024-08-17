@@ -81,6 +81,7 @@ function restore-point {
     Write-Host "Creating a restore point before proceeding.."
 
     # enables system protection to have restorepoint on all drives
+    try {
     $driveSpecs = 
     Get-CimInstance -Class Win32_LogicalDisk -ErrorAction SilentlyContinue |
     Where-Object { $_.DriveType -eq 3 } | 
@@ -93,8 +94,11 @@ function restore-point {
     New-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SystemRestore\" -Name "SystemRestorePointCreationFrequency" -Value 0 -Force > $null
         
       Invoke-WithoutProgress {
-        Checkpoint-Computer -Description "UPDATE_SCRIPT_$random" -RestorePointType MODIFY_SETTINGS
+        Checkpoint-Computer -Description "UPDATESCRIPT_$random" -RestorePointType MODIFY_SETTINGS > $null 2>&1
      }
+    } catch {
+        return
+    }
     
     Write-Host "Successfully created a restore point." -ForegroundColor Green
     Write-Host ""
