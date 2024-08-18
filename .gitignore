@@ -161,3 +161,4 @@ cython_debug/
 
 My Scripts
 utils/PCHH-GUI
+scripts/Windows Repair/stopservice.ps1
