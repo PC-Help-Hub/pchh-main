@@ -80,7 +80,7 @@ function scan {
     Write-Host ""
 
     try {
-        DISM /Online /Cleanup-Image /CheckHealth > $null 2>&1
+        DISM /Online /Cleanup-Image /ScanHealth > $null 2>&1
         $exitCode = $LASTEXITCODE
     } catch {
         $errors.dism = "true"
