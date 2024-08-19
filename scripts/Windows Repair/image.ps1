@@ -61,7 +61,6 @@ function InternetCheck {
 
     try {
         Invoke-WithoutProgress {
-            #Invoke-WebRequest -UseBasicParsing -Uri www.google.com -ErrorAction Stop > $null
             Test-Connection -ComputerName "www.google.com" -ErrorAction SilentlyContinue > $null 2>&1
             Write-Host "A network connection has been detected, continuing with script.." -ForegroundColor Green
             Write-Host ""
@@ -81,7 +80,7 @@ function scan {
     Write-Host ""
 
     try {
-        DISM /Online /Cleanup-Image /ScanHealth > $null 2>&1
+        DISM /Online /Cleanup-Image /CheckHealth > $null 2>&1
         $exitCode = $LASTEXITCODE
     } catch {
         $errors.dism = "true"
@@ -90,8 +89,7 @@ function scan {
 
     if ($exitCode -eq "0") {
         Write-Host "Windows has found no corruption on your system." -ForegroundColor Green
-        Write-Host "Performing a final check for file integrity.."
-        IntegCheck
+        nocorruptprompt
     } elseif ($exitCode -eq "2") {
         Write-Host "Windows has detected corruption on your system but it will be unrepairable.." -ForegroundColor Red
         Write-Host "A reinstallation of windows will be required to resolve this issue.." -ForegroundColor Red
@@ -100,6 +98,24 @@ function scan {
         Write-Host "Windows has found corruption on your system, attempting to resolve.." -ForegroundColor Yellow
         Write-Host "This will take some time to complete.." -ForegroundColor Yellow
         corruption
+    }
+}
+
+function nocorruptprompt {
+    Write-Host ""
+    $prompt = Read-Host "Would you still like to run the commands to repair any corruption? (Y/N)"
+    Write-Host ""
+
+    if ($prompt -eq "Y".toLower()) {
+        Write-Host "Running commands for corruption.."
+        corruption
+    } elseif ($prompt -eq "N".ToLower()) {
+        Write-Host "Performing a final check for file integrity.."
+        IntegCheck
+    } else {
+        Write-Host "You didn't provide a valid answer."
+        Write-Host "Performing a final check for file integrity."
+        IntegCheck
     }
 }
 
