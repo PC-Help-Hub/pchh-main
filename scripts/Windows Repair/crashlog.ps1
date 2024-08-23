@@ -24,6 +24,7 @@ Write-Host ""
 
 # Variable setup
 $random = Get-Random -Minimum 1 -Maximum 5000
+$minidump = "$env:SystemRoot\minidump"
 $source = "$env:SystemRoot\minidump\*.dmp"
 $appdmp = "$env:LOCALAPPDATA\CrashDumps\*.dmp"
 
@@ -57,8 +58,10 @@ function dmpcheck {
     $limit = (Get-Date).AddDays(-60)
 
     
-
-    Get-ChildItem -Path $source -Recurse -Force | Where-Object { !$_.PSIsContainer -and $_.LastWriteTime -lt $limit } | Remove-Item -Force -ErrorAction SilentlyContinue > $null 2>&1
+    if (Test-Path $minidump) {
+        Get-ChildItem -Path $source -Recurse -Force | Where-Object { !$_.PSIsContainer -and $_.LastWriteTime -lt $limit } | Remove-Item -Force -ErrorAction SilentlyContinue > $null 2>&1
+    }
+    
     Get-ChildItem -Path $env:systemroot -Filter "MEMORY.dmp" -File | Remove-Item -Force -ErrorAction SilentlyContinue > $null 2>&1
 
     if (Test-Path $source) {
