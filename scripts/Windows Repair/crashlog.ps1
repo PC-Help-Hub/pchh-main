@@ -7,9 +7,9 @@ Clear-Host
 
 $Host.UI.RawUI.WindowTitle = "PCHH Crashlog Script"
 
-# admin check
+# Admin check
 if (-NOT ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator")) {
-    #  Admin text from https://christitus.com/windows-tool/
+    # Admin text from https://christitus.com/windows-tool/
     Write-Host "============================================" -ForegroundColor Red
     Write-Host "-- Script must be ran as an Administrator --" -ForegroundColor Red
     Write-Host "-- Right-Click Start -> Terminal(Admin)   --" -ForegroundColor Red
@@ -22,18 +22,22 @@ if (-NOT ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdent
 
 Write-Host ""
 
-# variable setup
+# Variable setup
 $random = Get-Random -Minimum 1 -Maximum 5000
 $source = "$env:SystemRoot\minidump\*.dmp"
+$appdmp = "$env:LOCALAPPDATA\CrashDumps\*.dmp"
+
 $File = "$env:TEMP\Crash-LOGS"
+$appDMPFile = "$File\App_Dumps"
 $specsfile = "$File\specs.txt"
 $programsfile = "$File\InstalledPrograms.txt"
 $ziptar = "$File\Crashlog-Files_$random.zip"
 
 $sys_eventlog_path = "$File\system_eventlogs.evtx"
-$app_eventlog_path = "$File\application_eventlogs.evtx"
+# $app_eventlog_path = "$File\application_eventlogs.evtx"
 
 $dmpfound = $false
+$appdmpfound = $false
 
 $errors = @{
     fileCreate = $false
@@ -52,25 +56,34 @@ function dmpcheck {
 
     $limit = (Get-Date).AddDays(-60)
 
+    
+
     Get-ChildItem -Path $source -Recurse -Force | Where-Object { !$_.PSIsContainer -and $_.LastWriteTime -lt $limit } | Remove-Item -Force -ErrorAction SilentlyContinue > $null 2>&1
+    Get-ChildItem -Path $env:systemroot -Filter "MEMORY.dmp" -File | Remove-Item -Force -ErrorAction SilentlyContinue > $null 2>&1
 
     if (Test-Path $source) {
         $dmpfound = $true
     }
 
+    if (Test-Path $appdmp) {
+        $appdmpfound = $true
+    }
+
     filecreation
 }
 
-
-# initial file creation
+# Initial file creation
 function filecreation {
     Write-Host "Starting file creation.."
-    Remove-Item -Path "$File\*" -Force -ErrorAction SilentlyContinue > $null 2>&1
+    Remove-Item -Path "$File\*" -Force -Recurse -ErrorAction SilentlyContinue > $null 2>&1
 
     try {
         New-Item -Path $File -ItemType Directory -Force | Out-Null
         New-Item -Path $specsfile -ItemType File -Force | Out-Null
         New-Item -Path $programsfile -ItemType File -Force | Out-Null
+        if ($appdmpfound) {
+            New-Item -Path $appDMPFile -ItemType Directory -Force | Out-Null
+        }
     } catch {
         $errors.fileCreate = $true
     }
@@ -78,9 +91,9 @@ function filecreation {
     fileadd
 }
 
-# grabbing specs
+# Grabbing specs
 function fileadd {
-    # grabbing sys info
+    # Grabbing system info
     $cpu = Get-WmiObject Win32_Processor | Select-Object -ExpandProperty Name
     $gpu = Get-WmiObject Win32_VideoController | Select-Object -ExpandProperty Name
     $motherboardModel = Get-WmiObject Win32_BaseBoard | Select-Object -ExpandProperty Product
@@ -111,8 +124,7 @@ function fileadd {
     specs "`nRam Capacity: $([math]::Round($installedMemory/1GB)) GB"
     specs "RAM Speed: $ramSpeed MT/s"
 
-    # grabbing programs
-
+    # Grabbing installed programs
     $installedPrograms = Get-ItemProperty HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*,
     HKLM:\Software\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\* |
     Select-Object DisplayName |
@@ -122,6 +134,20 @@ function fileadd {
     
     Write-Host "File creation complete.." -ForegroundColor Green
 
+    copyappdumps
+}
+
+function copyappdumps {
+    if ($appdmpfound) {
+
+        try {
+            Copy-Item -Path $appdmp -Destination $appDMPFile -Force -ErrorAction Stop
+        } catch {
+            $errors.fileCreate = $true
+            functionerror
+        }
+    }
+    
     eventlogexport
 }
 
@@ -141,7 +167,7 @@ function eventlogexport {
     try {
 
         wevtutil epl System $sys_eventlog_path /q:"*[System[TimeCreated[@SystemTime>='$startTime']]]"
-        wevtutil epl Application $app_eventlog_path /q:"*[System[TimeCreated[@SystemTime>='$startTime']]]"
+       # wevtutil epl Application $app_eventlog_path /q:"*[System[TimeCreated[@SystemTime>='$startTime']]]"
 
     } catch {
         $errors.event = $true
@@ -153,15 +179,21 @@ function eventlogexport {
     compression
 }
 
-# compresses files
+# Compresses files
 function compression {
     Write-Host ""
     Write-Host "Starting file compression.."
 
-    $filesToCompress = @($specsfile, $programsfile, $sys_eventlog_path, $app_eventlog_path)
+    Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\CrashControl" -Name "DisplayParameters" -Value 1 -Type DWord -Force | Out-Null
+
+    $filesToCompress = @($specsfile, $programsfile, $sys_eventlog_path <#, $app_eventlog_path#>)
 
     if ($dmpfound) {
         $filesToCompress += $source
+    }
+
+    if ($appdmpfound) {
+        $filesToCompress += $appDMPFile
     }
 
     try {
@@ -172,7 +204,7 @@ function compression {
         functionerror
     }
 
-    Remove-Item -Path $specsfile, $programsfile, $sys_eventlog_path, $app_eventlog_path -Force -ErrorAction SilentlyContinue > $null 2>&1
+    Remove-Item -Path $specsfile, $programsfile, $sys_eventlog_path, <#$app_eventlog_path,#> $appDMPFile -Force -Recurse -ErrorAction SilentlyContinue > $null 2>&1
 
     Write-Host "File compression complete.." -ForegroundColor Green
 
@@ -201,7 +233,7 @@ function functionerror {
         Write-Host "There was an error while creating the required files.." -ForegroundColor Red
     }
 
-    Remove-Item -Path $specsfile, $programsfile, $sys_eventlog_path, $app_eventlog_path -Force -ErrorAction SilentlyContinue > $null 2>&1
+    Remove-Item -Path $specsfile, $programsfile, $sys_eventlog_path, <#$app_eventlog_path,#> $appDMPFile -Force -Recurse -ErrorAction SilentlyContinue > $null 2>&1
 
     endmessage
 }
