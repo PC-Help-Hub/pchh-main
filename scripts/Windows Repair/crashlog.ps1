@@ -37,6 +37,8 @@ $sys_eventlog_path = "$File\system_eventlogs.evtx"
 $dmpfound = $false
 $appdmpfound = $false
 
+$documents = "$HOME\Documents"
+
 $errors = @{
     fileCreate = $false
     Compress   = $false
@@ -213,10 +215,14 @@ function compression {
 
     if ($appdmpfound) {
         $filesToCompress += $appDMPFile
+        specs "`n`nApp DMP's Found: True"
+    }
+    else {
+        specs "`n`nApp DMP's Found: False"
     }
 
     try {
-        Compress-Archive -Path $filesToCompress -DestinationPath $ziptar -Force | Out-Null
+        Compress-Archive -Path $filesToCompress -CompressionLevel Optimal -DestinationPath $ziptar -Force | Out-Null
     }
     catch {
         $errors.Compress = $true
@@ -226,6 +232,22 @@ function compression {
     Remove-Item -Path $infofile, $sys_eventlog_path, $appDMPFile -Force -Recurse -ErrorAction SilentlyContinue > $null 2>&1
 
     Write-Host "File compression complete.." -ForegroundColor Green
+
+    filesizecheck
+}
+
+function filesizecheck {
+    Write-Host ""
+    Write-Host "Checking file size.."
+    $filesize = (Get-Item $ziptar).Length
+    $filesizeMB = [math]::round($filesize / 1MB, 2)
+
+    if ($filesizeMB -gt 25) {
+        Write-Host "The file size exceeds Discord's maximum allowed size, please ask for help in the Discord Server.." -ForegroundColor Yellow
+        Write-Host ""
+    }    
+
+    Write-Host "File Size check complete.." -ForegroundColor Green
 
     eof
 }
