@@ -26,6 +26,7 @@ $errors = @{
     timeout    = $false
     scan       = $false
     nointernet = $false
+    exist = $false
 }
 
 $null = New-Module {
@@ -75,6 +76,17 @@ function InternetCheck {
 
 
 function scan {
+
+    if (-not (Test-Path -Path "$env:systemroot\system32\Dism.exe")) {
+        $errors.exist = "true"
+        scripterror
+    }
+
+    if (-not (Test-Path -Path "$env:systemroot\system32\sfc.exe")) {
+        $errors.exist = "true"
+        scripterror
+    }
+
     Write-Host "Performing a thorough scan for corruption.."
     Write-Host "This will take a few minutes.."
     Write-Host ""
@@ -221,6 +233,8 @@ function scripterror {
     } elseif ($errors.nointernet -eq "true") {
         Write-Host "No internet connection was detected." -ForegroundColor Yellow
         Write-Host "This script requires an active internet connection, retry the script when you meet the requirements." -ForegroundColor Yellow
+    } elseif ($errors.exist -eq "true") {
+        Write-Host "The DISM/SFC program doesn't exist on your system.." -ForegroundColor Red
     }
 
     endmessage
