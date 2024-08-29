@@ -32,6 +32,8 @@ $appDMPFile = "$File\App_Dumps"
 $infofile = "$File\specs-programs.txt"
 $ziptar = "$File\Crashlog-Files_$random.zip"
 
+$transcript = "$env:temp\crashlog_transcript.txt"
+
 $sys_eventlog_path = "$File\system_eventlogs.evtx"
 
 $dmpfound = $false
@@ -46,6 +48,7 @@ $errors = @{
 }
 
 function dmpcheck {
+    Start-Transcript "$env:temp\crashlog_transcript.txt" -Force > $null 2>&1
     Clear-Host 
     Write-Host ""
     Write-Host "============================================" -ForegroundColor DarkGreen
@@ -243,8 +246,33 @@ function filesizecheck {
     $filesizeMB = [math]::round($filesize / 1MB, 2)
 
     if ($filesizeMB -gt 25) {
-        Write-Host "The file size exceeds Discord's maximum allowed size, please ask for help in the Discord Server.." -ForegroundColor Yellow
+        Write-Host "The file size exceeds Discord's maximum allowed size, performing a fix.." -ForegroundColor Yellow
         Write-Host ""
+
+            try {
+            New-Item -Path "$File\TEMP_FILES" -ItemType Directory -Force | Out-Null
+            New-Item -Path "$documents\App_DMP" -ItemType Directory -Force | Out-Null
+            Expand-Archive -Path "$ziptar" -DestinationPath "$File\TEMP_FILES"
+        
+            Get-ChildItem -Path "$File\TEMP_FILES\App_Dumps" -File -Recurse | ForEach-Object {
+                $destinationPath = Join-Path -Path "$documents\App_DMP" -ChildPath $_.Name
+        
+                Remove-Item -Path $destinationPath -Force > $null 2>&1
+        
+                Move-Item -Path $_.FullName -Destination $destinationPath
+            }
+
+            Remove-Item -Path "$File\TEMP_FILES\App_Dumps" -Force -Recurse > $null 2>&1
+            Remove-Item -Path "$ziptar" -Force -Recurse > $null 2>&1
+
+            Compress-Archive -Path "$File\TEMP_FILES\*" -DestinationPath "$ziptar" -Force -CompressionLevel Optimal | Out-Null
+            Remove-Item -Path "$File\TEMP_FILES" -Force -Recurse > $null 2>&1
+            } catch {
+                Write-Host "Unable to perform requested fixes, ask for help in the Discord Server.." -ForegroundColor Red
+                Write-Host ""
+            }
+        
+        
     }    
 
     Write-Host "File Size check complete.." -ForegroundColor Green
@@ -254,7 +282,6 @@ function filesizecheck {
 
 function eof {
     Write-Host ""
-    
     Write-Host "------------------------------"
     Write-Host " FILES ARE READY TO BE SHARED "
     Write-Host "------------------------------"
@@ -287,9 +314,25 @@ function endmessage {
     if ($eofcomplete) {
         Add-Type -AssemblyName System.Windows.Forms
         [System.Windows.Forms.Clipboard]::SetFileDropList([System.Collections.Specialized.StringCollection]@($ziptar))
+
+        Stop-Transcript | Out-Null
+
+        try {
+        Add-Type -AssemblyName "System.IO.Compression.FileSystem"
+
+        $zipArchive = [System.IO.Compression.ZipFile]::Open($ziptar, [System.IO.Compression.ZipArchiveMode]::Update)
+
+        $entry = [System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile($zipArchive, $transcript, [System.IO.Path]::GetFileName($transcript))
+        [void]$entry
+
+        $zipArchive.Dispose()
+        Remove-Item $transcript -Force
+        } finally { }
     }
+        
     $null = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
     exit
 }
+
 
 dmpcheck
