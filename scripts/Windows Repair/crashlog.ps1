@@ -48,7 +48,7 @@ $errors = @{
 }
 
 function dmpcheck {
-    Start-Transcript "$env:temp\crashlog_transcript.txt" -Force > $null 2>&1
+    Start-Transcript "$transcript" -Force > $null 2>&1
     Clear-Host 
     Write-Host ""
     Write-Host "============================================" -ForegroundColor DarkGreen
@@ -323,19 +323,9 @@ function endmessage {
         Add-Type -AssemblyName System.Windows.Forms
         [System.Windows.Forms.Clipboard]::SetFileDropList([System.Collections.Specialized.StringCollection]@($ziptar))
 
-        Stop-Transcript | Out-Null
+        Stop-Transcript -ErrorAction SilentlyContinue | Out-Null
 
-        try {
-        Add-Type -AssemblyName "System.IO.Compression.FileSystem"
-
-        $zipArchive = [System.IO.Compression.ZipFile]::Open($ziptar, [System.IO.Compression.ZipArchiveMode]::Update)
-
-        $entry = [System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile($zipArchive, $transcript, [System.IO.Path]::GetFileName($transcript))
-        [void]$entry
-
-        $zipArchive.Dispose()
-        Remove-Item $transcript -Force
-        } finally { }
+        Compress-Archive -Path "$transcript" -DestinationPath "$ziptar" -Update | Out-Null
     }
         
     $null = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
