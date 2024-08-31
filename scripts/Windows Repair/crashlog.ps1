@@ -119,7 +119,6 @@ function fileadd {
     $cpu = Get-WmiObject Win32_Processor
     $cpuName = $cpu | Select-Object -ExpandProperty Name
     $cpuSpeed = $cpu | Select-Object -ExpandProperty MaxClockSpeed
-    $cpuArch = $cpu | Select-Object -ExpandProperty Architecture
     $gpu = Get-WmiObject Win32_VideoController | Select-Object -ExpandProperty Name
     $motherboardModel = Get-WmiObject Win32_BaseBoard | Select-Object -ExpandProperty Product
     $bios = Get-WmiObject Win32_BIOS
@@ -132,14 +131,18 @@ function fileadd {
     $systemDirectory = $env:SystemDrive
     $secureBoot = (Get-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\SecureBoot\State" -Name "UEFISecureBootEnabled").UEFISecureBootEnabled
     $fastboot = (Get-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Power" -Name HiberbootEnabled).HiberbootEnabled
+
     $installedMemory = Get-WmiObject Win32_ComputerSystem | Select-Object -ExpandProperty TotalPhysicalMemory
     $ramSpeed = Get-WmiObject Win32_PhysicalMemory | Select-Object -ExpandProperty Speed
 
-    $drives = Get-WmiObject Win32_LogicalDisk | Select-Object DeviceID, VolumeName,
-    @{Name = 'Total Size (GB)'; Expression = { [math]::round($_.Size / 1GB, 2) } },
-    @{Name = 'Free Space (GB)'; Expression = { [math]::round($_.FreeSpace / 1GB, 2) } },
-    @{Name = 'Percentage Free (%)'; Expression = { [math]::round(($_.FreeSpace / $_.Size) * 100, 2) } }
-    
+    $drives = Get-WmiObject Win32_LogicalDisk | Select-Object `
+    @{Name = 'Drive Label'; Expression = { $_.DeviceID + '\' }}, `
+    @{Name = 'Drive Name'; Expression = { $_.VolumeName }}, `
+    @{Name = 'Windows Drive'; Expression = { $_.DeviceID -eq "$env:SystemDrive" }}, `
+    @{Name = 'Total Size (GB)'; Expression = { [math]::round($_.Size / 1GB, 2) }}, `
+    @{Name = 'Free Space (GB)'; Expression = { [math]::round($_.FreeSpace / 1GB, 2) }}, `
+    @{Name = 'Percentage Free (%)'; Expression = { [math]::round(($_.FreeSpace / $_.Size) * 100, 2) }}
+
     $driveInfo = $drives | Out-String   
 
     $secureBootState = if ($secureBoot -eq "1") { "Enabled" } else { "Disabled" }
@@ -148,7 +151,6 @@ function fileadd {
     specs "Username: $username"
     specs "`nCPU Name: $cpuName"
     specs "CPU Max Speed: $cpuSpeed"
-    specs "CPU Architecture: $cpuArch"
     specs "GPU Name: $gpu"
     specs "`nMotherboard Model: $motherboardModel"
     specs "BIOS Version: $biosVersion"
@@ -270,6 +272,9 @@ function filesizecheck {
 
             Compress-Archive -Path "$File\TEMP_FILES\*" -DestinationPath "$ziptar" -Force -CompressionLevel Optimal | Out-Null
             Remove-Item -Path "$File\TEMP_FILES" -Force -Recurse > $null 2>&1
+            Compress-Archive -Path "$documents\App_DMP" -DestinationPath "$documents\App_DMP.zip" -Force -CompressionLevel Optimal | Out-Null
+            Write-Host "The Application Dumps are located in a .zip in your documents folder.."
+            Write-Host ""
             } catch {
                 Write-Host "Unable to perform requested fixes, ask for help in the Discord Server.." -ForegroundColor Red
                 Write-Host ""
@@ -336,6 +341,5 @@ function endmessage {
     $null = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
     exit
 }
-
 
 dmpcheck
