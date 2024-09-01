@@ -135,15 +135,32 @@ function fileadd {
     $installedMemory = Get-WmiObject Win32_ComputerSystem | Select-Object -ExpandProperty TotalPhysicalMemory
     $ramSpeed = Get-WmiObject Win32_PhysicalMemory | Select-Object -ExpandProperty Speed
 
-    $drives = Get-WmiObject Win32_LogicalDisk | Select-Object `
-    @{Name = 'Drive Label'; Expression = { $_.DeviceID + '\' }}, `
-    @{Name = 'Drive Name'; Expression = { $_.VolumeName }}, `
-    @{Name = 'Windows Drive'; Expression = { $_.DeviceID -eq "$env:SystemDrive" }}, `
-    @{Name = 'Total Size (GB)'; Expression = { [math]::round($_.Size / 1GB, 2) }}, `
-    @{Name = 'Free Space (GB)'; Expression = { [math]::round($_.FreeSpace / 1GB, 2) }}, `
-    @{Name = 'Percentage Free (%)'; Expression = { [math]::round(($_.FreeSpace / $_.Size) * 100, 2) }}
+    $drives = Get-WmiObject Win32_LogicalDisk | ForEach-Object {
+        $logicalDisk = $_
+        $windowsDrive = $logicalDisk.DeviceID.TrimEnd(':')
 
-    $driveInfo = $drives | Out-String   
+        $disk = Get-PhysicalDisk | Where-Object {
+            $physicalDisk = $_
+            $partition = Get-Disk -Number $physicalDisk.DeviceId | Get-Partition | Where-Object { $_.DriveLetter -eq $windowsDrive }
+            $partition -ne $null
+        }
+    
+        $driveType = if ($disk) { $disk.MediaType } else { 'Unknown' }
+        $diskNumber = if ($disk) { (Get-Disk -Number $disk.DeviceId).Number } else { 'Unknown' }
+    
+        [PSCustomObject]@{
+            'Drive Label'       = $logicalDisk.DeviceID + '\'
+            'Drive Name'        = if (-not [string]::IsNullOrEmpty($logicalDisk.VolumeName)) { $logicalDisk.VolumeName } else { 'No Name Found' }
+            'Windows Drive'     = $logicalDisk.DeviceID -eq "$env:SystemDrive"
+            'Drive ID'          = $diskNumber
+            'Drive Type'        = if ($driveType) { $driveType } else { 'Unknown' }
+            'Total Size (GB)'   = [math]::round($logicalDisk.Size / 1GB, 2)
+            'Free Space (GB)'   = [math]::round($logicalDisk.FreeSpace / 1GB, 2)
+            'Percentage Free (%)' = [math]::round(($logicalDisk.FreeSpace / $logicalDisk.Size) * 100, 2)
+        }
+    }
+    
+    $driveInfo = $drives | Out-String
 
     $secureBootState = if ($secureBoot -eq "1") { "Enabled" } else { "Disabled" }
     $fastbootState = if ($fastboot -eq "1") { "Enabled" } else { "Disabled" }
