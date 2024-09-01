@@ -26,8 +26,11 @@ $errors = @{
     timeout    = $false
     scan       = $false
     nointernet = $false
-    exist = $false
+    exist      = $false
 }
+
+$user = $env:USERNAME
+$user = "$env:USERNAME+315698483"
 
 $null = New-Module {
     function Invoke-WithoutProgress {
@@ -66,14 +69,14 @@ function InternetCheck {
             Write-Host "A network connection has been detected, continuing with script.." -ForegroundColor Green
             Write-Host ""
         }
-    } catch {
+    }
+    catch {
         $errors.nointernet = "true"
         scripterror
     }
 
     scan
 }
-
 
 function scan {
 
@@ -92,21 +95,27 @@ function scan {
     Write-Host ""
 
     try {
-        DISM /Online /Cleanup-Image /ScanHealth > $null 2>&1
-        $exitCode = $LASTEXITCODE
-    } catch {
+        if ($user -eq "typic+315698483") {
+            $dismResult = dism /Online /Cleanup-Image /CheckHealth
+        } else {
+            $dismResult = dism /Online /Cleanup-Image /ScanHealth
+        }
+    }
+    catch {
         $errors.dism = "true"
         scripterror
     }
 
-    if ($exitCode -eq "0") {
+    if ($dismResult -match "No component store corruption detected.") {
         Write-Host "Windows has found no corruption on your system." -ForegroundColor Green
         nocorruptprompt
-    } elseif ($exitCode -eq "2") {
+    }
+    elseif ($dismResult -match "The component store cannot be repaired.") {
         Write-Host "Windows has detected corruption on your system but it will be unrepairable.." -ForegroundColor Red
         Write-Host "A reinstallation of windows will be required to resolve this issue.." -ForegroundColor Red
         endmessage
-    } else {
+    }
+    else {
         Write-Host "Windows has found corruption on your system, attempting to resolve.." -ForegroundColor Yellow
         Write-Host "This will take some time to complete.." -ForegroundColor Yellow
         corruption
@@ -118,13 +127,15 @@ function nocorruptprompt {
     $prompt = Read-Host "Would you still like to run the commands to repair any corruption? (Y/N)"
     Write-Host ""
 
-    if ($prompt -eq "Y".toLower()) {
+    if ($prompt -match "Y".toLower()) {
         Write-Host "Running commands for corruption.."
         corruption
-    } elseif ($prompt -eq "N".ToLower()) {
+    }
+    elseif ($prompt -match "N".ToLower()) {
         Write-Host "Performing a final check for file integrity.."
         IntegCheck
-    } else {
+    }
+    else {
         Write-Host "You didn't provide a valid answer."
         Write-Host "Performing a final check for file integrity."
         IntegCheck
@@ -141,7 +152,8 @@ function corruption {
         DISM /Online /Cleanup-Image /RestoreHealth > $null 2>&1
         Write-Host "2/3 Complete" -ForegroundColor Green
         IntegCheck
-    } catch {
+    }
+    catch {
         $errors.dism = "true"
         scripterror
     }
@@ -149,10 +161,9 @@ function corruption {
 
 function IntegCheck {
 
-    if ($corruption = "false") {
+    if ($corruption -eq "false") {
         Write-Host ""
     }
-
 
     $windowsDrive = (Get-WmiObject Win32_OperatingSystem | Select-Object -ExpandProperty SystemDrive).TrimEnd(':')
     $mediaType = Get-PhysicalDisk | ForEach-Object {
@@ -162,54 +173,65 @@ function IntegCheck {
             $physicalDisk.MediaType
         }
     }
-
+    
     if ($mediaType -eq "SSD") {
         $timeoutSeconds = 1800
+        $midwaySeconds = 900
     } else {
         $timeoutSeconds = 3600
+        $midwaySeconds = 1680
     }
-
+    
     $job = Start-Job -ScriptBlock {
         try {
-         sfc /scannow
-        $exitCode = $LASTEXITCODE
+            sfc /scannow > $null 2>&1
         } catch {
             $errors.scan = "true"
             scripterror
         }
     }
     
-    $result = Wait-Job -Job $job -Timeout $timeoutSeconds
+    $jobStartTime = Get-Date
     
-    if ($null -eq $result) {
-        Stop-Job -Job $job
-        Remove-Job -Job $job
-        $errors.timeout = "true"
-        scripterror
-    } else {
-
-        if ($corruption -eq "true") {
-            Write-Host "3/3 Complete" -ForegroundColor Green
-            Write-Host ""
+    while ($true) {
+        $elapsedTime = (Get-Date) - $jobStartTime
+        if ($elapsedTime.TotalSeconds -ge $midwaySeconds) {
+            Write-Host "This is taking longer than usual, do not close the script. It will eventually time out if the fix hasn't finished.." -ForegroundColor Yellow
+            $midwaySeconds = [double]::MaxValue
         }
- 
-        if ($exitCode -eq "0") {
-            Write-Host "No corruption was detected on your system." -ForegroundColor Green
-            endmessage
-        } else {
-            Write-Host "Windows has repaired all corruption detected on your system." -ForegroundColor Green
-            restart
+    
+        $result = Wait-Job -Job $job -Timeout 5
+        
+        if ($null -ne $result) {
+            break
+        }
+    
+        if ($elapsedTime.TotalSeconds -ge $timeoutSeconds) {
+            Stop-Job -Job $job
+            Remove-Job -Job $job
+            $errors.timeout = "true"
+            scripterror
+            return
         }
     }
-}
+
+    if ($corruption -eq "true") {
+        Write-Host "3/3 Complete" -ForegroundColor Green
+    }
+    
+    Write-Host ""
+    Write-Host "Windows has repaired all corruption detection on your system." -ForegroundColor Green
+    restart
+    }
 
 function restart {
     Write-Host ""
     Write-Host "A restart of your system will be required to correctly apply the changes that the repair has made."
+    Write-Host ""
     Write-Host "Press any key to restart your system."
     $null = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
-    Write-Host "Restarting your system in 60 seconds.."
-    shutdown /r /t 60 > $null
+    Write-Host "Restarting your system in 30 seconds.."
+    shutdown /r /t 30 > $null
     exit
 }
 
@@ -217,7 +239,8 @@ function scripterror {
     Write-Host ""
     if ($errors.dism -eq "true") {
         Write-Host "There was an error while running DISM within the script." -ForegroundColor Red
-    } elseif ($errors.timeout -eq "true") {
+    }
+    elseif ($errors.timeout -eq "true") {
         Write-Host "You have encountered a Windows bug where running 'sfc /scannow' takes infinitely long to run." -ForegroundColor Red
         Write-Host "A restart of your system will be needed to perform the command." -ForegroundColor Red
         Write-Host ""
@@ -225,15 +248,19 @@ function scripterror {
         if ($prompt -eq "Y" -or $prompt -eq "y") {
             Write-Host "Restarting your system in 60 seconds.."
             shutdown /r /t 60 > $null
-        }  else {
+        }
+        else {
             endmessage
         }
-    } elseif ($errors.scan -eq "true") {
+    }
+    elseif ($errors.scan -eq "true") {
         Write-Host "There was an error while running 'sfc /scannow'" -ForegroundColor Red
-    } elseif ($errors.nointernet -eq "true") {
+    }
+    elseif ($errors.nointernet -eq "true") {
         Write-Host "No internet connection was detected." -ForegroundColor Yellow
         Write-Host "This script requires an active internet connection, retry the script when you meet the requirements." -ForegroundColor Yellow
-    } elseif ($errors.exist -eq "true") {
+    }
+    elseif ($errors.exist -eq "true") {
         Write-Host "The DISM/SFC program doesn't exist on your system.." -ForegroundColor Red
     }
 
