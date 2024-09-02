@@ -47,6 +47,25 @@ $errors = @{
     event      = $false
 }
 
+$null = New-Module {
+    function Invoke-WithoutProgress {
+        [CmdletBinding()]
+        param (
+            [Parameter(Mandatory)] [scriptblock] $ScriptBlock
+        )
+
+        $prevProgressPreference = $global:ProgressPreference
+        $global:ProgressPreference = 'SilentlyContinue'
+
+        try {
+            . $ScriptBlock
+        }
+        finally {
+            $global:ProgressPreference = $prevProgressPreference
+        }
+    }
+}
+
 function dmpcheck {
     Start-Transcript "$transcript" -Force > $null 2>&1
     Clear-Host 
@@ -115,6 +134,7 @@ function filecreation {
 # Grabbing specs
 function fileadd {
     # Grabbing system info
+    $secCompat = $false
     $username = whoami
     $cpu = Get-WmiObject Win32_Processor
     $cpuName = $cpu | Select-Object -ExpandProperty Name
@@ -129,7 +149,7 @@ function fileadd {
     $osVersion = $os | Select-Object -ExpandProperty Version
     $bootDevice = $os | Select-Object -ExpandProperty BootDevice
     $systemDirectory = $env:SystemDrive
-    $secureBoot = Confirm-SecureBootUEFI
+    $secureBoot = try {Confirm-SecureBootUEFI} catch {$secCompat = $true}
     $fastboot = (Get-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Power" -Name HiberbootEnabled).HiberbootEnabled
 
     $installedMemory = Get-WmiObject Win32_ComputerSystem | Select-Object -ExpandProperty TotalPhysicalMemory
@@ -142,7 +162,7 @@ function fileadd {
         $disk = Get-PhysicalDisk | Where-Object {
             $physicalDisk = $_
             $partition = Get-Disk -Number $physicalDisk.DeviceId | Get-Partition | Where-Object { $_.DriveLetter -eq $windowsDrive }
-            $partition -ne $null
+            $null -ne $partition
         }
     
         $driveType = if ($disk) { $disk.MediaType } else { 'Unknown' }
@@ -162,7 +182,7 @@ function fileadd {
     
     $driveInfo = $drives | Out-String
 
-    $secureBootState = if ($secureBoot -match "True") { "Enabled" } else { "Disabled" }
+    $secureBootState = if ($secureBoot -match "True") { "Enabled" } elseif ($secureBoot -match "False") { "Disabled" } elseif ($secCompat -eq "$true") {"Not Supported"}
     $fastbootState = if ($fastboot -eq "1") { "Enabled" } else { "Disabled" }
 
     specs "Username: $username"
@@ -247,7 +267,9 @@ function compression {
     }
 
     try {
-        Compress-Archive -Path $filesToCompress -CompressionLevel Optimal -DestinationPath $ziptar -Force | Out-Null
+        Invoke-WithoutProgress {
+            Compress-Archive -Path $filesToCompress -CompressionLevel Optimal -DestinationPath $ziptar -Force | Out-Null
+        }
     }
     catch {
         $errors.Compress = $true
@@ -272,6 +294,7 @@ function filesizecheck {
         Write-Host ""
 
             try {
+                Invoke-WithoutProgress {
             New-Item -Path "$File\TEMP_FILES" -ItemType Directory -Force | Out-Null
             New-Item -Path "$documents\App_DMP" -ItemType Directory -Force | Out-Null
             Expand-Archive -Path "$ziptar" -DestinationPath "$File\TEMP_FILES"
@@ -292,6 +315,7 @@ function filesizecheck {
             Compress-Archive -Path "$documents\App_DMP" -DestinationPath "$documents\App_DMP.zip" -Force -CompressionLevel Optimal | Out-Null
             Write-Host "The Application Dumps are located in a .zip in your documents folder.."
             Write-Host ""
+        }
             } catch {
                 Write-Host "Unable to perform requested fixes, ask for help in the Discord Server.." -ForegroundColor Red
                 Write-Host ""
