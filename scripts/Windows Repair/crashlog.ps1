@@ -129,7 +129,7 @@ function fileadd {
     $osVersion = $os | Select-Object -ExpandProperty Version
     $bootDevice = $os | Select-Object -ExpandProperty BootDevice
     $systemDirectory = $env:SystemDrive
-    $secureBoot = (Get-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\SecureBoot\State" -Name "UEFISecureBootEnabled").UEFISecureBootEnabled
+    $secureBoot = Confirm-SecureBootUEFI
     $fastboot = (Get-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Power" -Name HiberbootEnabled).HiberbootEnabled
 
     $installedMemory = Get-WmiObject Win32_ComputerSystem | Select-Object -ExpandProperty TotalPhysicalMemory
@@ -162,7 +162,7 @@ function fileadd {
     
     $driveInfo = $drives | Out-String
 
-    $secureBootState = if ($secureBoot -eq "1") { "Enabled" } else { "Disabled" }
+    $secureBootState = if ($secureBoot -match "True") { "Enabled" } else { "Disabled" }
     $fastbootState = if ($fastboot -eq "1") { "Enabled" } else { "Disabled" }
 
     specs "Username: $username"
