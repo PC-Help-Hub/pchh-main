@@ -242,7 +242,7 @@ function restart {
     $null = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
     Write-Host "Restarting your system in 60 seconds.."
     shutdown /r /t 60 > $null
-    exit
+    endmessage
 }
 
 function scripterror {
