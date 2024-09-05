@@ -90,7 +90,6 @@ function restore-point {
     Enable-ComputerRestore $driveSpecs -ErrorAction SilentlyContinue
 
     # disables restorepoint frequency
-    Remove-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SystemRestore" -Name "SystemRestorePointCreationFrequency" -Force > $null
     New-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SystemRestore\" -Name "SystemRestorePointCreationFrequency" -Value 0 -Force > $null
         
       Invoke-WithoutProgress {
