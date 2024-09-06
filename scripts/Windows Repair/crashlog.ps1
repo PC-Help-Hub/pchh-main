@@ -175,21 +175,21 @@ function fileadd {
     $fastbootState = if ($fastboot -eq "1") { "Enabled" } else { "Disabled" }
 
     specs "Username: $username"
-    specs "nCPU Name: $cpuName"
+    specs "`nCPU Name: $cpuName"
     specs "CPU Max Speed: $cpuSpeed"
     specs "GPU Name: $gpu"
-    specs "nMotherboard Model: $motherboardModel"
+    specs "`nMotherboard Model: $motherboardModel"
     specs "BIOS Version: $biosVersion"
     specs "BIOS Date: $([System.Management.ManagementDateTimeConverter]::ToDateTime($biosDate))"
-    specs "nOS Name: $osName"
+    specs "`nOS Name: $osName"
     specs "OS Version: $osVersion"
     specs "Boot Device: $bootDevice"
     specs "System Directory: $systemDirectory\"
     specs "Secure Boot State: $secureBootState"
     specs "Fast Boot State: $fastbootState"
-    specs "nRam Capacity: $([math]::Round($installedMemory/1GB)) GB"
+    specs "`nRam Capacity: $([math]::Round($installedMemory/1GB)) GB"
     specs "RAM Speed: $ramSpeed MT/s"
-    specs "nDrive Information: $driveInfo" | Out-Null
+    specs "`nDrive Information: $driveInfo" | Out-Null
 
     # Grabbing installed programs
     $installedPrograms = Get-ItemProperty HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*,
