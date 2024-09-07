@@ -207,7 +207,7 @@ function fileadd {
 
     $programs = $installedPrograms | Out-String
 
-    specs "`n`nPrograms Installed:n $programs"
+    specs "`n`nPrograms Installed:`n $programs"
     
     Write-Host "File creation complete.." -ForegroundColor Green
 
