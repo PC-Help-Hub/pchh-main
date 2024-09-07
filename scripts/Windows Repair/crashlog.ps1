@@ -141,6 +141,12 @@ function fileadd {
     $secureBoot = try { Confirm-SecureBootUEFI } catch { $secCompat = $true }
     $fastboot = (Get-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Power" -Name HiberbootEnabled).HiberbootEnabled
 
+    $lboottime = (Get-CimInstance -ClassName Win32_OperatingSystem).LastBootUpTime
+    $uptime = (Get-Date) - $lboottime
+
+    $pgfile = Get-WmiObject -Query "SELECT * FROM Win32_PageFileUsage"
+    $pgfilesize = $pgfile.AllocatedBaseSize
+
     $installedMemory = Get-WmiObject Win32_ComputerSystem | Select-Object -ExpandProperty TotalPhysicalMemory
     $ramSpeed = Get-WmiObject Win32_PhysicalMemory | Select-Object -ExpandProperty Speed
 
@@ -183,6 +189,8 @@ function fileadd {
     specs "BIOS Date: $([System.Management.ManagementDateTimeConverter]::ToDateTime($biosDate))"
     specs "`nOS Name: $osName"
     specs "OS Version: $osVersion"
+    specs "System Uptime: $($uptime.Days) days, $($uptime.Hours) hours, $($uptime.Minutes) minutes"
+    specs "Page File Size: $pgfilesize MB"
     specs "Boot Device: $bootDevice"
     specs "System Directory: $systemDirectory\"
     specs "Secure Boot State: $secureBootState"
@@ -199,7 +207,7 @@ function fileadd {
 
     $programs = $installedPrograms | Out-String
 
-    specs "nnPrograms Installed:n $programs"
+    specs "`n`nPrograms Installed:n $programs"
     
     Write-Host "File creation complete.." -ForegroundColor Green
 
