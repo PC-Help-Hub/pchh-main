@@ -1,7 +1,31 @@
 Set-ExecutionPolicy -ExecutionPolicy Unrestricted -Scope Process -Force
 
+$pshost = Get-Host
+$pswindow = $pshost.UI.RawUI
+
+$newBufferSize = $pswindow.BufferSize
+$newBufferSize.Width = 170
+$newBufferSize.Height = 3000
+$pswindow.BufferSize = $newBufferSize
+
+$newWindowSize = $pswindow.WindowSize
+$newWindowSize.Width = 170
+$newWindowSize.Height = 50
+$pswindow.WindowSize = $newWindowSize
+
+
 $Host.UI.RawUI.BackgroundColor = "Black"
 $Host.UI.RawUI.ForegroundColor = "White"
+
+<# edit previous text template
+    $filestart = "Creating required files.."
+    $fileorigpos = $host.UI.RawUI.CursorPosition
+    Write-Host $filestart -NoNewline
+    $host.UI.RawUI.CursorPosition = $fileorigpos
+    Write-Host (" " * $filestart.Length) -NoNewline
+    $host.UI.RawUI.CursorPosition = $fileorigpos
+    Write-Host "done create"
+#>
 
 Clear-Host
 
@@ -65,20 +89,28 @@ $null = New-Module {
     }
 }
 
+function cmark {
+    return [char]0x2705
+}
+
+function xmark {
+    return [char]0x274C
+}
+
 function dmpcheck {
-    Start-Transcript "$transcript" -Force > $null 2>&1
+    Start-Transcript "$transcript" > $null 2>&1
     Clear-Host 
     Write-Host ""
     Write-Host "============================================" -ForegroundColor DarkGreen
-    Write-Host "-- Script is running as an Administrator --" -ForegroundColor DarkGreen
-    Write-Host "--         Made by ShinTheBean           --" -ForegroundColor DarkGreen
+    Write-Host "-- Script is running as an Administrator --" -ForegroundColor Green
+    Write-Host "--         Made by ShinTheBean           --" -ForegroundColor Green
     Write-Host "============================================" -ForegroundColor DarkGreen
     Write-Host ""
-    Write-Host "Creating required files.."
+    Write-Host "Creating required files.." -ForegroundColor Blue
 
     $limit = (Get-Date).AddDays(-60)
 
-    Get-ChildItem -Path $env:systemroot -Filter "MEMORY.dmp" -File | Remove-Item -Force -ErrorAction SilentlyContinue > $null 2>&1
+    Get-ChildItem -Path $env:systemroot -Filter "MEMORY.dmp" -File | Remove-Item  -Force -Recurse -ErrorAction SilentlyContinue > $null 2>&1
 
     if (Test-Path $minidump) {
         Get-ChildItem -Path $source -Recurse -Force | Where-Object { !$_.PSIsContainer -and $_.LastWriteTime -lt $limit } | Remove-Item -Force -ErrorAction SilentlyContinue > $null 2>&1
@@ -153,7 +185,7 @@ function fileadd {
     $drives = Get-WmiObject Win32_LogicalDisk | ForEach-Object {
         $logicalDisk = $_
         $windowsDrive = $logicalDisk.DeviceID.TrimEnd(':')
-
+    
         $disk = Get-PhysicalDisk | Where-Object {
             $physicalDisk = $_
             $partition = Get-Disk -Number $physicalDisk.DeviceId | Get-Partition | Where-Object { $_.DriveLetter -eq $windowsDrive }
@@ -163,15 +195,25 @@ function fileadd {
         $driveType = if ($disk) { $disk.MediaType } else { 'Unknown' }
         $diskNumber = if ($disk) { (Get-Disk -Number $disk.DeviceId).Number } else { 'Unknown' }
     
+        $totalSizeGB = if ($logicalDisk.Size) { [math]::round($logicalDisk.Size / 1GB, 2) } else { 0 }
+        $freeSpaceGB = if ($logicalDisk.FreeSpace) { [math]::round($logicalDisk.FreeSpace / 1GB, 2) } else { 0 }
+        
+        $percentageFree = if ($totalSizeGB -ne 0) {
+            [math]::round(($freeSpaceGB / $totalSizeGB) * 100, 2)
+        }
+        else {
+            'N/A'
+        }
+    
         [PSCustomObject]@{
             'Drive Label'         = $logicalDisk.DeviceID + '\'
             'Drive Name'          = if (-not [string]::IsNullOrEmpty($logicalDisk.VolumeName)) { $logicalDisk.VolumeName } else { 'No Name Found' }
             'Windows Drive'       = $logicalDisk.DeviceID -eq "$env:SystemDrive"
             'Drive ID'            = $diskNumber
             'Drive Type'          = if ($driveType) { $driveType } else { 'Unknown' }
-            'Total Size (GB)'     = [math]::round($logicalDisk.Size / 1GB, 2)
-            'Free Space (GB)'     = [math]::round($logicalDisk.FreeSpace / 1GB, 2)
-            'Percentage Free (%)' = [math]::round(($logicalDisk.FreeSpace / $logicalDisk.Size) * 100, 2)
+            'Total Size (GB)'     = $totalSizeGB
+            'Free Space (GB)'     = $freeSpaceGB
+            'Percentage Free (%)' = $percentageFree
         }
     }
     
@@ -209,7 +251,8 @@ function fileadd {
 
     specs "`n`nPrograms Installed:`n $programs"
     
-    Write-Host "File creation complete.." -ForegroundColor Green
+    Write-Host -NoNewline -ForegroundColor Green "$(cmark)"
+    Write-Host " File Creation Complete"
 
     eventlogexport
 }
@@ -225,7 +268,7 @@ function specs {
 
 function eventlogexport {
     Write-Host ""
-    Write-Host "Grabbing event logs.."
+    Write-Host "Grabbing event logs.." -ForegroundColor Blue
 
     $startTime = (Get-Date).AddDays(-14).ToString("yyyy-MM-ddTHH:mm:ss")
 
@@ -237,7 +280,8 @@ function eventlogexport {
         functionerror
     }
 
-    Write-Host "Event grab complete.." -ForegroundColor Green
+    Write-Host -NoNewline -ForegroundColor Green "$(cmark)"
+    Write-Host " Event grab complete.."
 
     compression
 }
@@ -245,7 +289,7 @@ function eventlogexport {
 # Compresses files
 function compression {
     Write-Host ""
-    Write-Host "Compressing files.."
+    Write-Host "Compressing the files.." -ForegroundColor Blue
 
     Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\CrashControl" -Name "DisplayParameters" -Value 1 -Type DWord -Force | Out-Null
 
@@ -271,16 +315,17 @@ function compression {
 
     Remove-Item -Path $infofile, $sys_eventlog_path, $kernelFile -Force -Recurse -ErrorAction SilentlyContinue > $null 2>&1
 
-    Write-Host "File compression complete.." -ForegroundColor Green
+    Write-Host -NoNewline -ForegroundColor Green "$(cmark)"
+    Write-Host " Compression complete.."
 
     eof
 }
 
 function eof {
     Write-Host ""
-    Write-Host "------------------------------"
-    Write-Host " FILES ARE READY TO BE SHARED "
-    Write-Host "------------------------------"
+    Write-Host "==============================" -ForegroundColor DarkGreen
+    Write-Host " FILES ARE READY TO BE SHARED " -ForegroundColor Green
+    Write-Host "==============================" -ForegroundColor DarkGreen
     Start-Process explorer.exe -ArgumentList $File
     $eofcomplete = $true
 
@@ -288,15 +333,21 @@ function eof {
 }
 
 function functionerror {
+    Write-Host -NoNewline -ForegroundColor Red "$(xmark)"
+
     if ($errors.Compress -eq "true") {
-        Write-Host "There was an error while compressing the files.." -ForegroundColor Red
+       # Write-Host "There was an error while compressing the files.." -ForegroundColor Red
+        Write-Host " There was an error during compression.."
     }
     elseif ($errors.event -eq "true") {
-        Write-Host "There was an error while exporting the event logs.." -ForegroundColor Red
+        Write-Host "There was an error while grabbing the event logs.."
     }
     elseif ($errors.fileCreate -eq "true") {
-        Write-Host "There was an error while creating the required files.." -ForegroundColor Red
+        Write-Host "There was an error while creating files.."
     }
+
+    Write-Host -NoNewline -ForegroundColor White "Error:"
+    Write-Host " $_" -ForegroundColor Red
 
     Remove-Item -Path $infofile, $sys_eventlog_path, $kernelFile -Force -Recurse -ErrorAction SilentlyContinue > $null 2>&1
 
@@ -311,11 +362,13 @@ function endmessage {
         Add-Type -AssemblyName System.Windows.Forms
         [System.Windows.Forms.Clipboard]::SetFileDropList([System.Collections.Specialized.StringCollection]@($ziptar))
 
-        Stop-Transcript -ErrorAction SilentlyContinue | Out-Null
+        try {
+            Stop-Transcript -ErrorAction SilentlyContinue | Out-Null
 
-        if (Test-Path $transcript) {
-        Compress-Archive -Path "$transcript" -DestinationPath "$ziptar" -Update | Out-Null
-        }
+            if (Test-Path $transcript) {
+                Compress-Archive -Path "$transcript" -DestinationPath "$ziptar" -Update | Out-Null
+            }
+        } catch { }
     }
         
     $null = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
