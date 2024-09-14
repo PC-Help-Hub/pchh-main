@@ -35,3 +35,10 @@
 - [BSOD-Restart](https://github.com/PC-Help-Hub/pchh-main/blob/main/tweaks/bsodrestart.md) - This will tell you how to disable and/or enable Auto Restart whenever you get a Blue Screen.
 - [BSOD-Detail](https://github.com/PC-Help-Hub/pchh-main/blob/main/utils/bsod-detail.ps1) - This script will disable Auto Restart, and enable parameters whenever you get a Blue Screen.
 - [Specs](https://github.com/PC-Help-Hub/pchh-main/blob/main/utils/specs.ps1) - This script will create a text file containing all your specs.
+- [In-Place Repair Guide](https://github.com/PC-Help-Hub/pchh-main/blob/main/docs/ISO.md) - Article that guides you how to do an In-Place Windows Repair
+- [Recovery Windows Repair Guide](https://github.com/PC-Help-Hub/pchh-main/blob/main/docs/WINDOWS_REPAIR_NOBOOT_DISMSFC_REPAIR.pdf) - Artice that guides you how to repair Windows when in Windows Recovery.
+
+ > [!NOTE]
+>  Script Credits: ShinTheBean
+> 
+> Recovery Windows Repair Guide Credits: FG13
