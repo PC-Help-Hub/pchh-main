@@ -194,10 +194,12 @@ function fileadd {
     
         $driveType = if ($disk) { $disk.MediaType } else { 'Unknown' }
         $diskNumber = if ($disk) { (Get-Disk -Number $disk.DeviceId).Number } else { 'Unknown' }
+        $operationalStatus = if ($disk) { $disk.OperationalStatus } else { 'Unknown' }
+        $healthStatus = if ($disk) { $disk.HealthStatus } else { 'Unknown' }
     
         $totalSizeGB = if ($logicalDisk.Size) { [math]::round($logicalDisk.Size / 1GB, 2) } else { 0 }
         $freeSpaceGB = if ($logicalDisk.FreeSpace) { [math]::round($logicalDisk.FreeSpace / 1GB, 2) } else { 0 }
-        
+    
         $percentageFree = if ($totalSizeGB -ne 0) {
             [math]::round(($freeSpaceGB / $totalSizeGB) * 100, 2)
         }
@@ -208,6 +210,7 @@ function fileadd {
         [PSCustomObject]@{
             'Drive Label'         = $logicalDisk.DeviceID + '\'
             'Drive Name'          = if (-not [string]::IsNullOrEmpty($logicalDisk.VolumeName)) { $logicalDisk.VolumeName } else { 'No Name Found' }
+            'Drive Status'        = "$operationalStatus, $healthStatus"
             'Windows Drive'       = $logicalDisk.DeviceID -eq "$env:SystemDrive"
             'Drive ID'            = $diskNumber
             'Drive Type'          = if ($driveType) { $driveType } else { 'Unknown' }
@@ -216,6 +219,7 @@ function fileadd {
             'Percentage Free (%)' = $percentageFree
         }
     }
+    
     
     $driveInfo = $drives | Out-String
 
