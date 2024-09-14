@@ -1,15 +1,34 @@
-# Disable Auto-Restart in a BSOD
+<p align="center">
+  <img src="https://github.com/shinthebean1/pchh-assets/blob/main/logo.png" width="300" height="300">
+</p>
 
-Paste into PowerShell as an admin ( Win + X and click Terminal (Admin)
 
-### Enable
-```
+<div align="center">
+  <h1><strong>BSOD-RESTART</strong></h1>
+</div>
+
+‎ 
+
+> [!IMPORTANT]
+>
+> We are **NOT** responsible for any data loss that occurs by these scripts, you are at your own risk at data loss; **Backup your data** before running specific scripts.
+
+> [!NOTE]
+> To run these scripts, open PowerShell as an Admin; You can do this by Pressing `Win + X`, then selecting `PowerShell (Admin)` or `Terminal (Admin)`.
+> 
+> With PowerShell opened, paste the code that matches what you would like to do.
+
+
+## Enable Auto-Restart
+```pwsh
 Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\CrashControl" -Name "AutoReboot" -Value 0 -Type DWord -Force
 ```
-Doing this will make it to where if you Blue Screen, the system won't automatically restart when it's done gathering information.
 
-### Disable
-```
+## Disable Auto-Restart
+```pwsh
 Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\CrashControl" -Name "AutoReboot" -Value 1 -Type DWord -Force
 ```
-Doing this will make it to where if you Blue Screen, the system will automatically restart when it's done gathering information.
+
+Once entering one of these commands, restart your computer for changes to apply.
+
+These changes will change the behavior of auto-restarting when you Blue Screen. For enabling parameters, [head here](https://github.com/PC-Help-Hub/pchh-main/blob/main/utils/bsod-detail.ps1). 
