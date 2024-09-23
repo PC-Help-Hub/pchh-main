@@ -29,7 +29,6 @@ $errors = @{
     exist      = $false
 }
 
-$user = $env:USERNAME
 $user = "$env:USERNAME+315698483"
 
 $null = New-Module {
@@ -53,6 +52,7 @@ $null = New-Module {
 
 
 function InternetCheck {
+    Start-Transcript -Path "$env:temp\sfrep_trans.txt" -Force > $null 2>&1
     Clear-Host 
     Write-Host ""
     Write-Host "============================================" -ForegroundColor DarkGreen
@@ -270,6 +270,7 @@ function scripterror {
 function endmessage {
     Write-Host ""
     Write-Host "Press any key to exit.."
+    Stop-Transcript > $null 2>&1
     $null = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
     exit
 }
