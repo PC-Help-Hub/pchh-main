@@ -19,7 +19,7 @@ $Host.UI.RawUI.ForegroundColor = "White"
 
 Clear-Host
 
-$Host.UI.RawUI.WindowTitle = "PCHH Crashlog Script"
+$Host.UI.RawUI.WindowTitle = "Malware Scanners & Tools Installer"
 
 # Admin check
 if (-NOT ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator")) {
