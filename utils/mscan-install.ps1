@@ -75,7 +75,7 @@ function scriptstart {
     $selection = Read-Host
     Write-Host ""
 
-    $downloads = [Environment]::GetFolderPath('MyDocuments').Replace("Documents", "Downloads")
+    $downloads = "C:\PCHH-MTools"
 
     $digits = @()
     $i = 0
