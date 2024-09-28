@@ -74,7 +74,8 @@ function scriptstart {
     $selection = Read-Host
     Write-Host ""
 
-    $downloads = "C:\PCHH-MTools"
+    $download = [Environment]::GetFolderPath('MyDocuments').Replace("Documents", "Downloads")
+    $downloads = $download + "\PCHH-Malware-Tools"
     if (-not (Test-Path $downloads)) {
         New-Item -Path $downloads -ItemType Directory | Out-Null
     }
