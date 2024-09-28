@@ -13,7 +13,6 @@ $newWindowSize.Width = 170
 $newWindowSize.Height = 50
 $pswindow.WindowSize = $newWindowSize
 
-
 $Host.UI.RawUI.BackgroundColor = "Black"
 $Host.UI.RawUI.ForegroundColor = "White"
 
@@ -76,6 +75,9 @@ function scriptstart {
     Write-Host ""
 
     $downloads = "C:\PCHH-MTools"
+    if (-not (Test-Path $downloads)) {
+        New-Item -Path $downloads -ItemType Directory | Out-Null
+    }
 
     $digits = @()
     $i = 0
@@ -94,81 +96,170 @@ function scriptstart {
     Write-Host ""
 
     foreach ($digit in $digits) {
-    
+        Write-Host ""
         if ($digit -contains '0') {
             Write-Host "Installing Rkill.." -ForegroundColor Green
-            $wc = New-Object net.webclient
-            $wc.Downloadfile($rkilllink, "$downloads\rkill.exe")
+            try {
+                $wc = New-Object System.Net.WebClient
+                $wc.DownloadFile($rkilllink, "$downloads\rkill.exe")
+                Write-Host "Rkill downloaded successfully." -ForegroundColor Cyan
+            }
+            catch {
+                Write-Host "Failed to download Rkill." -ForegroundColor Red
+            }
+            finally {
+                $wc.Dispose()
+            }
         }
-
         if ($digit -contains '1') {
             Write-Host "Installing FRST.." -ForegroundColor Green
-            $wc = New-Object net.webclient
-            $wc.Downloadfile($frstlink, "$downloads\FRSTEnglish.exe")
+            try {
+                $wc = New-Object System.Net.WebClient
+                $wc.DownloadFile($frstlink, "$downloads\FRSTEnglish.exe")
+                Write-Host "FRST downloaded successfully." -ForegroundColor Cyan
+            }
+            catch {
+                Write-Host "Failed to download FRST." -ForegroundColor Red
+            }
+            finally {
+                $wc.Dispose()
+            }
         }
         elseif ($digit -contains '2') {
             Write-Host "Installing Hitman Pro.." -ForegroundColor Green
-            $wc = New-Object net.webclient
-            $wc.Downloadfile($hitmanlink, "$downloads\HitmanPro_x64.exe")
+            try {
+                $wc = New-Object System.Net.WebClient
+                $wc.DownloadFile($hitmanlink, "$downloads\HitmanPro_x64.exe")
+                Write-Host "Hitman Pro downloaded successfully." -ForegroundColor Cyan
+            }
+            catch {
+                Write-Host "Failed to download Hitman Pro." -ForegroundColor Red
+            }
+            finally {
+                $wc.Dispose()
+            }
         }
         elseif ($digit -contains '3') {
-            Write-Host "Installing adware cleaner.." -ForegroundColor Green
-            $wc = New-Object net.webclient
-            $wc.Downloadfile($adwcleanerlink, "$downloads\adwcleaner.exe")
-
+            Write-Host "Installing AdwCleaner.." -ForegroundColor Green
+            try {
+                $wc = New-Object System.Net.WebClient
+                $wc.DownloadFile($adwcleanerlink, "$downloads\adwcleaner.exe")
+                Write-Host "AdwCleaner downloaded successfully." -ForegroundColor Cyan
+            }
+            catch {
+                Write-Host "Failed to download AdwCleaner." -ForegroundColor Red
+            }
+            finally {
+                $wc.Dispose()
+            }
         }
         elseif ($digit -eq '4') {
             Write-Host "Installing NPE.." -ForegroundColor Green
-            $wc = New-Object net.webclient
-            $wc.Downloadfile($npelink, "$downloads\NPE.exe")
+            try {
+                $wc = New-Object System.Net.WebClient
+                $wc.DownloadFile($npelink, "$downloads\NPE.exe")
+                Write-Host "NPE downloaded successfully." -ForegroundColor Cyan
+            }
+            catch {
+                Write-Host "Failed to download NPE." -ForegroundColor Red
+            }
+            finally {
+                $wc.Dispose()
+            }
         }
         elseif ($digit -eq '5') {
             Write-Host "Installing ESET.." -ForegroundColor Green
-            $wc = New-Object net.webclient
-            $wc.Downloadfile($esetlink, "$downloads\esetonlinescanner.exe")
+            try {
+                $wc = New-Object System.Net.WebClient
+                $wc.DownloadFile($esetlink, "$downloads\esetonlinescanner.exe")
+                Write-Host "ESET downloaded successfully." -ForegroundColor Cyan
+            }
+            catch {
+                Write-Host "Failed to download ESET." -ForegroundColor Red
+            }
+            finally {
+                $wc.Dispose()
+            }
         }
         elseif ($digit -eq '6') {
             Write-Host "Installing MSERT.." -ForegroundColor Green
-            $wc = New-Object net.webclient
-            $wc.Downloadfile($msertlink, "$downloads\msert.exe")
+            try {
+                $wc = New-Object System.Net.WebClient
+                $wc.DownloadFile($msertlink, "$downloads\msert.exe")
+                Write-Host "MSERT downloaded successfully." -ForegroundColor Cyan
+            }
+            catch {
+                Write-Host "Failed to download MSERT." -ForegroundColor Red
+            }
+            finally {
+                $wc.Dispose()
+            }
         }
         elseif ($digit -eq '7') {
             Write-Host "Installing Trojan Killer.." -ForegroundColor Green
-
-            $wc = New-Object net.webclient
-            $wc.Downloadfile($trojankillerlink, "$downloads\TrojanKiller.exe")
+            try {
+                $wc = New-Object System.Net.WebClient
+                $wc.DownloadFile($trojankillerlink, "$downloads\TrojanKiller.exe")
+                Write-Host "Trojan Killer downloaded successfully." -ForegroundColor Cyan
+            }
+            catch {
+                Write-Host "Failed to download Trojan Killer." -ForegroundColor Red
+            }
+            finally {
+                $wc.Dispose()
+            }
         }
         elseif ($digit -eq '8') {
-            Write-Host "Installing Security Checker.." -ForegroundColor Green
-
-            $wc = New-Object net.webclient
-            $wc.Downloadfile($securitychecklink, "$downloads\SecurityCheck.exe")
-
+            Write-Host "Installing Security Check.." -ForegroundColor Green
+            try {
+                $wc = New-Object System.Net.WebClient
+                $wc.DownloadFile($securitychecklink, "$downloads\SecurityCheck.exe")
+                Write-Host "Security Check downloaded successfully." -ForegroundColor Cyan
+            }
+            catch {
+                Write-Host "Failed to download Security Check." -ForegroundColor Red
+            }
+            finally {
+                $wc.Dispose()
+            }
         }
         elseif ($digit -eq '9') {
             Write-Host "Installing Emsisoft.." -ForegroundColor Green
-
-            $wc = New-Object net.webclient
-            $wc.Downloadfile($emsisoftlink, "$downloads\EmsisoftEmergencyKit.exe")
-
+            try {
+                $wc = New-Object System.Net.WebClient
+                $wc.DownloadFile($emsisoftlink, "$downloads\EmsisoftEmergencyKit.exe")
+                Write-Host "Emsisoft downloaded successfully." -ForegroundColor Cyan
+            }
+            catch {
+                Write-Host "Failed to download Emsisoft." -ForegroundColor Red
+            }
+            finally {
+                $wc.Dispose()
+            }
         }
         elseif ($digit -eq '10') {
             Write-Host "Installing Revo Uninstaller.." -ForegroundColor Green
-
-            $wc = New-Object net.webclient
-            $wc.Downloadfile($revolink, "$downloads\RevoUninstaller_Portable.zip")
-
-            Expand-Archive -Path "$downloads\RevoUninstaller_Portable.zip" -DestinationPath "$downloads\RevoUninstaller_Portable" -Force > $null 2>&1
-            Remove-Item -Path "$downloads\RevoUninstaller_Portable.zip" -Force > $null 2>&1
-
+            try {
+                $wc = New-Object System.Net.WebClient
+                $wc.DownloadFile($revolink, "$downloads\RevoUninstaller_Portable.zip")
+                Write-Host "Revo Uninstaller downloaded successfully." -ForegroundColor Cyan
+            }
+            catch {
+                Write-Host "Failed to download Revo Uninstaller." -ForegroundColor Red
+            }
+            finally {
+                $wc.Dispose()
+            }
         }
         elseif ($digit -eq '11') {
             Write-Host "Removing tools.." -ForegroundColor Green
 
             $itemstoremove = @(
                 "$downloads\RevoUninstaller_Portable",
+                "$downloads\RevoUninstaller_Portable.zip",
                 "$downloads\EmsisoftEmergencyKit.exe",
                 "$downloads\FRSTEnglish.exe",
+                "$downloads\HitmanPro_x64.exe",
                 "$downloads\FRST-OlderVersion",
                 "$downloads\TrojanKiller.exe",
                 "$downloads\msert.exe",
@@ -183,29 +274,22 @@ function scriptstart {
                 "$downloads\FRST.txt",
                 "$downloads\Search.txt",
                 "C:\AdwCleaner",
-                "C:\EEK"
+                "C:\EEK",
+                "$downloads"
 
                 # will add more when i feel like finding the rest
 
             )
             
             Remove-Item -Path $itemstoremove -Recurse -Force > $null 2>&1
+            
         }
-
-        Write-Host "Completed installation.." -ForegroundColor Blue
-        Write-Host ""
     }
-
-    Write-Host "Everything that was downloaded is located in '$downloads'" -ForegroundColor Yellow
-    endmessage
-}
-
-function endmessage {
+    
     Write-Host ""
-    Write-Host "Press any key to exit.."
-        
+    Write-Host "Done! The tools are located in $downloads" -ForegroundColor Yellow
+    Write-Host "Press any key to exit the script.." -ForegroundColor Yellow
     $null = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
-    exit
 }
 
 scriptstart
