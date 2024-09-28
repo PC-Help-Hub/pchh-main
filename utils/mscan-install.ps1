@@ -33,17 +33,17 @@ if (-NOT ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdent
     exit
 }
 
-$frstlink = "https://www.dropbox.com/scl/fi/n3zkk0q4i6zq8hi6oq5d6/FRSTEnglish.exe?rlkey=dkf9cmnqnccfsmg6ylr3npstk&st=waxgi45n&dl=1"
-$hitmanlink = "https://www.dropbox.com/scl/fi/exuwti6tfx6g9891rep3i/HitmanPro_x64.exe?rlkey=32cjnefe3s2ee6cchk3fcdums&st=m5wl0q8t&dl=1"
-$adwcleanerlink = "https://downloads.malwarebytes.com/file/adwcleaner"
-$npelink = "https://www.norton.com/npe_latest"
-$esetlink = "https://download.eset.com/com/eset/tools/online_scanner/latest/esetonlinescanner.exe"
-$emsisoftlink = "https://dl.emsisoft.com/EmsisoftEmergencyKit.exe"
-$msertlink = "https://go.microsoft.com/fwlink/?LinkId=212732"
-$trojankillerlink = "https://www.dropbox.com/scl/fi/iry33ywlg9tpfi7m2qmkp/GTKSetup-en.exe?rlkey=jjcpat9hzmn07s9cniw29gbjy&st=9t7cuvm3&dl=1"
-$revolink = "https://download.revouninstaller.com/download/RevoUninstaller_Portable.zip"
-$securitychecklink = "https://tools.safezone.cc/glax24/SecurityCheck/SecurityCheck.exe"
-$rkilllink = "https://download.bleepingcomputer.com/dl/b9f1f87f75b31e2b2a3e57746beaa752/66f64487/windows/security/security-utilities/r/rkill/rkill.exe"
+$frstlink = "https://github.com/PC-Help-Hub/pchh-main/raw/refs/heads/main/utils/mscan-install-assets/FRSTEnglish.exe"
+$hitmanlink = "https://github.com/PC-Help-Hub/pchh-main/raw/refs/heads/main/utils/mscan-install-assets/HitmanPro_x64.exe"
+$adwcleanerlink = "https://github.com/PC-Help-Hub/pchh-main/raw/refs/heads/main/utils/mscan-install-assets/adwcleaner.exe"
+$npelink = "https://github.com/PC-Help-Hub/pchh-main/raw/refs/heads/main/utils/mscan-install-assets/NPE.exe"
+$esetlink = "https://github.com/PC-Help-Hub/pchh-main/raw/refs/heads/main/utils/mscan-install-assets/esetonlinescanner.exe"
+$emsisoftlink = "https://dl.emsisoft.com/EmsisoftEmergencyKit.exe" # needs new link
+$msertlink = "https://go.microsoft.com/fwlink/?LinkId=212732" # needs new link
+$trojankillerlink = "https://github.com/PC-Help-Hub/pchh-main/raw/refs/heads/main/utils/mscan-install-assets/TrojanKiller.exe"
+$revolink = "https://github.com/PC-Help-Hub/pchh-main/raw/refs/heads/main/utils/mscan-install-assets/RevoUninstaller_Portable.zip"
+$securitychecklink = "https://github.com/PC-Help-Hub/pchh-main/raw/refs/heads/main/utils/mscan-install-assets/SecurityCheck.exe"
+$rkilllink = "https://github.com/PC-Help-Hub/pchh-main/raw/refs/heads/main/utils/mscan-install-assets/rkill.exe"
 
 function scriptstart {
     Clear-Host
@@ -109,7 +109,7 @@ function scriptstart {
         elseif ($digit -contains '2') {
             Write-Host "Installing Hitman Pro.." -ForegroundColor Green
             $wc = New-Object net.webclient
-            $wc.Downloadfile($hitmanlink, "$downloads_HitmanPro_x64.exe")
+            $wc.Downloadfile($hitmanlink, "$downloads\HitmanPro_x64.exe")
         }
         elseif ($digit -contains '3') {
             Write-Host "Installing adware cleaner.." -ForegroundColor Green
