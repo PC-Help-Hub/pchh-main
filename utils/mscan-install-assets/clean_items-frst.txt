@@ -369,7 +369,6 @@
 "COMODO Security Solutions Inc.",
 "Opera Software",
 "(NVIDIA Corp.)",
-"- Comodo)",
 "Reincubate Ltd",
 "(Team Cherry)",
 "LunarG, Inc.",
@@ -469,7 +468,6 @@
 "Unity Technologies ApS",
 "Unity Technologies Inc.",
 "Ubisoft",
-"Chrome\\User Data\System Profile [",
 "ManyCam (VISICOM MÉDIA INC.)",
 "Visicom Media Inc.",
 "WindowsLiveWallpaper",
@@ -544,6 +542,6 @@
 "Adobe Inc.",
 "Adobe Systems",
 "Voicemod Sociedad Limitada",
-"Voicemod",
+"Voicemod",s
 "win.rar GmbH",
 "Alexander Roshal"
