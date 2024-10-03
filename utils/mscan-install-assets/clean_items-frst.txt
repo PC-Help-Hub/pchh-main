@@ -542,6 +542,6 @@
 "Adobe Inc.",
 "Adobe Systems",
 "Voicemod Sociedad Limitada",
-"Voicemod",s
+"Voicemod",
 "win.rar GmbH",
 "Alexander Roshal"
