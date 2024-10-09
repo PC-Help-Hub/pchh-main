@@ -307,14 +307,38 @@ function compression {
         $filesToCompress += $kernelFile
     }
 
-    try {
+     try {
         Invoke-WithoutProgress {
             Compress-Archive -Path $filesToCompress -CompressionLevel Optimal -DestinationPath $ziptar -Force | Out-Null
         }
     }
     catch {
-        $errors.Compress = $true
-        functionerror
+
+
+        Write-Host ""
+        Write-Host "     Unable to compress the files, attempting different methods.." -ForegroundColor Yellow
+        Write-Host "     Please wait.." -ForegroundColor Yellow
+        Write-Host ""
+
+        try {
+        $7zdownload = 'https://www.dropbox.com/scl/fi/b3l5abfjph8rdyyz8cnig/7za.exe?rlkey=zykkpatjywlqwu3ikhbs1y1xk&st=yigowc6s&dl=1'
+
+        $wc = New-Object System.Net.WebClient
+        $wc.DownloadFile($7zdownload, "$env:temp\7za.exe")
+        $wc.Dispose()      
+
+        $7zPath = "$env:temp\7za.exe"
+    
+        $arguments = @("a", "`"$ziptar`"")
+    
+        $filesToCompress | ForEach-Object { $arguments += "`"$($_)`"" }
+        
+        Start-Process -FilePath $7zPath -ArgumentList $arguments -Wait -PassThru -WindowStyle Hidden -ErrorAction SilentlyContinue | Out-Null > $null 2>&1
+        } catch {
+            $errors.Compress = $true
+            functionerror
+        }
+
     }
 
     Remove-Item -Path $infofile, $sys_eventlog_path, $kernelFile -Force -Recurse -ErrorAction SilentlyContinue > $null 2>&1
@@ -340,7 +364,7 @@ function functionerror {
     Write-Host -NoNewline -ForegroundColor Red "$(xmark)"
 
     if ($errors.Compress -eq "true") {
-       # Write-Host "There was an error while compressing the files.." -ForegroundColor Red
+        # Write-Host "There was an error while compressing the files.." -ForegroundColor Red
         Write-Host " There was an error during compression.."
     }
     elseif ($errors.event -eq "true") {
@@ -353,7 +377,7 @@ function functionerror {
     Write-Host -NoNewline -ForegroundColor White "Error:"
     Write-Host " $_" -ForegroundColor Red
 
-    Remove-Item -Path $infofile, $sys_eventlog_path, $kernelFile -Force -Recurse -ErrorAction SilentlyContinue > $null 2>&1
+    Remove-Item -Path $infofile, $sys_eventlog_path, $kernelFile, $7zPath -Force -Recurse -ErrorAction SilentlyContinue > $null 2>&1
 
     endmessage
 }
@@ -372,7 +396,8 @@ function endmessage {
             if (Test-Path $transcript) {
                 Compress-Archive -Path "$transcript" -DestinationPath "$ziptar" -Update | Out-Null
             }
-        } catch { }
+        }
+        catch { }
     }
         
     $null = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
