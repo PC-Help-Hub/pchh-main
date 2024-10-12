@@ -18,17 +18,28 @@
 > 
 > With PowerShell opened, paste the code that matches what you would like to do.
 
+# Auto-Restart
 
-## Enable Auto-Restart
+### Enable Auto-Restart
 ```pwsh
 Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\CrashControl" -Name "AutoReboot" -Value 0 -Type DWord -Force
 ```
 
-## Disable Auto-Restart
+### Disable Auto-Restart
 ```pwsh
 Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\CrashControl" -Name "AutoReboot" -Value 1 -Type DWord -Force
 ```
 
-Once entering one of these commands, restart your computer for changes to apply.
+# On-Screen Parameters
 
-These changes will change the behavior of auto-restarting when you Blue Screen. For enabling parameters, [head here](https://github.com/PC-Help-Hub/pchh-main/blob/main/utils/bsod-detail.ps1). 
+### Enable On-Screen Parameters
+```pwsh
+Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\CrashControl" -Name "DisplayParameters" -Value 1 -Type DWord -Force
+```
+
+### Disable On-Screen Parameters
+```pwsh
+Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\CrashControl" -Name "DisplayParameters" -Value 0 -Type DWord -Force
+```
+
+Once entering one of these commands, restart your computer for changes to apply.
