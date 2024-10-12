@@ -20,13 +20,4 @@
 > 
 > With PowerShell opened, paste the code that matches what script that you would like to run.
 
-
-## bsod-detail.ps1
-```pwsh
-iwr -useb https://raw.githubusercontent.com/PC-Help-Hub/pchh-main/main/utils/bsod-detail.ps1 | iex
-```
-
-## specs.ps1
-```pwsh
-iwr -useb https://raw.githubusercontent.com/PC-Help-Hub/pchh-main/main/utils/specs.ps1 | iex
-```
+*Scripts will be added soon*
