@@ -269,6 +269,24 @@ function scripterror {
 
 function endmessage {
     Write-Host ""
+    if (-Not (Test-Path ("$env:temp\image-no.txt"))) {
+        $issueprompt = Read-Host "Were there any issues within the script? (Y/N)"
+    
+        if ($issueprompt -eq "Y".ToLower()) {
+            Write-Host "Redirecting you to the issue creation page.." 
+            start "https://github.com/PC-Help-Hub/pchh-main/issues/new/choose"
+    
+            Write-Host ""
+            $askagainprompt = Read-Host "Would you like to be asked this question again when running this script? (Y/N)"
+    
+            if ($askagainprompt -eq "N".ToLower()) {
+                New-Item -Path "$env:temp\image-no.txt" -ItemType File -Force > $null 2>&1
+                Add-Content -Path "$env:temp\image-no.txt" -Value "No" -Force > $null 2>&1
+                Write-Host "You will no longer be asked this question.."
+            }
+        }
+    }
+    Write-Host ""
     Write-Host "Press any key to exit.."
     Stop-Transcript > $null 2>&1
     $null = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
