@@ -34,7 +34,7 @@ $Host.UI.RawUI.WindowTitle = "PCHH Crashlog Script"
 # Admin check
 if (-NOT ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator")) {
     Write-Host "============================================" -ForegroundColor Red
-    Write-Host "-- Script must be ran as an Administrator --" -ForegroundColor Red
+    Write-Host "-- Script must be run as an Administrator --" -ForegroundColor Red
     Write-Host "-- Right-Click Start -> Terminal(Admin)   --" -ForegroundColor Red
     Write-Host "============================================" -ForegroundColor Red
     Write-Host ""
@@ -49,10 +49,10 @@ Write-Host ""
 $random = Get-Random -Minimum 1 -Maximum 5000
 $minidump = "$env:SystemRoot\minidump"
 $source = "$env:SystemRoot\minidump\*.dmp"
-$kerneldmp = "$env:SystemRoot\LiveKernelReports\*.dmp"
+#$kerneldmp = "$env:SystemRoot\LiveKernelReports\*.dmp"
 
 $File = "$env:TEMP\Crash-LOGS"
-$kernelFile = "$File\Live-Kernel-Dumps"
+#$kernelFile = "$File\Live-Kernel-Dumps"
 $infofile = "$File\specs-programs.txt"
 
 $ziptar = "$File\Crashlog-Files_$random.zip"
@@ -104,6 +104,7 @@ function dmpcheck {
     Write-Host "============================================" -ForegroundColor DarkGreen
     Write-Host "-- Script is running as an Administrator --" -ForegroundColor Green
     Write-Host "--         Made by ShinTheBean           --" -ForegroundColor Green
+    Write-Host "--       Updated by Solus Bellator       --" -ForegroundColor Green
     Write-Host "============================================" -ForegroundColor DarkGreen
     Write-Host ""
     Write-Host "Creating required files.." -ForegroundColor Blue
@@ -121,14 +122,14 @@ function dmpcheck {
     }
     
 
-    if (Test-Path $kerneldmp) {
+<#    if (Test-Path $kerneldmp) {
         Get-ChildItem -Path $kerneldmp -Recurse -Force | Where-Object { !$_.PSIsContainer -and $_.LastWriteTime -lt $limit } | Remove-Item -Force -ErrorAction SilentlyContinue > $null 2>&1
         
         if (Test-Path $kerneldmp) {
             $kerneldmpfound = $true
         }
     }
-
+#>
     filecreation
 }
 
@@ -138,6 +139,8 @@ function filecreation {
     try {
         New-Item -Path $File -ItemType Directory -Force | Out-Null
         New-Item -Path $infofile -ItemType File -Force | Out-Null
+
+        # implicitly disabled through value of $kerneldmpfound
 
         if ($kerneldmpfound) {
             New-Item -Path $kernelFile -ItemType Directory -Force | Out-Null
@@ -302,6 +305,8 @@ function compression {
     if ($dmpfound) {
         $filesToCompress += Get-ChildItem -Path $source
     }
+
+    # implicitly disabled through value of $kerneldmpfound
 
     if ($kerneldmpfound) {
         $filesToCompress += $kernelFile
