@@ -347,7 +347,8 @@ function compression {
 
     }
 
-    Remove-Item -Path $infofile, $sys_eventlog_path, $kernelFile -Force -Recurse -ErrorAction SilentlyContinue > $null 2>&1
+    # Remove-Item -Path $infofile, $sys_eventlog_path, $kernelFile -Force -Recurse -ErrorAction SilentlyContinue > $null 2>&1
+    Remove-Item -Path $infofile, $sys_eventlog_path, -Force -Recurse -ErrorAction SilentlyContinue > $null 2>&1
 
     Write-Host -NoNewline -ForegroundColor Green "$(cmark)"
     Write-Host " Compression complete.."
