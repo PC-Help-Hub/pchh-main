@@ -347,8 +347,7 @@ function compression {
 
     }
 
-    # Remove-Item -Path $infofile, $sys_eventlog_path, $kernelFile -Force -Recurse -ErrorAction SilentlyContinue > $null 2>&1
-    Remove-Item -Path $infofile, $sys_eventlog_path, -Force -Recurse -ErrorAction SilentlyContinue > $null 2>&1
+    Remove-Item -Path $infofile, $sys_eventlog_path, <# $kernelFile #> -Force -Recurse -ErrorAction SilentlyContinue > $null 2>&1
 
     Write-Host -NoNewline -ForegroundColor Green "$(cmark)"
     Write-Host " Compression complete.."
@@ -384,7 +383,7 @@ function functionerror {
     Write-Host -NoNewline -ForegroundColor White "Error:"
     Write-Host " $_" -ForegroundColor Red
 
-    Remove-Item -Path $infofile, $sys_eventlog_path, $kernelFile, $7zPath -Force -Recurse -ErrorAction SilentlyContinue > $null 2>&1
+    Remove-Item -Path $infofile, $sys_eventlog_path, <# $kernelFile, #> $7zPath -Force -Recurse -ErrorAction SilentlyContinue > $null 2>&1
 
     endmessage
 }
