@@ -137,6 +137,16 @@ function fileadd {
     $cpuName = $cpu | Select-Object -ExpandProperty Name
     $cpuSpeed = $cpu | Select-Object -ExpandProperty MaxClockSpeed
     $gpu = Get-WmiObject Win32_VideoController | Select-Object -ExpandProperty Name
+
+    if ((Get-Tpm).TpmEnabled -eq "True") {
+        $tpmEnabled = "Enabled"
+    }
+    else {
+        $tpmEnabled = "Disabled"
+    }
+
+    $tpmVersion = (Get-CimInstance -Namespace "root\CIMV2\Security\MicrosoftTPM" -ClassName Win32_TPM).SpecVersion[0]
+
     $motherboardModel = Get-WmiObject Win32_BaseBoard | Select-Object -ExpandProperty Product
     $bios = Get-WmiObject Win32_BIOS
     $biosVersion = $bios | Select-Object -ExpandProperty SMBIOSBIOSVersion
@@ -170,6 +180,10 @@ function fileadd {
     specs "`nCPU: $cpuName"
     specs "CPU Speed: $cpuSpeed"
     specs "GPU: $gpu"
+    specs "`nTPM Status: $tpmEnabled"
+    if ($tpmEnabled -eq "Enabled") {
+        specs "TPM Version: $tpmVersion"
+    }
     specs "`nMotherboard: $motherboardModel"
     specs "BIOS Version: $biosVersion"
     specs "BIOS Date: $([System.Management.ManagementDateTimeConverter]::ToDateTime($biosDate))"
