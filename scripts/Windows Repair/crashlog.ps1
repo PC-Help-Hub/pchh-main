@@ -149,6 +149,11 @@ function fileadd {
     $secureBoot = try { Confirm-SecureBootUEFI } catch { $secCompat = $true }
     $fastboot = (Get-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Power" -Name HiberbootEnabled).HiberbootEnabled
 
+    $buildNumber = (Get-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion").CurrentBuild
+    $ubr = (Get-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion").UBR
+    $build = "$buildNumber.$ubr"
+
+
     $lboottime = (Get-CimInstance -ClassName Win32_OperatingSystem).LastBootUpTime
     $uptime = (Get-Date) - $lboottime
 
@@ -171,6 +176,7 @@ function fileadd {
     specs "`nOS: $osName"
     specs "OS Version: $osVersion"
     specs "System Uptime: $($uptime.Days) days, $($uptime.Hours) hours, $($uptime.Minutes) minutes"
+    specs "Build: $build"
     specs "Page File Size: $pgfilesize MB"
     specs "Boot Device: $bootDevice"
     specs "System Directory: $systemDirectory\"
@@ -179,8 +185,69 @@ function fileadd {
     specs "`nRam Capacity: $([math]::Round($installedMemory/1GB)) GB"
     specs "RAM Speed: $ramSpeed MT/s"
 
-    <#
-    # grabs installed programs
+    $drives = Get-WmiObject Win32_LogicalDisk | ForEach-Object {
+        $logicalDisk = $_
+        $windowsDrive = $logicalDisk.DeviceID.TrimEnd(':')
+
+        $partition = Get-Partition | Where-Object { $_.DriveLetter -eq $windowsDrive }
+
+        $diskNumber = if ($partition) {
+            $partition.DiskNumber
+        }
+        else {
+            $null
+        }
+
+        $disk = if ($null -ne $diskNumber) {
+            Get-Disk -Number $diskNumber
+        }
+
+        $physicalDisk = if ($disk) {
+            Get-PhysicalDisk | Where-Object { $_.DeviceId -eq $diskNumber }
+        }
+
+        $driveType = if ($physicalDisk) { $physicalDisk.MediaType } else { 'Unknown' }
+        $operationalStatus = if ($physicalDisk) { $physicalDisk.OperationalStatus } else { 'Unknown' }
+        $healthStatus = if ($physicalDisk) { $physicalDisk.HealthStatus } else { 'Unknown' }
+
+        $totalSizeGB = if ($logicalDisk.Size) { [math]::Round($logicalDisk.Size / 1GB, 2) } else { 0 }
+        $freeSpaceGB = if ($logicalDisk.FreeSpace) { [math]::Round($logicalDisk.FreeSpace / 1GB, 2) } else { 0 }
+        $percentageFree = if ($totalSizeGB -ne 0) {
+            [math]::Round(($freeSpaceGB / $totalSizeGB) * 100, 2)
+        }
+        else {
+            'N/A'
+        }
+
+        [PSCustomObject]@{
+            'Drive Label'         = $logicalDisk.DeviceID + '\'
+            'Drive Name'          = if (-not [string]::IsNullOrEmpty($logicalDisk.VolumeName)) { $logicalDisk.VolumeName } else { 'No Name Found' }
+            'Drive Status'        = "$operationalStatus, $healthStatus"
+            'Windows Drive'       = ($logicalDisk.DeviceID -eq "$env:SystemDrive")
+            'Drive ID'            = if ($null -ne $diskNumber) { $diskNumber } else { 'Unknown' }
+            'Drive Type'          = $driveType
+            'Total Size (GB)'     = $totalSizeGB
+            'Free Space (GB)'     = $freeSpaceGB
+            'Percentage Free (%)' = $percentageFree
+        }
+    }
+
+specs "`n`nDrive Information:`n`n"
+
+foreach ($drive in $drives) {
+    specs "Drive Label: $($drive.'Drive Label')"
+    specs "Drive Name: $($drive.'Drive Name')"
+    specs "Drive Status: $($drive.'Drive Status')"
+    specs "Windows Drive: $($drive.'Windows Drive')"
+    specs "Drive ID: $($drive.'Drive ID')"
+    specs "Drive Type: $($drive.'Drive Type')"
+    specs "Total Size (GB): $($drive.'Total Size (GB)')"
+    specs "Free Space (GB): $($drive.'Free Space (GB)')"
+    specs "Percentage Free (%): $($drive.'Percentage Free (%)')`n"
+}
+
+
+
     $installedPrograms = Get-ItemProperty HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*,
     HKLM:\Software\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\* |
     Select-Object DisplayName |
@@ -188,7 +255,7 @@ function fileadd {
 
     $programs = $installedPrograms | Out-String
 
-    specs "`n`nPrograms Installed:`n $programs" #>
+    specs "`n`nPrograms Installed:`n $programs"
     
     Write-Host -NoNewline -ForegroundColor Green "$(cmark)"
     Write-Host " File Creation Complete"
@@ -305,6 +372,9 @@ function endmessage {
     }
         
     $null = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+
+    #exit
+    
     Stop-Process -Id $PID -Force
 }
 
