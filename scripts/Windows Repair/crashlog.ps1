@@ -232,19 +232,19 @@ function fileadd {
         }
     }
 
-specs "`n`nDrive Information:`n`n"
+    specs "`n`nDrive Information:`n`n"
 
-foreach ($drive in $drives) {
-    specs "Drive Label: $($drive.'Drive Label')"
-    specs "Drive Name: $($drive.'Drive Name')"
-    specs "Drive Status: $($drive.'Drive Status')"
-    specs "Windows Drive: $($drive.'Windows Drive')"
-    specs "Drive ID: $($drive.'Drive ID')"
-    specs "Drive Type: $($drive.'Drive Type')"
-    specs "Total Size (GB): $($drive.'Total Size (GB)')"
-    specs "Free Space (GB): $($drive.'Free Space (GB)')"
-    specs "Percentage Free (%): $($drive.'Percentage Free (%)')`n"
-}
+    foreach ($drive in $drives) {
+        specs "Drive Label: $($drive.'Drive Label')"
+        specs "Drive Name: $($drive.'Drive Name')"
+        specs "Drive Status: $($drive.'Drive Status')"
+        specs "Windows Drive: $($drive.'Windows Drive')"
+        specs "Drive ID: $($drive.'Drive ID')"
+        specs "Drive Type: $($drive.'Drive Type')"
+        specs "Total Size (GB): $($drive.'Total Size (GB)')"
+        specs "Free Space (GB): $($drive.'Free Space (GB)')"
+        specs "Percentage Free (%): $($drive.'Percentage Free (%)')`n"
+    }
 
 
 
@@ -372,9 +372,7 @@ function endmessage {
     }
         
     $null = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
-
-    #exit
-    
+    #exit   
     Stop-Process -Id $PID -Force
 }
 
