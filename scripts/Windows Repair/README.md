@@ -35,8 +35,3 @@ iwr -useb https://raw.githubusercontent.com/PC-Help-Hub/pchh-main/main/scripts/W
 ```pwsh
 iwr -useb https://raw.githubusercontent.com/PC-Help-Hub/pchh-main/main/scripts/Windows%20Repair/update.ps1 | iex
 ```
-
-## OScheck.ps1
-```pwsh
-iwr -useb https://raw.githubusercontent.com/PC-Help-Hub/pchh-main/main/scripts/Windows%20Repair/OScheck.ps1 | iex
-```

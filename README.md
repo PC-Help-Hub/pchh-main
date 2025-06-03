@@ -28,7 +28,6 @@
 - [SFREP](https://github.com) - This script will run DISM and SFC to repair any Windows corruption.
 - [Crashlog](https://github.com/PC-Help-Hub/pchh-main/blob/main/scripts/Windows%20Repair/crashlog.ps1) - This script will grab any minidumps, event logs, and specs. No sensitive information is leaked with this.
 - [Update](https://github.com/PC-Help-Hub/pchh-main/blob/main/scripts/Windows%20Repair/update.ps1) - This script will use the known fixes to fix problems with updating Windows.
-- [OSCheck](https://github.com/PC-Help-Hub/pchh-main/blob/main/scripts/Windows%20Repair/OScheck.ps1) - This script will check if you meet the requirements to use Windows 10 or 11.
 
 ## Miscellaneous
 - [Copilot](https://github.com/PC-Help-Hub/pchh-main/blob/main/tweaks/DisableWindowsCopilot.md) - This will tell you how to disable and/or enable Windows Copilot.

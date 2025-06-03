@@ -163,3 +163,4 @@ My Scripts
 utils/PCHH-GUI
 scripts/Windows Repair/stopservice.ps1
 scripts/Windows Repair/ignore.bat
+scripts/Windows Repair/winrepair.ps1
