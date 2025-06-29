@@ -75,7 +75,7 @@ Write-Host ""
 Write-Host " ============================================" -ForegroundColor DarkGreen
 Write-Host "|-- Script is running as an Administrator -- |" -ForegroundColor DarkGreen
 Write-Host "|--         Made by ShinTheBean           -- |" -ForegroundColor DarkGreen
-Write-Host "|--          Updated 06/06/2025           -- |" -ForegroundColor DarkGreen
+Write-Host "|--          Updated 06/29/2025           -- |" -ForegroundColor DarkGreen
 Write-Host " ============================================" -ForegroundColor DarkGreen
 Write-Host ""
 

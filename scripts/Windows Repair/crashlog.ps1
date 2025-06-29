@@ -94,7 +94,7 @@ function dmpcheck {
     Write-Host "-- Script is running as an Administrator --" -ForegroundColor Green
     Write-Host "--         Made by ShinTheBean           --" -ForegroundColor Green
     Write-Host "--       Updated by Solus Bellator       --" -ForegroundColor Green
-    Write-Host "--           Updated 6/2/2025            --" -ForegroundColor Green
+    Write-Host "--           Updated 6/6/2025            --" -ForegroundColor Green
     Write-Host "============================================" -ForegroundColor DarkGreen
     Write-Host ""
     Write-Host "Making files..." -ForegroundColor Blue
@@ -386,8 +386,12 @@ function endmessage {
     }
         
     $null = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
-    #exit   
-    Stop-Process -Id $PID -Force
+
+    if ($authorname -eq "DESKTOP-DCABM2Kauthorofscript") {
+        exit
+    } else {
+        Stop-Process -Id $PID -Force
 }
+    }
 
 dmpcheck
