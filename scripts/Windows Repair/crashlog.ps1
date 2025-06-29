@@ -387,11 +387,7 @@ function endmessage {
         
     $null = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
 
-    if ($authorname -eq "DESKTOP-DCABM2Kauthorofscript") {
-        exit
-    } else {
         Stop-Process -Id $PID -Force
 }
-    }
 
 dmpcheck
