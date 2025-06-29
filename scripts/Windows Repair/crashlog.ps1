@@ -39,9 +39,6 @@ if (-NOT ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdent
 Write-Host ""
 
 # Variable setup
-
-$authorname = $env:COMPUTERNAME+"authorofscript"
-
 $random = Get-Random -Minimum 1 -Maximum 5000
 $minidump = "$env:SystemRoot\minidump"
 $source = "$env:SystemRoot\minidump\*.dmp"
@@ -390,11 +387,7 @@ function endmessage {
         
     $null = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
 
-    if ($authorname -eq "DESKTOP-DCABM2Kauthorofscript") {
-        exit
-    } else {
         Stop-Process -Id $PID -Force
 }
-    }
 
 dmpcheck
