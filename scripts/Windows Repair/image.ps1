@@ -52,10 +52,45 @@ function xmark {
     return [char]0x274C
 }
 
+
+
 $errors = @{
     push         = $false
     timeout      = $false
     requirements = $false
+}
+
+function scripterror {
+    Write-Host ""
+        
+    if ($errors.timeout -eq "true") {
+        Write-Host "You have encountered a Windows bug where running 'sfc /scannow' takes infinitely long to run." -ForegroundColor Red
+        Write-Host "A restart of your system will be needed to perform the command." -ForegroundColor Red
+        Write-Host "Rerun the script once you restart your system." -ForegroundColor Red
+        Write-Host ""
+        $prompt = Read-Host "Would you like to restart your system? (Y/N)"
+        if ($prompt -eq "Y".ToLower()) {
+            Write-Host "Restarting your system in 60 seconds.."
+            shutdown /r /c "System restart is required to fix sfc /scannow bug, rerun the script after the restart." /t 60
+        }
+    }
+    elseif ($errors.push -eq "true") {
+        Write-Host "[!]" -ForegroundColor Red -NoNewline
+        Write-Host " There was an issue while fixing system files.."
+    }
+    elseif ($errors.requirements -eq "true") {
+        Write-Host "[!]" -ForegroundColor Red -NoNewline
+        Write-Host " You failed to meet one of the requirements needed to run the script.."
+    }
+
+    endmessage
+}
+
+function endmessage {
+    Write-Host ""
+    Write-Host "Press any key to exit.."
+    $null = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+    Stop-Process -Id $PID -Force
 }
 
 Clear-Host
@@ -160,37 +195,4 @@ try {
 catch {
     $errors.push = "true"
     scripterror
-}
-
-function scripterror {
-    Write-Host ""
-        
-    if ($errors.timeout -eq "true") {
-        Write-Host "You have encountered a Windows bug where running 'sfc /scannow' takes infinitely long to run." -ForegroundColor Red
-        Write-Host "A restart of your system will be needed to perform the command." -ForegroundColor Red
-        Write-Host "Rerun the script once you restart your system." -ForegroundColor Red
-        Write-Host ""
-        $prompt = Read-Host "Would you like to restart your system? (Y/N)"
-        if ($prompt -eq "Y".ToLower()) {
-            Write-Host "Restarting your system in 60 seconds.."
-            shutdown /r /c "System restart is required to fix sfc /scannow bug, rerun the script after the restart." /t 60
-        }
-    }
-    elseif ($errors.push -eq "true") {
-        Write-Host "[!]" -ForegroundColor Red -NoNewline
-        Write-Host " There was an issue while fixing system files.."
-    }
-    elseif ($errors.requirements -eq "true") {
-        Write-Host "[!]" -ForegroundColor Red -NoNewline
-        Write-Host " You failed to meet one of the requirements needed to run the script.."
-    }
-
-    endmessage
-}
-
-function endmessage {
-    Write-Host ""
-    Write-Host "Press any key to exit.."
-    $null = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
-    Stop-Process -Id $PID -Force
 }
