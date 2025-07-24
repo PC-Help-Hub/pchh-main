@@ -38,10 +38,10 @@ $mediaType = (Get-PhysicalDisk -DeviceNumber (Get-Partition -DriveLetter C).Disk
 
 #timeout is in seconds
 if ($mediaType -eq "SSD") {
-    <#SSD#> $timeout = "900"
+    <#SSD#> $timeout = "1800"
 }
 else {
-    <#HDD#> $timeout = "2700"
+    <#HDD#> $timeout = "3600"
 }
 
 function cmark {
@@ -110,7 +110,7 @@ Write-Host ""
 Write-Host " ============================================" -ForegroundColor DarkGreen
 Write-Host "|-- Script is running as an Administrator -- |" -ForegroundColor DarkGreen
 Write-Host "|--         Made by ShinTheBean           -- |" -ForegroundColor DarkGreen
-Write-Host "|--          Updated 06/29/2025           -- |" -ForegroundColor DarkGreen
+Write-Host "|--          Updated 07/23/2025           -- |" -ForegroundColor DarkGreen
 Write-Host " ============================================" -ForegroundColor DarkGreen
 Write-Host ""
 
