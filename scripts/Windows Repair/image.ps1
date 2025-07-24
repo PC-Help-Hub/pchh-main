@@ -88,6 +88,7 @@ function scripterror {
 
 function endmessage {
     Write-Host ""
+    Write-Host "We'd appreciate if you can send a screenshot of this window to the discord channel. (Win + Shift + S)"
     Write-Host "Press any key to exit.."
     $null = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
     Stop-Process -Id $PID -Force
