@@ -1301,7 +1301,7 @@ function renderSecurity(){
     SECURITY.bitlocker.forEach(b=>{
       const on=b.status==='On';
       h+='<dt>'+esc(b.drive||'?')+(b.type?' <span style="color:var(--dim);font-weight:400">('+esc(b.type)+')</span>':'')+'</dt>'+
-        '<dd style="color:'+(on?'var(--ok)':'var(--err)')+'">'+(on?'On':'Off')+(b.pct&&b.pct!=='100'?' \u00b7 '+esc(b.pct)+'% encrypted':'')+'</dd>';
+        '<dd style="color:'+(on?'var(--ok)':'var(--err)')+'">'+(on?'Enabled':'Disabled')+'</dd>';
     });
     h+='</dl></div>';
   }
@@ -2430,14 +2430,13 @@ function reliabilityexport {
                 }
             } catch { }
 
-            # BitLocker status per volume (drive letter, protection status, encryption %)
+            # BitLocker status per volume (drive letter, protection status)
             $bitlocker = @()
             try {
                 $bitlocker = @(Get-BitLockerVolume -ErrorAction Stop | ForEach-Object {
                     [PSCustomObject]@{
                         drive  = "$($_.MountPoint)"
                         status = "$($_.ProtectionStatus)"
-                        pct    = "$($_.EncryptionPercentage)"
                         type   = "$($_.VolumeType)"
                     }
                 })
