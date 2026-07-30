@@ -605,6 +605,10 @@ function parseSpecs(text){
     if(!t||t==='DisplayName'||/^-+$/.test(t))return;
     out.programs.push(t);
   });
+  // The registry scan reads both the 32-bit and 64-bit Uninstall keys, so the same shared
+  // redistributable (e.g. a .NET or Visual C++ runtime) commonly appears in both and shows up
+  // twice with an identical name - dedupe before sorting so the count reflects reality.
+  out.programs=[...new Set(out.programs)];
   out.programs.sort((a,b)=>a.localeCompare(b,undefined,{sensitivity:'base'}));
   return out;
 }
@@ -1515,7 +1519,7 @@ function fileadd {
     $pgfilesize = $pgfile.AllocatedBaseSize
 
     $installedMemory = Get-WmiObject Win32_ComputerSystem | Select-Object -ExpandProperty TotalPhysicalMemory
-    $ramSpeed = Get-WmiObject Win32_PhysicalMemory | Select-Object -ExpandProperty Speed
+    $ramSpeed = ((Get-WmiObject Win32_PhysicalMemory | Select-Object -ExpandProperty Speed | Sort-Object -Unique) -join '/')
 
     $secureBootState = if ($secureBoot -match "True") { "Enabled" } elseif ($secureBoot -match "False") { "Disabled" } elseif ($secCompat -eq "$true") { "Not Supported" }
     $fastbootState = if ($fastboot -eq "1") { "Enabled" } else { "Disabled" }
@@ -1548,7 +1552,10 @@ function fileadd {
     specs "`nRam Capacity: $([math]::Round($installedMemory/1GB)) GB"
     specs "RAM Speed: $ramSpeed MT/s"
 
-    $drives = Get-WmiObject Win32_LogicalDisk | ForEach-Object {
+    # DriveType=3 is 'Local Fixed Disk' - this excludes network/cloud-sync virtual mounts (like
+    # Google Drive's virtual drive letter), removable media, and optical drives, all of which can
+    # otherwise show up with misleading or borrowed capacity figures that aren't real storage.
+    $drives = Get-WmiObject Win32_LogicalDisk -Filter "DriveType=3" | ForEach-Object {
         $logicalDisk = $_
         $windowsDrive = $logicalDisk.DeviceID.TrimEnd(':')
 
@@ -1832,11 +1839,22 @@ function reliabilityexport {
                 $disk = $_
                 $parts = @(Get-Partition -DiskNumber $disk.Number -ErrorAction SilentlyContinue | Sort-Object PartitionNumber | ForEach-Object {
                     $p = $_
+                    # MBR type 7 (0x07) just means "NTFS/exFAT/HPFS partition" - it's used by every
+                    # NTFS partition on an MBR disk (C:, D:, a hidden recovery partition, all of them),
+                    # so it is NOT a reliable recovery indicator on its own and must not be labelled as
+                    # such. The real signal for a hidden MBR partition is type+0x10 (23/0x17 for hidden
+                    # NTFS), which combined with no drive letter and a small size is what Windows itself
+                    # uses for its own WinRE partitions.
+                    $sizeGBraw = $p.Size / 1GB
                     $typeLabel = switch -Regex ("$($p.GptType)$($p.MbrType)") {
                         'c12a7328-f81f-11d2-ba4b-00a0c93ec93b' { "EFI System Partition"; break }
                         'e3c9e316-0b5c-4db8-817d-f92df00215ae' { "Microsoft Reserved"; break }
                         'de94bba4-06d1-4d40-a16a-bfd50179d6ac' { "Recovery"; break }
-                        '^7$'                                   { "Recovery (MBR)"; break }
+                        '^23$' {
+                            if (-not $p.DriveLetter -and $sizeGBraw -lt 10) { "Recovery (MBR)" }
+                            elseif ($p.DriveLetter) { "Data" } else { "System" }
+                            break
+                        }
                         default { if ($p.DriveLetter) { "Data" } else { "System" } }
                     }
                     [PSCustomObject]@{
@@ -1856,9 +1874,30 @@ function reliabilityexport {
         } catch { }
 
         # Per-stick RAM info (slots, part numbers, rated vs configured speed)
+        # Win32_PhysicalMemory.Manufacturer is unreliable - it identifies the silicon fab (or just
+        # says "Unknown"), not the kit brand printed on the box, since brands like G.Skill/Corsair/
+        # Kingston/Crucial buy chips and program their own part number into SPD but don't always set
+        # the manufacturer string. The part number prefix is usually a much better brand signal.
+        $ramBrandByPrefix = @(
+            @{ p = 'F[1-5]-';        b = 'G.Skill' },
+            @{ p = 'CM[KWTRJUZ]';    b = 'Corsair' },
+            @{ p = '(KHX|KF4|KF3|KVR)'; b = 'Kingston / HyperX' },
+            @{ p = '(BLS|BLM|CT\d)'; b = 'Crucial' },
+            @{ p = '(TLZ|TED4|TF\d|TPD4)'; b = 'Team Group' },
+            @{ p = 'M[3478][45AB]'; b = 'Samsung' },
+            @{ p = 'HMA|HMT';       b = 'SK Hynix' },
+            @{ p = 'MTA|MT\d{2}';  b = 'Micron' }
+        )
+        function Resolve-RamBrand($mfr, $pn) {
+            if ($mfr -and $mfr -notmatch '^(Unknown|Undefined|To Be Filled|0*)$') { return $mfr }
+            foreach ($entry in $ramBrandByPrefix) {
+                if ($pn -match $entry.p) { return "$($entry.b) (identified from part number)" }
+            }
+            return $mfr
+        }
         $ram = @()
         try {
-            $ram = @(Get-CimInstance Win32_PhysicalMemory -ErrorAction Stop | ForEach-Object {
+            $rawRam = @(Get-CimInstance Win32_PhysicalMemory -ErrorAction Stop | ForEach-Object {
                 [PSCustomObject]@{
                     slot  = "$($_.DeviceLocator)"
                     mfr   = "$($_.Manufacturer)".Trim()
@@ -1866,6 +1905,27 @@ function reliabilityexport {
                     cap   = "$([math]::Round($_.Capacity / 1GB))"
                     rated = if ($_.Speed) { "$($_.Speed)" } else { "" }
                     conf  = if ($_.ConfiguredClockSpeed) { "$($_.ConfiguredClockSpeed)" } else { "" }
+                }
+            })
+            # Some boards report an identical, non-unique DeviceLocator for every slot - append a
+            # position number in that case so sticks are still visually distinguishable in the report.
+            $slotSeen = @{}
+            $rawRam | ForEach-Object { $slotSeen[$_.slot] = ($slotSeen[$_.slot] + 1) }
+            $slotIndex = @{}
+            $ram = @($rawRam | ForEach-Object {
+                $mfrResolved = Resolve-RamBrand $_.mfr $_.pn
+                $displaySlot = $_.slot
+                if ($slotSeen[$_.slot] -gt 1) {
+                    $slotIndex[$_.slot] = ($slotIndex[$_.slot] + 1)
+                    $displaySlot = "$($_.slot) (position $($slotIndex[$_.slot]))"
+                }
+                [PSCustomObject]@{
+                    slot  = $displaySlot
+                    mfr   = $mfrResolved
+                    pn    = $_.pn
+                    cap   = $_.cap
+                    rated = $_.rated
+                    conf  = $_.conf
                 }
             })
         } catch { }
