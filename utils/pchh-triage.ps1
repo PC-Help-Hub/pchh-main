@@ -812,6 +812,8 @@ const FAQ_DATA=[
 {id:'ram-speed',q:"RAM Speed (XMP/EXPO)",a:"Your memory (RAM) is capable of running faster than it currently is. This almost always means that a feature called XMP (Intel) or EXPO (AMD) isn't enabled.<br><br>XMP/EXPO is a one-click profile in the BIOS that allows your RAM to run at its advertised speed. When it's disabled, your RAM will default to a lower speed. Enabling it isn't overclocking, and isn't dangerous. We'd recommend enabling it, which can be done through your BIOS. If you're unsure how to do that, you can ask one of our advisors for more help.<br><br><i>Note: some systems can struggle to run RAM at its full advertised speed for various reasons, which is why it isn't enabled by default. When this happens, it can sometimes help to disable it, to prevent system instability or crashes.</i><br><br>This isn't dangerous either way, but running below the rated speed does mean the RAM isn't performing the way it was bought to.",tools:["CPU-Z"]},
 {id:'antivirus-conflict',q:"Multiple Antivirus Programs",a:"More than one antivirus program is trying to actively scan the system at the same time. This is a common, often-overlooked cause of slowdowns, false-positive quarantines, and general instability, since the two programs can end up fighting over the same files.",tools:[]},
 {id:'defender-rtp',q:"Defender Real-Time Protection",a:"Windows' built-in antivirus isn't actively scanning for threats. This can be intentional if another antivirus is installed, or it can be accidental. Malware sometimes disables it deliberately to avoid detection.",tools:[]},
+{id:'bitlocker-off',q:"BitLocker Not Enabled",a:"BitLocker encrypts the drive so its contents can't be read if the disk is removed or the PC is stolen. It isn't on by default on every edition of Windows, and turning it on is a choice rather than something that's always expected.<br><br>Check the Security tab for the status of each drive. This is a factual note, not a claim that anything is wrong.",tools:[]},
+{id:'bitlocker-on',q:"BitLocker Enabled",a:"The system drive is encrypted with BitLocker. This is worth knowing before any wipe, reset, reinstall, or drive removal &mdash; without the recovery key, an encrypted drive that gets locked out (for example, after a motherboard or TPM change) cannot be read or recovered.<br><br>If a wipe or reset is planned, confirm the recovery key is backed up somewhere accessible (Microsoft account, Active Directory, or a printed/saved copy) before proceeding.",tools:[]},
 {id:'firewall-disabled',q:"Firewall Disabled",a:"Windows Firewall isn't active on one or more network profiles (Domain, Private, or Public), leaving the system more exposed to unwanted network connections.",tools:[]},
 {id:'defender-threats',q:"Defender Threat Detections",a:"Windows Defender has previously found and acted on something it identified as malware, a virus, or another threat on this PC. This is historical. It doesn't necessarily mean anything is currently infected, but repeated or recent detections are worth taking seriously.",tools:[]},
 {id:'defender-exclusions',q:"Risky Defender Exclusions",a:"An exclusion tells Windows Defender to skip scanning a specific file, folder, or file type. Excluding a game folder is common and usually fine.<br><br>Excluding an entire drive, a broad system folder, or all .exe files is far more dangerous, since it means malware placed there would never be scanned at all. Check the Security tab for exactly what's excluded.",tools:[]},
@@ -1160,6 +1162,11 @@ function renderSummary(){
     if(SECURITY.exclFlags&&SECURITY.exclFlags.length)notes.push(dataLink('security','defender-exclusions','<span class="y"><b>'+SECURITY.exclFlags.length+'</b> risky Defender exclusion'+(SECURITY.exclFlags.length>1?'s':'')+'</span>'));
     if(SECURITY.hostsFlags&&SECURITY.hostsFlags.length)notes.push(dataLink('security','hosts-redirect','<span class="y">Hosts file redirects a known update/security domain</span>'));
     if(SECURITY.startupFlags&&SECURITY.startupFlags.length)notes.push(dataLink('security','startup-flagged','<span class="y"><b>'+SECURITY.startupFlags.length+'</b> flagged startup entr'+(SECURITY.startupFlags.length>1?'ies':'y')+'</span>'));
+    if(SECURITY.bitlocker&&SECURITY.bitlocker.length){
+      const osVol=SECURITY.bitlocker.find(b=>b.type==='OperatingSystem')||SECURITY.bitlocker.find(b=>b.drive==='C:');
+      if(osVol&&osVol.status==='On')notes.push(dataLink('security','bitlocker-on','<span class="y">BitLocker is enabled on the system drive &mdash; back up the recovery key before wiping or resetting</span>'));
+      else if(osVol)notes.push(dataLink('security','bitlocker-off','<span class="y">BitLocker is not enabled on the system drive</span>'));
+    }
   }
   const gpuDrvRe=/nvlddmkm|amdwddmg|amdkmdag|atikmdag/i;
   const tdrEvents=SYSEVT.filter(r=>String(r.id)==='4101'||gpuDrvRe.test(r.prov)||gpuDrvRe.test(r.msg||''));
@@ -1287,6 +1294,15 @@ function renderSecurity(){
   if(SECURITY.firewall&&SECURITY.firewall.length){
     h+='<div class="spec-section"><h2>Firewall</h2><dl class="kv">';
     SECURITY.firewall.forEach(f=>{h+='<dt>'+esc(f.profile)+'</dt><dd style="color:'+(f.enabled==='True'?'var(--ok)':'var(--err)')+'">'+(f.enabled==='True'?'Enabled':'Disabled')+'</dd>';});
+    h+='</dl></div>';
+  }
+  if(SECURITY.bitlocker&&SECURITY.bitlocker.length){
+    h+='<div class="spec-section"><h2>BitLocker</h2><dl class="kv">';
+    SECURITY.bitlocker.forEach(b=>{
+      const on=b.status==='On';
+      h+='<dt>'+esc(b.drive||'?')+(b.type?' <span style="color:var(--dim);font-weight:400">('+esc(b.type)+')</span>':'')+'</dt>'+
+        '<dd style="color:'+(on?'var(--ok)':'var(--err)')+'">'+(on?'On':'Off')+(b.pct&&b.pct!=='100'?' \u00b7 '+esc(b.pct)+'% encrypted':'')+'</dd>';
+    });
     h+='</dl></div>';
   }
   if(SECURITY.threats&&SECURITY.threats.length){
@@ -2414,6 +2430,19 @@ function reliabilityexport {
                 }
             } catch { }
 
+            # BitLocker status per volume (drive letter, protection status, encryption %)
+            $bitlocker = @()
+            try {
+                $bitlocker = @(Get-BitLockerVolume -ErrorAction Stop | ForEach-Object {
+                    [PSCustomObject]@{
+                        drive  = "$($_.MountPoint)"
+                        status = "$($_.ProtectionStatus)"
+                        pct    = "$($_.EncryptionPercentage)"
+                        type   = "$($_.VolumeType)"
+                    }
+                })
+            } catch { }
+
             $security = [PSCustomObject]@{
                 defender         = $defender
                 threats          = $threats
@@ -2425,6 +2454,7 @@ function reliabilityexport {
                 extensions       = $extensions
                 firewall         = $firewall
                 stalledServices  = $stalledServices
+                bitlocker        = $bitlocker
             }
         } catch { }
 
