@@ -629,7 +629,7 @@ function renderSpecs(){
   let h='';
   if(sp.info.length){
     h+='<div class="spec-section" style="border-top:1px solid var(--line);padding-top:18px"><dl class="kv">';
-    const SHOWN=['OS','OS Version','Build','System Uptime','CPU Name','GPU','Motherboard','Motherboard Manufacturer','BIOS Date','BIOS Version','Ram Capacity','RAM Speed'];
+    const SHOWN=['System Name','Manufacturer','Model','OS','OS Version','Build','System Uptime','CPU Name','GPU','Motherboard','Motherboard Manufacturer','BIOS Date','BIOS Version','Ram Capacity','RAM Speed'];
     const FAQ_KEY={'Secure Boot State':'secure-boot','TPM Status':'tpm'};
     sp.info.filter(([k])=>!SHOWN.includes(k)).forEach(([k,val])=>{
       const off=/^(Secure Boot State|TPM Status)$/.test(k)&&/Disabled/i.test(val);
@@ -642,8 +642,36 @@ function renderSpecs(){
     h+='<div class="spec-section"><h2>Audio</h2><dl class="kv"><dt>Default playback device</dt><dd>'+esc(AUDIO.playback)+'</dd></dl></div>';
   }
   if(DEVERR.length){
-    h+='<div class="spec-section"><h2>Device Manager errors ('+DEVERR.length+')</h2><dl class="kv">';
-    DEVERR.forEach(e=>{h+='<dt>'+esc(e.name)+'</dt><dd style="color:var(--err)">Error code '+esc(e.code)+'</dd>';});
+    h+='<div class="spec-section" id="devErrSection"><h2>Device Manager errors ('+DEVERR.length+')</h2><dl class="kv">';
+    const DEVERR_CODES={
+      '1':'Device not configured correctly',
+      '3':'Driver may be corrupted, or system is low on resources',
+      '10':'Device cannot start',
+      '12':'Not enough free resources',
+      '14':'Device needs a restart to work',
+      '18':'Drivers need reinstalling',
+      '19':'Registry entries for the device are corrupted',
+      '21':'Windows is in the process of removing the device',
+      '22':'Device is disabled',
+      '24':'Device not present, not working, or missing drivers',
+      '28':'Drivers are not installed',
+      '29':'Disabled by firmware \u2014 didn\u2019t give the device resources',
+      '31':'Windows cannot load the drivers',
+      '32':'Driver service is disabled',
+      '37':'Driver returned a failure',
+      '39':'Driver is missing or corrupted',
+      '41':'Driver loaded but can\u2019t find the device',
+      '42':'Duplicate device found',
+      '43':'Device reported a problem',
+      '44':'An application or driver stopped the device',
+      '45':'Device not currently connected',
+      '48':'A previous driver for this device is blocked from loading',
+      '52':'Drivers aren\u2019t digitally signed',
+    };
+    DEVERR.forEach(e=>{
+      const desc=DEVERR_CODES[String(e.code)];
+      h+='<dt>'+esc(e.name)+'</dt><dd style="color:var(--err)">Error code '+esc(e.code)+(desc?' <span style="color:var(--faint)">\u2014 '+desc+'</span>':'')+'</dd>';
+    });
     h+='</dl></div>';
   }
   let dh='';
@@ -812,7 +840,6 @@ const FAQ_DATA=[
 {id:'ram-speed',q:"RAM Speed (XMP/EXPO)",a:"Your memory (RAM) is capable of running faster than it currently is. This almost always means that a feature called XMP (Intel) or EXPO (AMD) isn't enabled.<br><br>XMP/EXPO is a one-click profile in the BIOS that allows your RAM to run at its advertised speed. When it's disabled, your RAM will default to a lower speed. Enabling it isn't overclocking, and isn't dangerous. We'd recommend enabling it, which can be done through your BIOS. If you're unsure how to do that, you can ask one of our advisors for more help.<br><br><i>Note: some systems can struggle to run RAM at its full advertised speed for various reasons, which is why it isn't enabled by default. When this happens, it can sometimes help to disable it, to prevent system instability or crashes.</i><br><br>This isn't dangerous either way, but running below the rated speed does mean the RAM isn't performing the way it was bought to.",tools:["CPU-Z"]},
 {id:'antivirus-conflict',q:"Multiple Antivirus Programs",a:"More than one antivirus program is trying to actively scan the system at the same time. This is a common, often-overlooked cause of slowdowns, false-positive quarantines, and general instability, since the two programs can end up fighting over the same files.",tools:[]},
 {id:'defender-rtp',q:"Defender Real-Time Protection",a:"Windows' built-in antivirus isn't actively scanning for threats. This can be intentional if another antivirus is installed, or it can be accidental. Malware sometimes disables it deliberately to avoid detection.",tools:[]},
-{id:'bitlocker-off',q:"BitLocker Not Enabled",a:"BitLocker encrypts the drive so its contents can't be read if the disk is removed or the PC is stolen. It isn't on by default on every edition of Windows, and turning it on is a choice rather than something that's always expected.<br><br>Check the Security tab for the status of each drive. This is a factual note, not a claim that anything is wrong.",tools:[]},
 {id:'bitlocker-on',q:"BitLocker Enabled",a:"The system drive is encrypted with BitLocker. This is worth knowing before any wipe, reset, reinstall, or drive removal &mdash; without the recovery key, an encrypted drive that gets locked out (for example, after a motherboard or TPM change) cannot be read or recovered.<br><br>If a wipe or reset is planned, confirm the recovery key is backed up somewhere accessible (Microsoft account, Active Directory, or a printed/saved copy) before proceeding.",tools:[]},
 {id:'firewall-disabled',q:"Firewall Disabled",a:"Windows Firewall isn't active on one or more network profiles (Domain, Private, or Public), leaving the system more exposed to unwanted network connections.",tools:[]},
 {id:'defender-threats',q:"Defender Threat Detections",a:"Windows Defender has previously found and acted on something it identified as malware, a virus, or another threat on this PC. This is historical. It doesn't necessarily mean anything is currently infected, but repeated or recent detections are worth taking seriously.",tools:[]},
@@ -885,6 +912,22 @@ function toolLink(name){
 }
 function tabLink(tabId,label){
   return '<a href="#" onclick="return goTab(\'' + tabId + '\')" style="color:var(--info);text-decoration:underline;text-decoration-style:dotted;text-underline-offset:3px;cursor:pointer">'+label+'</a>';
+}
+function goAnchor(tabId,anchorId){
+  goTab(tabId);
+  setTimeout(()=>{
+    const el=document.getElementById(anchorId);
+    if(!el)return;
+    el.scrollIntoView({behavior:'smooth',block:'center'});
+    el.style.outline='2px solid var(--info)';
+    setTimeout(()=>{el.style.outline='';},1600);
+  },30);
+  return false;
+}
+function anchorLink(tabId,anchorId,faqId,html){
+  const main='<a href="#" onclick="return goAnchor(\''+tabId+'\',\''+anchorId+'\')" style="color:inherit;text-decoration:underline;text-decoration-style:dotted;text-underline-offset:3px;cursor:pointer">'+html+'</a>';
+  const info=faqId?' <a href="#" onclick="return goFaq(\''+faqId+'\')" title="What does this mean?" style="color:var(--faint);text-decoration:none;cursor:pointer;font-size:12px">(?)</a>':'';
+  return main+info;
 }
 function flagLink(faqId,html){
   return '<a href="#" class="faq-link" onclick="return goFaq(\''+faqId+'\')" style="color:inherit;text-decoration:underline;text-decoration-style:dotted;text-underline-offset:3px;cursor:pointer">'+html+'</a>';
@@ -990,10 +1033,18 @@ function friendlyDriver(gpuName,ver,radeon){
   return ver;
 }
 function specVal(info,key){const f=info.find(([k])=>k===key);return f?f[1]:null;}
+function realSpec(v){
+  if(!v)return '';
+  if(/^(system manufacturer|system product name|to be filled by o\.e\.m\.?|default string|not applicable|unknown|n\/a)$/i.test(v.trim()))return '';
+  return v;
+}
 function renderSummary(){
   const sp=parseSpecs(SPECS);
   const el=document.getElementById('summary');
   const pairs=[];
+  const sysName=specVal(sp.info,'System Name'), sysMfr=realSpec(specVal(sp.info,'Manufacturer')), sysModel=realSpec(specVal(sp.info,'Model'));
+  if(sysName)pairs.push(['System name', esc(sysName)]);
+  if(sysMfr||sysModel)pairs.push(['Manufacturer / Model', esc([sysMfr,sysModel].filter(Boolean).join(' \u00b7 '))]);
   const os=specVal(sp.info,'OS'), build=specVal(sp.info,'Build'), up=specVal(sp.info,'System Uptime');
   const WINVER={ '26200':'25H2','26100':'24H2','22631':'23H2','22621':'22H2','22000':'21H2','19045':'22H2','19044':'21H2' };
   if(os){
@@ -1057,17 +1108,7 @@ function renderSummary(){
   const kp41ev=SYSEVT.filter(r=>String(r.id)==='41');
   const shutdownCount=Math.max(shutdowns,kp41ev.length);
   if(shutdownCount){
-    const BC_NAMES={ '278':'0x116 VIDEO_TDR_FAILURE','279':'0x117 VIDEO_TDR_TIMEOUT_DETECTED','281':'0x119 VIDEO_SCHEDULER_INTERNAL_ERROR','321':'0x141 VIDEO_ENGINE_TIMEOUT_DETECTED','322':'0x142 VIDEO_TDR_APPLICATION_BLOCKED' };
-    const bcs=[...new Set(kp41ev.map(r=>String(r.bc||'')).filter(b=>b&&b!=='0'))];
-    let detail;
-    if(bcs.length){
-      detail='bugcheck '+bcs.map(b=>BC_NAMES[b]||('code '+b)).join(', ');
-    }else if(kp41ev.length){
-      detail='no bugcheck (power loss, hard reset, or hang)';
-    }else{
-      detail='reliability history only (outside event log window)';
-    }
-    notes.push(dataLink('shutdowns','unexpected-shutdown','<span class="r"><b>'+shutdownCount+'</b> Unexpected shutdown'+(shutdownCount>1?'s':'')+'</span> <span style="color:var(--faint)">('+esc(detail)+')</span>'));
+    notes.push(dataLink('shutdowns','unexpected-shutdown','<span class="r"><b>'+shutdownCount+'</b> Unexpected shutdown'+(shutdownCount>1?'s':'')+'</span>'));
   }else{
     notes.push('<span class="g">No unexpected shutdowns</span>');
   }
@@ -1079,7 +1120,11 @@ function renderSummary(){
     if(probs.length)notes.push(dataLink('drives','disk-smart','<span class="r">Disk '+esc(d.disk)+' ('+esc(d.name)+'): '+esc(probs.join(', '))+'</span>'));
   });
   DIRTY.forEach(v=>notes.push(dataLink('drives','dirty-bit','<span class="y">Volume '+esc(v)+' has its dirty bit set</span>')));
-  if(DEVERR.length)notes.push(flagLink('device-manager-errors','<span class="y"><b>'+DEVERR.length+'</b> device'+(DEVERR.length>1?'s':'')+' showing errors in Device Manager</span>'));
+  if(DEVERR.length){
+    const devNames=DEVERR.map(e=>e.name);
+    const shown=devNames.slice(0,3).join(', ')+(devNames.length>3?' +'+(devNames.length-3)+' more':'');
+    notes.push(anchorLink('summary','devErrSection','device-manager-errors','<span class="y"><b>'+DEVERR.length+'</b> device'+(DEVERR.length>1?'s':'')+' showing errors in Device Manager</span> <span style="color:var(--faint)">('+esc(shown)+')</span>'));
+  }
   const sysDisk=DISKLAYOUT.find(dk=>dk.partitions.some(p=>p.letter==='C:'));
   if(sysDisk&&sysDisk.style&&sysDisk.style.toUpperCase()==='MBR')notes.push(dataLink('drives','mbr-secureboot','<span class="y">System disk uses MBR partitioning (Secure Boot requires GPT)</span>'));
   if(WINUPDATE&&WINUPDATE.pendingReboot)notes.push(dataLink('updates','pending-reboot','<span class="y">System has a pending reboot (Windows Update or servicing)</span>'));
@@ -1165,7 +1210,6 @@ function renderSummary(){
     if(SECURITY.bitlocker&&SECURITY.bitlocker.length){
       const osVol=SECURITY.bitlocker.find(b=>b.type==='OperatingSystem')||SECURITY.bitlocker.find(b=>b.drive==='C:');
       if(osVol&&osVol.status==='On')notes.push(dataLink('security','bitlocker-on','<span class="y">BitLocker is enabled on the system drive &mdash; back up the recovery key before wiping or resetting</span>'));
-      else if(osVol)notes.push(dataLink('security','bitlocker-off','<span class="y">BitLocker is not enabled on the system drive</span>'));
     }
   }
   const gpuDrvRe=/nvlddmkm|amdwddmg|amdkmdag|atikmdag/i;
@@ -1565,6 +1609,10 @@ function fileadd {
     $cpuName = $cpu | Select-Object -ExpandProperty Name
     $cpuSpeed = $cpu | Select-Object -ExpandProperty MaxClockSpeed
     $gpu = Get-WmiObject Win32_VideoController | Select-Object -ExpandProperty Name
+    $compSys = Get-WmiObject Win32_ComputerSystem
+    $sysName = $env:COMPUTERNAME
+    $sysMfr = $compSys | Select-Object -ExpandProperty Manufacturer
+    $sysModel = $compSys | Select-Object -ExpandProperty Model
 
     if ((Get-Tpm).TpmEnabled -eq "True") {
         $tpmEnabled = "Enabled"
@@ -1615,7 +1663,10 @@ function fileadd {
     $secureBootState = if ($secureBoot -match "True") { "Enabled" } elseif ($secureBoot -match "False") { "Disabled" } elseif ($secCompat -eq "$true") { "Not Supported" }
     $fastbootState = if ($fastboot -eq "1") { "Enabled" } else { "Disabled" }
 
-    specs "CPU Name: $cpuName"
+    specs "System Name: $sysName"
+    specs "Manufacturer: $sysMfr"
+    specs "Model: $sysModel"
+    specs "`nCPU Name: $cpuName"
     specs "CPU Speed (MHz): $cpuSpeed"
     specs "GPU: $gpu"
     specs "`nTPM Status: $tpmEnabled"
