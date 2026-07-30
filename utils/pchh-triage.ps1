@@ -1015,7 +1015,7 @@ function renderSummary(){
       else if(/msi|micro-star/.test(mfrL))url='https://www.msi.com/Search?searchKeyword='+encodeURIComponent(mb);
       else if(/gigabyte/.test(mfrL))url='https://www.gigabyte.com/Search?search='+encodeURIComponent(mb);
     }
-    pairs.push(['BIOS updates', (val?val+' \u00b7 ':'')+'<a href="'+url+'" target="_blank" rel="noopener" style="color:var(--info)">Check for updates</a>']);
+    pairs.push(['BIOS version', (val?val+' \u00b7 ':'')+'<a href="'+url+'" target="_blank" rel="noopener" style="color:var(--info)">Check for updates</a>']);
   }
   if(RAM.length){
     const totGB=RAM.reduce((a,x)=>a+(+x.cap||0),0);
