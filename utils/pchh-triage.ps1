@@ -848,6 +848,7 @@ const FAQ_DATA=[
 {id:'hosts-redirect',q:"Hosts File Redirects",a:"The hosts file is a small system text file that can override where certain web addresses point. This flag means an update- or security-related address, like Windows Update or an antivirus vendor, has been redirected elsewhere. Sometimes this is done deliberately to block updates, but it's also a technique malware uses to stop antivirus software updating itself.<br><br>It's also common to find the hosts file modified when the user (or someone else) has installed cracked software, since some software relies on connecting to license server websites to 'check' that they're licensed.",tools:[]},
 {id:'startup-flagged',q:"Flagged Startup Entries",a:"These are programs set to launch automatically with Windows that either run from a Temp folder or don't have a valid digital signature. Neither is automatically a problem. Plenty of legitimate small or hobbyist tools are unsigned, but it's exactly the pattern malware persistence uses, so anything unfamiliar here is worth a closer look.",tools:[]},
 {id:'gpu-tdr',q:"Display Driver Timeout (TDR)",a:"The graphics driver stopped responding briefly and Windows had to recover it (often called a TDR event). This usually shows up as a brief flicker or freeze rather than a full crash, though it can escalate to one.<br><br>Common causes are an unstable GPU overclock, an outdated or corrupted graphics driver, or the GPU overheating under load.",tools:["Display Driver Uninstaller (DDU)","FurMark","HWiNFO"]},
+{id:'high-uptime',q:"Long System Uptime",a:"The PC hasn't been restarted in over a week. This is common and not inherently a problem, but pending Windows/driver updates won't take effect until a reboot, and memory leaks or resource creep in long-running processes become more likely to cause slowdowns the longer a session goes on.<br><br>If something on this PC is running slow or behaving oddly, a restart is a cheap first thing to try before digging further.",tools:[]},
 {id:'livekernelevent',q:"LiveKernelEvent",a:"Windows' record of a serious problem severe enough to be crash-like, but that the system managed to recover from without a full restart, most often tied to a graphics driver failing and recovering.<br><br>Frequent LiveKernelEvents point to the same kinds of causes as display driver timeouts.",tools:["Display Driver Uninstaller (DDU)","FurMark","HWiNFO"]},
 {id:'wifi-signal',q:"Weak Wi-Fi Signal",a:"The wireless connection's signal strength was weak at the moment this report was generated. A weak signal can cause slow speeds, dropped connections, and higher ping in games, and is usually down to distance from the router, walls/obstructions, or interference from other devices.",tools:[]},
 {id:'commit-charge',q:"Commit Charge",a:"This measures how much memory (RAM plus the page file combined) the system had committed to running programs at the moment this report was generated.<br><br>Running close to the limit can cause slowdowns, stuttering, or 'out of memory' errors, and often points to either too little RAM for the workload or a page file set too small.",tools:["HWiNFO"]},
@@ -1187,9 +1188,8 @@ function renderSummary(){
   (sp.programs||[]).forEach(p=>{
     SOFT_FLAGS.forEach(f=>{ if(f.re.test(p)){ (foundSoft[f.grp]=foundSoft[f.grp]||new Set()).add(f.label); } });
   });
-  const avStr=specVal(sp.info,'Antivirus');
-  if(avStr){
-    const avList=avStr.split(',').map(s=>s.trim()).filter(Boolean);
+  if(SECURITY&&SECURITY.avProducts&&SECURITY.avProducts.length){
+    const avList=SECURITY.avProducts.filter(a=>a.enabled).map(a=>a.name);
     if(avList.length>1)notes.push(dataLink('security','antivirus-conflict','<span class="y">Multiple real-time antivirus products active: '+esc(avList.join(', '))+'</span>'));
   }
   Object.keys(foundSoft).forEach(grp=>{
@@ -1246,6 +1246,10 @@ function renderSummary(){
     }
   }
   if(WINDOWSOLD&&WINDOWSOLD.present)notes.push(flagLink('windows-old','<span style="color:var(--dim)">Windows.old folder present. Windows was upgraded or reset around '+esc(WINDOWSOLD.date)+'</span>'));
+  if(up){
+    const upDays=parseInt((up.match(/^(\d+)\s*days?/i)||[])[1]||'0',10);
+    if(upDays>=7)notes.push(dataLink('sys','high-uptime','<span class="y">System has been running for <b>'+upDays+'</b> days without a restart</span>'));
+  }
   const nEl=document.getElementById('notesBody');
   el.innerHTML=pairs.length?'<dl class="kv summary-kv">'+pairs.map(([k,v])=>'<dt>'+k+'</dt><dd>'+v+'</dd>').join('')+'</dl>':'';
   const NOTE_GROUPS=[
@@ -1332,6 +1336,13 @@ function renderSecurity(){
     return;
   }
   let h='';
+  if(SECURITY.avProducts&&SECURITY.avProducts.length){
+    h+='<div class="spec-section"><h2>Antivirus</h2><dl class="kv">';
+    SECURITY.avProducts.forEach(a=>{
+      h+='<dt>'+esc(a.name)+'</dt><dd style="color:'+(a.enabled?'var(--ok)':'var(--dim)')+'">'+(a.enabled?'Active':'Inactive')+'</dd>';
+    });
+    h+='</dl></div>';
+  }
   const d=SECURITY.defender;
   if(d){
     h+='<div class="spec-section"><h2>Windows Defender</h2><dl class="kv">';
@@ -1667,7 +1678,6 @@ function fileadd {
     $osInstallDate = try { ([System.Management.ManagementDateTimeConverter]::ToDateTime($os.InstallDate)).ToString("dd/MM/yyyy") } catch { "" }
     $cpuCores = ($cpu | Select-Object -ExpandProperty NumberOfCores) -join "+"
     $cpuThreads = ($cpu | Select-Object -ExpandProperty ThreadCount) -join "+"
-    $avNames = try { (Get-CimInstance -Namespace root/SecurityCenter2 -ClassName AntiVirusProduct -ErrorAction Stop | Select-Object -ExpandProperty displayName) -join ", " } catch { "" }
     $uacEnabled = try { if ((Get-ItemProperty "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" -ErrorAction Stop).EnableLUA -eq 1) { "Enabled" } else { "Disabled" } } catch { "" }
     $powerPlan = try { if ((powercfg /getactivescheme) -match '\((.+)\)\s*$') { $Matches[1] } else { "" } } catch { "" }
 
@@ -1708,7 +1718,6 @@ function fileadd {
     specs "Fast Boot State: $fastbootState"
     specs "CPU Cores/Threads: ${cpuCores}C / ${cpuThreads}T"
     if ($osInstallDate) { specs "Windows Install Date: $osInstallDate" }
-    if ($avNames) { specs "Antivirus: $avNames" }
     if ($uacEnabled) { specs "UAC: $uacEnabled" }
     if ($powerPlan) { specs "Active Power Plan: $powerPlan" }
     specs "`nRam Capacity: $([math]::Round($installedMemory/1GB)) GB"
@@ -2281,6 +2290,17 @@ function reliabilityexport {
                 }
             } else { $null }
 
+            # Registered antivirus products (Windows Security Center) - name + real-time enabled state
+            $avProducts = @()
+            try {
+                $avProducts = @(Get-CimInstance -Namespace root/SecurityCenter2 -ClassName AntiVirusProduct -ErrorAction Stop | ForEach-Object {
+                    # productState is a bitmask; the middle byte's low nibble indicates enabled/disabled
+                    $stateHex = "{0:X6}" -f [int]$_.productState
+                    $enabled = $stateHex.Substring(2,2) -in @('10','11')
+                    [PSCustomObject]@{ name = "$($_.displayName)"; enabled = $enabled }
+                })
+            } catch { }
+
             $threats = @()
             try {
                 $threats = @(Get-MpThreatDetection -ErrorAction Stop | Select-Object -First 25 | ForEach-Object {
@@ -2556,6 +2576,7 @@ function reliabilityexport {
                 bitlocker        = $bitlocker
                 rdp              = $rdp
                 acctType         = $acctType
+                avProducts       = $avProducts
             }
         } catch { }
 
