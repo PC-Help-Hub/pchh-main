@@ -114,16 +114,19 @@ body{background:var(--bg);color:var(--text);font-family:'Albert Sans',sans-serif
 .summary-kv{grid-template-columns:165px 1fr;margin-bottom:4px}
 .summary-kv dt{color:var(--dim)}
 .summary-kv dd b{font-weight:500}
-#summary .notes-head{color:var(--faint);font-size:14px;text-transform:uppercase;letter-spacing:.08em;font-weight:500;margin-top:12px}
-.notes{margin:4px 0 0 2px;padding-left:18px}
+.notes-head{color:var(--faint);font-size:12.5px;text-transform:uppercase;letter-spacing:.08em;font-weight:600}
+.notes-group{margin-bottom:18px}
+.notes-group:last-child{margin-bottom:0}
+.notes{margin:6px 0 0 2px;padding-left:18px}
 .notes li{margin:3px 0;color:var(--text)}
-#summary .g{color:var(--ok)}
-#summary .r{color:var(--err)}
-#summary .y{color:var(--warn)}
+.g{color:var(--ok)}
+.r{color:var(--err)}
+.y{color:var(--warn)}
 .view{display:none}
 body.tab-summary #summaryView{display:block}
 body.tab-rel #relView{display:block}
 body.tab-sys #sysView{display:block}
+body.tab-shutdowns #shutdownsView{display:block}
 body.tab-drives #drivesView{display:block}
 body.tab-gpu #gpuView{display:block}
 body.tab-memory #memoryView{display:block}
@@ -138,12 +141,13 @@ body.tab-tools #toolsView{display:block}
 body.tab-dumps #dumpsView{display:block}
 #pageTitle{padding:36px 36px 0;font-size:40px;font-weight:700;letter-spacing:-.01em;color:var(--text);max-width:1160px}
 #pageTitleSub{color:var(--info);font-weight:600}
-#summaryView,#sysView,#drivesView,#netView,#securityView,#appsView,#dumpsView,#memoryView,#gpuView,#processesView,#extensionsView,#updatesView,#toolsView,#faqView{padding:20px 36px 64px;max-width:1160px}
+#summaryView,#sysView,#shutdownsView,#drivesView,#netView,#securityView,#appsView,#dumpsView,#memoryView,#gpuView,#processesView,#extensionsView,#updatesView,#toolsView,#faqView{padding:20px 36px 64px;max-width:1160px}
 .sys-ok{color:var(--ok);padding:24px 0;font-size:16px}
 .sys-note{color:var(--faint);font-size:13px;margin-bottom:14px}
 .spec-section{margin-bottom:40px}
 .spec-section h2{font-size:14px;font-weight:600;color:var(--faint);text-transform:uppercase;letter-spacing:.08em;padding:4px 0 14px;border-bottom:1px solid var(--line);margin-bottom:20px}
 .kv{display:grid;grid-template-columns:210px 1fr;gap:7px 16px;font-size:15px}
+#wuHistList,#hfList{grid-template-columns:145px 1fr}
 .kv dt{color:var(--dim)}
 .kv dd{word-break:break-word}
 .kv dd.flag-off{color:var(--warn)}
@@ -172,7 +176,7 @@ body.tab-dumps #dumpsView{display:block}
 .smart-kv dt{color:var(--dim)}
 .smart-kv dd{text-align:right;font-family:'IBM Plex Mono',monospace}
 .proc-head{display:grid;grid-template-columns:1fr 110px 110px;color:var(--faint);font-size:13px;text-transform:uppercase;letter-spacing:.06em;padding:6px 4px;border-bottom:1px solid var(--line);margin-top:8px}
-.proc-row{display:grid;grid-template-columns:1fr 110px 110px;padding:5px 4px;border-bottom:1px solid color-mix(in srgb,var(--line) 40%,transparent);font-size:14.5px}
+.proc-row{display:grid;grid-template-columns:1fr 110px 110px;padding:5px 4px;border-bottom:1px solid color-mix(in srgb,var(--line) 40%,transparent);font-size:14.5px;font-family:'Albert Sans',sans-serif;color:var(--text)}
 .proc-row span:nth-child(2),.proc-row span:nth-child(3),.proc-head span:nth-child(2),.proc-head span:nth-child(3){text-align:right}
 .pager{display:flex;gap:12px;align-items:center;margin-top:12px}
 .pg-btn{background:var(--panel);border:1px solid var(--line);border-radius:6px;color:var(--dim);font-family:inherit;font-size:14px;padding:6px 14px;cursor:pointer}
@@ -187,10 +191,8 @@ body.tab-dumps #dumpsView{display:block}
 #hfSearch{background:var(--panel);border:1px solid var(--line);border-radius:6px;color:var(--text);padding:8px 12px;font-size:14px;font-family:inherit;width:260px;margin-bottom:10px}
 #hfSearch:focus{outline:none;border-color:var(--dim)}
 #progSearch:focus{outline:none;border-color:var(--dim)}
-#progList{columns:3;column-gap:24px;font-size:14.5px;line-height:1.9;color:var(--dim)}
-#progList div{break-inside:avoid}
-@media (max-width:900px){#progList{columns:2}}
-@media (max-width:600px){#progList{columns:1}.kv{grid-template-columns:1fr;gap:0}.kv dt{margin-top:8px}}
+.prog-row{padding:5px 4px;border-bottom:1px solid color-mix(in srgb,var(--line) 40%,transparent);font-size:14.5px;font-family:'Albert Sans',sans-serif;color:var(--text)}
+@media (max-width:600px){.kv{grid-template-columns:1fr;gap:0}.kv dt{margin-top:8px}}
 h1{font-size:24px;font-weight:600;letter-spacing:.01em}
 #range{color:var(--dim);font-size:14px}
 #drop{display:block;margin:0 0 16px;font-size:12px;color:var(--faint);border:1px dashed var(--line);border-radius:8px;padding:8px 10px;cursor:pointer;text-align:center}
@@ -258,7 +260,7 @@ body.dragging #drop{color:var(--info);border-color:var(--info)}
   #timeline,#controls,#list{padding-left:14px;padding-right:14px}
   #search{width:100%;margin-left:0}
   .row{grid-template-columns:44px 10px 1fr}
-  #summaryView,#sysView,#drivesView,#netView,#securityView,#appsView,#dumpsView,#memoryView,#gpuView,#processesView,#extensionsView,#updatesView,#toolsView,#faqView{padding:24px 16px 48px}
+  #summaryView,#sysView,#shutdownsView,#drivesView,#netView,#securityView,#appsView,#dumpsView,#memoryView,#gpuView,#processesView,#extensionsView,#updatesView,#toolsView,#faqView{padding:24px 16px 48px}
   #pageTitle{font-size:28px;padding:24px 16px 0}
 }
 </style>
@@ -280,6 +282,7 @@ body.dragging #drop{color:var(--info);border-color:var(--info)}
       <div class="nav-group-items">
         <button class="tab" data-tab="rel">Reliability History</button>
         <button class="tab" data-tab="sys">Event Viewer</button>
+        <button class="tab" data-tab="shutdowns">Unexpected Shutdowns</button>
         <button class="tab" data-tab="dumps" id="dumpsTab" style="display:none">Memory Dumps</button>
       </div>
     </div>
@@ -317,13 +320,13 @@ body.dragging #drop{color:var(--info);border-color:var(--info)}
 <h1 id="pageTitle">PCHH Triage <span id="pageTitleSub">- System Summary</span></h1>
 
 <div id="summaryView" class="view">
-  <div class="spec-section"><h2>System Specs</h2><div id="summary"></div><div id="specsContent"></div></div>
   <div class="spec-section"><h2>General Notes</h2><div id="notesBody"></div></div>
+  <div class="spec-section"><h2>System Specs</h2><div id="summary"></div><div id="specsContent"></div></div>
 </div>
 
 <div id="relView" class="view">
 <div id="timeline">
-  <div id="tlHead"><span id="tlRange" class="mono"></span><span id="tlHint">Click a bar to see that day's events. Use the arrows to move back a week.</span></div>
+  <div id="tlHead"><span id="tlRange" class="mono"></span><span id="tlHint">Click a bar to see that day's events. Use the arrows to move back two weeks.</span></div>
   <div id="tl-inner">
     <button id="tlPrev" class="tl-nav" title="Earlier">&#8249;</button>
     <div id="tl-main"><div id="bars"></div><div id="axis"></div></div>
@@ -344,6 +347,7 @@ body.dragging #drop{color:var(--info);border-color:var(--info)}
 </div>
 
 <div id="sysView" class="view"></div>
+<div id="shutdownsView" class="view"></div>
 <div id="drivesView" class="view"></div>
 <div id="gpuView" class="view"></div>
 <div id="memoryView" class="view"></div>
@@ -412,8 +416,8 @@ function classify(r){
 }
 const CATNAMES={err:'Critical events',warn:'Warnings',info:'Informational events'};
 
-let events=[], state={cats:new Set(['err','warn','info']), q:'', day:null, tlEnd:null};
-const TL_WIN=7;
+let events=[], state={cats:new Set(['err','warn']), q:'', day:null, tlEnd:null};
+const TL_WIN=14;
 
 function load(raw){
   events = raw.map(r=>{
@@ -425,7 +429,8 @@ function load(raw){
   render();
 }
 
-function fmtDay(k){const d=new Date(k);return d.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'});}
+function fmtDay(k){const d=new Date(k);const dd=String(d.getDate()).padStart(2,'0');const mm=String(d.getMonth()+1).padStart(2,'0');return dd+'/'+mm+'/'+d.getFullYear();}
+function fmtDayShort(k){const d=new Date(k);return d.getDate()+'/'+(d.getMonth()+1);}
 function fmtTime(d){return d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});}
 
 function render(){
@@ -479,13 +484,11 @@ function render(){
   });
   const axis=document.getElementById('axis');
   axis.innerHTML=days.map(k=>{
-    const d=new Date(k);
-    return '<span class="axis-lab'+(state.day===k?' active':'')+'">'+d.toLocaleDateString('en-GB',{weekday:'short',day:'numeric'})+'</span>';
+    return '<span class="axis-lab'+(state.day===k?' active':'')+'">'+fmtDayShort(k)+'</span>';
   }).join('');
   const rEl=document.getElementById('tlRange');
   if(days.length){
-    const a=new Date(days[0]),b2=new Date(days[days.length-1]);
-    rEl.textContent=a.toLocaleDateString('en-GB',{day:'numeric',month:'short'})+' \u2013 '+b2.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});
+    rEl.textContent=fmtDay(days[0])+' \u2013 '+fmtDay(days[days.length-1]);
   }
 
   const cd=document.getElementById('clearDay');
@@ -503,7 +506,7 @@ function render(){
   const ICONS={err:'\u274C\uFE0E',warn:'\u26A0\uFE0E',info:'\u2139\uFE0E'};
   dayGroups.forEach((groups,dayKey)=>{
     const h=document.createElement('div');h.className='day-head';
-    h.textContent='Reliability details for: '+fmtDay(dayKey);
+    h.textContent=fmtDay(dayKey);
     list.appendChild(h);
     ['err','warn','info'].forEach(cat=>{
       const evs=groups[cat];
@@ -517,7 +520,7 @@ function render(){
           '<span class="dot d-'+e.cat+'"></span>'+
           '<span class="title">'+esc(e.p||'(unnamed)')+'<span class="src">'+summary(e)+'</span></span>'+
           '<div class="msg mono">'+esc(e.m)+'</div>';
-        row.onclick=()=>row.classList.toggle('open');
+        row.onclick=(e)=>{ if(e.target.closest('.msg'))return; row.classList.toggle('open'); };
         list.appendChild(row);
       });
     });
@@ -651,7 +654,7 @@ function renderSpecs(){
       const pctFree=total?Math.round(free/total*100):0, pctUsed=100-pctFree;
       const name=d['Drive Name']&&d['Drive Name']!=='No Name Found'?d['Drive Name']:'';
       dh+='<div class="drive"><h3>'+esc(d['Drive Label']||'?')+(name?' <span style="color:var(--dim);font-weight:400">'+esc(name)+'</span>':'')+
-        (d['Windows Drive']==='True'?' <span style="color:var(--info);font-size:11px">Windows</span>':'')+'</h3>'+
+        (d['Windows Drive']==='True'?' <span style="color:var(--dim);font-weight:400">Windows</span>':'')+'</h3>'+
         '<div class="sub">'+esc(d['Drive Type']||'Unknown')+' · '+esc(d['Drive Status']||'Unknown')+'</div>'+
         (DIRTY.some(v=>String(d['Drive Label']||'').toUpperCase().startsWith(v.toUpperCase()))?'<div style="color:var(--warn);font-size:13.5px;margin-bottom:6px">Dirty bit set</div>':'')+
         '<div class="meter'+(pctFree<15?' low':'')+'"><div style="width:'+pctUsed+'%"></div></div>'+
@@ -748,6 +751,7 @@ function renderAppsList(programs){
   v.innerHTML=PROGS_ALL.length?
     '<div class="spec-section"><h2>Installed programs ('+PROGS_ALL.length+')</h2>'+
     '<input id="progSearch" type="text" placeholder="Filter programs\u2026">'+
+    '<div class="proc-head"><span>Program<span class="arrow"></span></span></div>'+
     '<div id="progList"></div><div class="pager" id="progPager"></div></div>'
     :'<div class="spec-section"><h2>Installed Apps</h2><div style="color:var(--faint)">No data embedded.</div></div>';
   const ps=document.getElementById('progSearch');
@@ -809,7 +813,6 @@ const FAQ_DATA=[
 {id:'antivirus-conflict',q:"Multiple Antivirus Programs",a:"More than one antivirus program is trying to actively scan the system at the same time. This is a common, often-overlooked cause of slowdowns, false-positive quarantines, and general instability, since the two programs can end up fighting over the same files.",tools:[]},
 {id:'defender-rtp',q:"Defender Real-Time Protection",a:"Windows' built-in antivirus isn't actively scanning for threats. This can be intentional if another antivirus is installed, or it can be accidental. Malware sometimes disables it deliberately to avoid detection.",tools:[]},
 {id:'firewall-disabled',q:"Firewall Disabled",a:"Windows Firewall isn't active on one or more network profiles (Domain, Private, or Public), leaving the system more exposed to unwanted network connections.",tools:[]},
-{id:'stalled-services',q:"Automatic Services Not Running",a:"Some background services are set to start automatically with Windows but currently aren't running. Sometimes this is harmless, but it can also point to something failing silently in the background.<br><br>Check the Security tab for which specific services are affected.",tools:[]},
 {id:'defender-threats',q:"Defender Threat Detections",a:"Windows Defender has previously found and acted on something it identified as malware, a virus, or another threat on this PC. This is historical. It doesn't necessarily mean anything is currently infected, but repeated or recent detections are worth taking seriously.",tools:[]},
 {id:'defender-exclusions',q:"Risky Defender Exclusions",a:"An exclusion tells Windows Defender to skip scanning a specific file, folder, or file type. Excluding a game folder is common and usually fine.<br><br>Excluding an entire drive, a broad system folder, or all .exe files is far more dangerous, since it means malware placed there would never be scanned at all. Check the Security tab for exactly what's excluded.",tools:[]},
 {id:'hosts-redirect',q:"Hosts File Redirects",a:"The hosts file is a small system text file that can override where certain web addresses point. This flag means an update- or security-related address, like Windows Update or an antivirus vendor, has been redirected elsewhere. Sometimes this is done deliberately to block updates, but it's also a technique malware uses to stop antivirus software updating itself.<br><br>It's also common to find the hosts file modified when the user (or someone else) has installed cracked software, since some software relies on connecting to license server websites to 'check' that they're licensed.",tools:[]},
@@ -936,7 +939,7 @@ function renderProgList(){
   const SZ=60,pages=Math.max(1,Math.ceil(rows.length/SZ));
   if(PG_.page>pages)PG_.page=pages;
   const slice=rows.slice((PG_.page-1)*SZ,PG_.page*SZ);
-  el.innerHTML=slice.map(p=>'<div>'+esc(p)+'</div>').join('')||'<div style="color:var(--faint)">No matches.</div>';
+  el.innerHTML=slice.map(p=>'<div class="prog-row">'+esc(p)+'</div>').join('')||'<div style="color:var(--faint)">No matches.</div>';
   pager(document.getElementById('progPager'),PG_.page,pages,rows.length,slice.length,g=>{PG_.page+=g;renderProgList();});
 }
 const HF_={q:'',page:1};
@@ -1001,10 +1004,10 @@ function renderSummary(){
   if(cpu)pairs.push(['CPU', esc(cpu.trim())]);
   if(GPUS.length||DISPLAYS.length){
     const gpuNames=[...new Set(GPUS.length?GPUS.map(g=>g.name):DISPLAYS.map(d=>d.gpu))];
-    pairs.push(['GPU'+(gpuNames.length>1?'s':''), gpuNames.map(esc).join(', ')+' <span style="color:var(--faint)">(see Hardware \u203a GPU)</span>']);
+    pairs.push(['GPU'+(gpuNames.length>1?'s':''), gpuNames.map(esc).join(', ')]);
   } else {
     const gpu=specVal(sp.info,'GPU');
-    if(gpu)pairs.push(['GPU', esc(gpu)+' <span style="color:var(--faint)">(see Hardware \u203a GPU)</span>']);
+    if(gpu)pairs.push(['GPU', esc(gpu)]);
   }
   const mb=specVal(sp.info,'Motherboard'), mbMfr=specVal(sp.info,'Motherboard Manufacturer');
   if(mb)pairs.push(['Motherboard', esc(((mbMfr||'').replace(/ASUSTeK COMPUTER INC\./i,'ASUS').replace(/Micro-Star International.*/i,'MSI').replace(/Gigabyte Technology.*/i,'Gigabyte')+' '+mb).trim())]);
@@ -1028,7 +1031,7 @@ function renderSummary(){
   if(RAM.length){
     const totGB=RAM.reduce((a,x)=>a+(+x.cap||0),0);
     const conf=[...new Set(RAM.map(m=>m.conf).filter(Boolean))].join('/');
-    pairs.push(['Memory', totGB+' GB total'+(conf?' @ '+esc(conf)+' MT/s':'')+' <span style="color:var(--faint)">(see Hardware \u203a Memory)</span>']);
+    pairs.push(['Memory', totGB+' GB total'+(conf?' @ '+esc(conf)+' MT/s':'')]);
   } else {
     const rc=specVal(sp.info,'Ram Capacity');
     if(rc)pairs.push(['Memory', esc(rc)]);
@@ -1062,7 +1065,7 @@ function renderSummary(){
     }else{
       detail='reliability history only (outside event log window)';
     }
-    notes.push(dataLink('rel','unexpected-shutdown','<span class="r"><b>'+shutdownCount+'</b> Unexpected shutdown'+(shutdownCount>1?'s':'')+'</span> <span style="color:var(--faint)">('+esc(detail)+')</span>'));
+    notes.push(dataLink('shutdowns','unexpected-shutdown','<span class="r"><b>'+shutdownCount+'</b> Unexpected shutdown'+(shutdownCount>1?'s':'')+'</span> <span style="color:var(--faint)">('+esc(detail)+')</span>'));
   }else{
     notes.push('<span class="g">No unexpected shutdowns</span>');
   }
@@ -1116,8 +1119,22 @@ function renderSummary(){
     {re:/streamlabs/i,           label:'Streamlabs OBS',             grp:'audio'},
     {re:/hola vpn/i,             label:'Hola VPN',                   grp:'net'},
     {re:/killer network|killer control center/i, label:'Killer Network Manager', grp:'net'},
+    {re:/teamviewer/i,           label:'TeamViewer',                 grp:'remote'},
+    {re:/anydesk/i,              label:'AnyDesk',                    grp:'remote'},
+    {re:/screenconnect|connectwise control|connectwise screenconnect/i, label:'ScreenConnect', grp:'remote'},
+    {re:/splashtop/i,            label:'Splashtop',                  grp:'remote'},
+    {re:/logmein/i,              label:'LogMeIn',                    grp:'remote'},
+    {re:/rustdesk/i,             label:'RustDesk',                   grp:'remote'},
+    {re:/dameware/i,             label:'DameWare',                   grp:'remote'},
+    {re:/(tight|ultra|real)?vnc (server|viewer|connect)|^vnc\b/i, label:'VNC', grp:'remote'},
+    {re:/nomachine/i,            label:'NoMachine',                  grp:'remote'},
+    {re:/gotomypc|gotoassist/i,  label:'GoTo Assist/MyPC',           grp:'remote'},
+    {re:/ammyy admin/i,          label:'Ammyy Admin',                grp:'remote'},
+    {re:/supremo/i,              label:'Supremo',                    grp:'remote'},
+    {re:/zoho assist/i,          label:'Zoho Assist',                grp:'remote'},
+    {re:/chrome remote desktop/i,label:'Chrome Remote Desktop',      grp:'remote'},
   ];
-  const GRP_NAME={ac:'Anti-cheat / kernel driver',oc:'Overclock / monitoring tool',periph:'RGB / peripheral suite',audio:'Audio / overlay software',net:'Network software',bloat:'Potential bloatware/PUP'};
+  const GRP_NAME={ac:'Anti-cheat / kernel driver',oc:'Overclock / monitoring tool',periph:'RGB / peripheral suite',audio:'Audio / overlay software',net:'Network software',bloat:'Potential bloatware/PUP',remote:'Remote access software'};
   const foundSoft={};
   (sp.programs||[]).forEach(p=>{
     SOFT_FLAGS.forEach(f=>{ if(f.re.test(p)){ (foundSoft[f.grp]=foundSoft[f.grp]||new Set()).add(f.label); } });
@@ -1130,7 +1147,7 @@ function renderSummary(){
   Object.keys(foundSoft).forEach(grp=>{
     const items=[...foundSoft[grp]].sort().join(', ');
     const SOFT_FAQ={ac:'software-anticheat',oc:'software-overclock',periph:'software-rgb',audio:'software-audio',net:'software-network',bloat:'software-bloatware'};
-    notes.push(dataLink('apps',SOFT_FAQ[grp]||'','<span class="'+(grp==='bloat'?'y':'')+'"><span class="slabel">'+GRP_NAME[grp]+':</span> '+esc(items)+'</span>'));
+    notes.push(dataLink('apps',SOFT_FAQ[grp]||'','<span class="'+(grp==='bloat'||grp==='remote'?'y':'')+'"><span class="slabel">'+GRP_NAME[grp]+':</span> '+esc(items)+'</span>'));
   });
 
   if(SECURITY){
@@ -1139,7 +1156,6 @@ function renderSummary(){
       const off=SECURITY.firewall.filter(f=>f.enabled!=='True').map(f=>f.profile);
       notes.push(dataLink('security','firewall-disabled','<span class="r">Firewall disabled on: '+esc(off.join(', '))+'</span>'));
     }
-    if(SECURITY.stalledServices&&SECURITY.stalledServices.length)notes.push(dataLink('security','stalled-services','<span class="y"><b>'+SECURITY.stalledServices.length+'</b> Automatic service'+(SECURITY.stalledServices.length>1?'s':'')+' not running</span>'));
     if(SECURITY.threats&&SECURITY.threats.length)notes.push(dataLink('security','defender-threats','<span class="r"><b>'+SECURITY.threats.length+'</b> threat detection'+(SECURITY.threats.length>1?'s':'')+' recorded by Windows Defender</span>'));
     if(SECURITY.exclFlags&&SECURITY.exclFlags.length)notes.push(dataLink('security','defender-exclusions','<span class="y"><b>'+SECURITY.exclFlags.length+'</b> risky Defender exclusion'+(SECURITY.exclFlags.length>1?'s':'')+'</span>'));
     if(SECURITY.hostsFlags&&SECURITY.hostsFlags.length)notes.push(dataLink('security','hosts-redirect','<span class="y">Hosts file redirects a known update/security domain</span>'));
@@ -1174,7 +1190,19 @@ function renderSummary(){
   if(WINDOWSOLD&&WINDOWSOLD.present)notes.push(flagLink('windows-old','<span style="color:var(--dim)">Windows.old folder present. Windows was upgraded or reset around '+esc(WINDOWSOLD.date)+'</span>'));
   const nEl=document.getElementById('notesBody');
   el.innerHTML=pairs.length?'<dl class="kv summary-kv">'+pairs.map(([k,v])=>'<dt>'+k+'</dt><dd>'+v+'</dd>').join('')+'</dl>':'';
-  nEl.innerHTML=notes.length?'<ul class="notes">'+notes.map(n=>'<li>'+n+'</li>').join('')+'</ul>':'';
+  const NOTE_GROUPS=[
+    {label:'Critical',   test:n=>/class="r"/.test(n)},
+    {label:'Warnings',   test:n=>/class="y"/.test(n)},
+    {label:'Informational', test:n=>!/class="[ry]"/.test(n)&&!/class="g"/.test(n)},
+    {label:'All good',   test:n=>/class="g"/.test(n)},
+  ];
+  let notesHtml='';
+  NOTE_GROUPS.forEach(g=>{
+    const items=notes.filter(g.test);
+    if(!items.length)return;
+    notesHtml+='<div class="notes-group"><div class="notes-head">'+g.label+'</div><ul class="notes">'+items.map(n=>'<li>'+n+'</li>').join('')+'</ul></div>';
+  });
+  nEl.innerHTML=notesHtml;
 }
 function sysCat(lvl){return lvl<=2?'err':lvl===3?'warn':'info';}
 function renderSys(){
@@ -1199,7 +1227,45 @@ function renderSys(){
       '<div class="msg mono">'+esc(e.msg||'')+'</div></div>';
   });
   v.innerHTML=h;
-  v.querySelectorAll('.row').forEach(r=>r.onclick=()=>r.classList.toggle('open'));
+  v.querySelectorAll('.row').forEach(r=>r.onclick=(e)=>{ if(e.target.closest('.msg'))return; r.classList.toggle('open'); });
+}
+function renderShutdowns(){
+  const v=document.getElementById('shutdownsView');
+  const BC_NAMES={ '278':'VIDEO_TDR_FAILURE','279':'VIDEO_TDR_TIMEOUT_DETECTED','281':'VIDEO_SCHEDULER_INTERNAL_ERROR','321':'VIDEO_ENGINE_TIMEOUT_DETECTED','322':'VIDEO_TDR_APPLICATION_BLOCKED' };
+  // Kernel-Power (event 41) carries a bugcheck code when one was recorded; reliability history's
+  // 'EventLog' source marks the same kind of incident but never carries a bugcheck, and can reach
+  // further back than the System log (which is size-capped). Merge both, preferring the bugcheck
+  // when the same incident appears in both.
+  const kp41=SYSEVT.filter(r=>String(r.id)==='41').map(r=>{
+    const dt=parseDate(r.t);
+    const bc=(r.bc&&String(r.bc)!=='0')?String(r.bc):'';
+    return {d:dt,bc,src:'Kernel-Power (41)'};
+  }).filter(x=>x.d);
+  const relOnly=events.filter(e=>e.s==='EventLog').map(e=>({d:e.d,bc:'',src:'Reliability history'}));
+  const all=[...kp41,...relOnly].sort((a,b)=>b.d-a.d);
+  const merged=[];
+  all.forEach(item=>{
+    const dup=merged.find(m=>Math.abs(m.d-item.d)<2*60*1000);
+    if(dup){
+      if(!dup.bc&&item.bc)dup.bc=item.bc;
+      if(!dup.src.includes(item.src))dup.src+=' + '+item.src;
+    }else merged.push({...item});
+  });
+  if(!merged.length){
+    v.innerHTML='<div class="spec-section"><h2>Unexpected Shutdowns</h2><div class="sys-ok">\u2713 No unexpected shutdowns found.</div></div>';
+    return;
+  }
+  let h='<div class="spec-section"><h2>Unexpected Shutdowns ('+merged.length+')</h2>'+
+    '<div class="sys-note">A shutdown Windows never got a clean "powering off" signal for &mdash; caused by a crash, power loss, a hard reset, or a freeze that needed a force restart.</div>'+
+    '<dl class="kv">';
+  merged.forEach(x=>{
+    const bcLabel=x.bc?('0x'+parseInt(x.bc).toString(16).toUpperCase()+(BC_NAMES[x.bc]?' '+BC_NAMES[x.bc]:'')):'';
+    h+='<dt class="mono">'+esc(fmtDay(x.d.toISOString().slice(0,10)))+', '+esc(fmtTime(x.d))+'</dt>'+
+      '<dd>'+(bcLabel?'<span class="r">Bugcheck '+esc(bcLabel)+'</span>':'<span style="color:var(--faint)">No bugcheck &mdash; power loss, hard reset, or hang</span>')+
+      ' <span style="color:var(--faint);font-size:13px">\u00b7 '+esc(x.src)+'</span></dd>';
+  });
+  h+='</dl></div>';
+  v.innerHTML=h;
 }
 function renderSecurity(){
   const v=document.getElementById('securityView');
@@ -1215,6 +1281,7 @@ function renderSecurity(){
     if(d.lastQuick)h+='<dt>Last quick scan</dt><dd>'+esc(d.lastQuick)+'</dd>';
     if(d.lastFull)h+='<dt>Last full scan</dt><dd>'+esc(d.lastFull)+'</dd>';
     if(d.sigAge)h+='<dt>Signature age</dt><dd>'+esc(d.sigAge)+' day'+(d.sigAge==='1'?'':'s')+'</dd>';
+    if(d.sigVersion)h+='<dt>Security intelligence version</dt><dd class="mono">'+esc(d.sigVersion)+'</dd>';
     h+='</dl></div>';
   }
   if(SECURITY.firewall&&SECURITY.firewall.length){
@@ -1243,11 +1310,6 @@ function renderSecurity(){
   if(SECURITY.startupFlags&&SECURITY.startupFlags.length){
     h+='<div class="spec-section"><h2>Startup entries flagged</h2><ul class="notes">'+SECURITY.startupFlags.map(f=>'<li><span class="y">'+esc(f)+'</span></li>').join('')+'</ul></div>';
   }
-  if(SECURITY.stalledServices&&SECURITY.stalledServices.length){
-    h+='<div class="spec-section"><h2>Automatic services not running ('+SECURITY.stalledServices.length+')</h2><dl class="kv">';
-    SECURITY.stalledServices.forEach(s=>{h+='<dt>'+esc(s.name)+'</dt><dd style="color:var(--warn)">'+esc(s.state)+'</dd>';});
-    h+='</dl></div>';
-  }
   v.innerHTML=h||'<div class="spec-section"><h2>Security</h2><div style="color:var(--faint)">No security data embedded.</div></div>';
 }
 function renderGPU(){
@@ -1274,7 +1336,7 @@ function renderGPU(){
     const dispRows=displays.filter(d=>d.mon||d.mode);
     const fallbackMons=(!Object.keys(byGpu).length && MONS.length)?MONS:[];
     if(dispRows.length||fallbackMons.length){
-      h+='<div class="sev-head" style="color:var(--dim);padding-top:4px">Connected Display'+((dispRows.length+fallbackMons.length)>1?'s':'')+'</div><dl class="kv smart-kv">';
+      h+='<div class="sev-head" style="color:var(--dim);padding:12px 0 5px 0">Connected Display'+((dispRows.length+fallbackMons.length)>1?'s':'')+'</div><dl class="kv smart-kv" style="font-size:15.5px">';
       dispRows.forEach(d=>{h+='<dt>'+esc(d.mon||'Display')+'</dt><dd>'+esc(d.mode||'')+'</dd>';});
       fallbackMons.forEach(m=>{h+='<dt>Connected Display</dt><dd>'+esc(m)+'</dd>';});
       h+='</dl>';
@@ -1388,6 +1450,7 @@ SPECS_PROGRAMS=SPECS_PROGRAMS=renderSpecs();
 load(RAW);
 renderSummary();
 renderSys();
+renderShutdowns();
 renderDumps();
 renderNet();
 renderGPU();
@@ -1602,7 +1665,7 @@ function fileadd {
         }
 
         [PSCustomObject]@{
-            'Drive Label'         = $logicalDisk.DeviceID + '\'
+            'Drive Label'         = $logicalDisk.DeviceID
             'Drive Name'          = if (-not [string]::IsNullOrEmpty($logicalDisk.VolumeName)) { $logicalDisk.VolumeName } else { 'No Name Found' }
             'Drive Status'        = "$operationalStatus, $healthStatus"
             'Windows Drive'       = ($logicalDisk.DeviceID -eq "$env:SystemDrive")
@@ -1975,7 +2038,7 @@ function reliabilityexport {
 
         $hotfixes = @()
         try {
-            $hotfixes = @(Get-HotFix -ErrorAction Stop | Sort-Object InstalledOn -Descending | ForEach-Object {
+            $hotfixes = @(Get-HotFix -ErrorAction Stop | Where-Object { $_.Description -notmatch 'Security Intelligence Update' -and $_.HotFixID -ne 'KB2267602' } | Sort-Object InstalledOn -Descending | ForEach-Object {
                 [PSCustomObject]@{
                     id   = "$($_.HotFixID)"
                     desc = "$($_.Description)"
@@ -2003,7 +2066,9 @@ function reliabilityexport {
         $wuServiceStatus = ""
         try { $wuServiceStatus = "$((Get-Service -Name wuauserv -ErrorAction Stop).Status)" } catch { }
 
-        # Recent Windows Update history, including FAILED/pending attempts that Get-HotFix cannot show
+        # Recent Windows Update history, including FAILED/pending attempts that Get-HotFix cannot show.
+        # Defender's daily "Security Intelligence Update" entries can dominate the most recent history,
+        # so pull a wider raw window before filtering them out and capping the final list.
         $wuHistory = @()
         try {
             $session = New-Object -ComObject Microsoft.Update.Session
@@ -2011,7 +2076,7 @@ function reliabilityexport {
             $historyCount = $searcher.GetTotalHistoryCount()
             if ($historyCount -gt 0) {
                 $resultMap = @{ 1 = "In progress"; 2 = "Succeeded"; 3 = "Succeeded with errors"; 4 = "Failed"; 5 = "Cancelled" }
-                $wuHistory = @($searcher.QueryHistory(0, [Math]::Min($historyCount, 40)) | ForEach-Object {
+                $wuHistory = @($searcher.QueryHistory(0, [Math]::Min($historyCount, 200)) | Where-Object { $_.Title -notmatch 'Security Intelligence Update' } | Select-Object -First 40 | ForEach-Object {
                     [PSCustomObject]@{
                         title  = "$($_.Title)"
                         date   = if ($_.Date) { $_.Date.ToString("dd/MM/yyyy HH:mm") } else { "" }
