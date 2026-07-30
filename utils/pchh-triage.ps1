@@ -844,6 +844,7 @@ const FAQ_DATA=[
 {id:'firewall-disabled',q:"Firewall Disabled",a:"Windows Firewall isn't active on one or more network profiles (Domain, Private, or Public), leaving the system more exposed to unwanted network connections.",tools:[]},
 {id:'defender-threats',q:"Defender Threat Detections",a:"Windows Defender has previously found and acted on something it identified as malware, a virus, or another threat on this PC. This is historical. It doesn't necessarily mean anything is currently infected, but repeated or recent detections are worth taking seriously.",tools:[]},
 {id:'defender-exclusions',q:"Risky Defender Exclusions",a:"An exclusion tells Windows Defender to skip scanning a specific file, folder, or file type. Excluding a game folder is common and usually fine.<br><br>Excluding an entire drive, a broad system folder, or all .exe files is far more dangerous, since it means malware placed there would never be scanned at all. Check the Security tab for exactly what's excluded.",tools:[]},
+{id:'rdp-enabled',q:"Remote Desktop (RDP) Enabled",a:"Remote Desktop lets someone log into this PC over the network as if sitting at it. It's useful for legitimate remote access, but it's also a common target for attackers, especially if the PC is reachable from the internet or has a weak password.<br><br>The signed-in account type matters here too: a local account only needs its own password, while a Microsoft or Entra ID account can be backed by MFA. If this wasn't set up intentionally, it's worth disabling. If it's needed, make sure Network Level Authentication is required and the account used has a strong password.",tools:[]},
 {id:'hosts-redirect',q:"Hosts File Redirects",a:"The hosts file is a small system text file that can override where certain web addresses point. This flag means an update- or security-related address, like Windows Update or an antivirus vendor, has been redirected elsewhere. Sometimes this is done deliberately to block updates, but it's also a technique malware uses to stop antivirus software updating itself.<br><br>It's also common to find the hosts file modified when the user (or someone else) has installed cracked software, since some software relies on connecting to license server websites to 'check' that they're licensed.",tools:[]},
 {id:'startup-flagged',q:"Flagged Startup Entries",a:"These are programs set to launch automatically with Windows that either run from a Temp folder or don't have a valid digital signature. Neither is automatically a problem. Plenty of legitimate small or hobbyist tools are unsigned, but it's exactly the pattern malware persistence uses, so anything unfamiliar here is worth a closer look.",tools:[]},
 {id:'gpu-tdr',q:"Display Driver Timeout (TDR)",a:"The graphics driver stopped responding briefly and Windows had to recover it (often called a TDR event). This usually shows up as a brief flicker or freeze rather than a full crash, though it can escalate to one.<br><br>Common causes are an unstable GPU overclock, an outdated or corrupted graphics driver, or the GPU overheating under load.",tools:["Display Driver Uninstaller (DDU)","FurMark","HWiNFO"]},
@@ -1207,6 +1208,12 @@ function renderSummary(){
     if(SECURITY.exclFlags&&SECURITY.exclFlags.length)notes.push(dataLink('security','defender-exclusions','<span class="y"><b>'+SECURITY.exclFlags.length+'</b> risky Defender exclusion'+(SECURITY.exclFlags.length>1?'s':'')+'</span>'));
     if(SECURITY.hostsFlags&&SECURITY.hostsFlags.length)notes.push(dataLink('security','hosts-redirect','<span class="y">Hosts file redirects a known update/security domain</span>'));
     if(SECURITY.startupFlags&&SECURITY.startupFlags.length)notes.push(dataLink('security','startup-flagged','<span class="y"><b>'+SECURITY.startupFlags.length+'</b> flagged startup entr'+(SECURITY.startupFlags.length>1?'ies':'y')+'</span>'));
+    if(SECURITY.rdp&&SECURITY.rdp.enabled){
+      let extra=[];
+      if(SECURITY.rdp.nlaRequired===false)extra.push('Network Level Authentication is <b>off</b>');
+      if(SECURITY.acctType)extra.push(esc(SECURITY.acctType));
+      notes.push(dataLink('security','rdp-enabled','<span class="y">Remote Desktop (RDP) is enabled'+(extra.length?' &mdash; '+extra.join(', '):'')+'</span>'));
+    }
     if(SECURITY.bitlocker&&SECURITY.bitlocker.length){
       const osVol=SECURITY.bitlocker.find(b=>b.type==='OperatingSystem')||SECURITY.bitlocker.find(b=>b.drive==='C:');
       if(osVol&&osVol.status==='On')notes.push(dataLink('security','bitlocker-on','<span class="y">BitLocker is enabled on the system drive &mdash; back up the recovery key before wiping or resetting</span>'));
@@ -1338,6 +1345,19 @@ function renderSecurity(){
   if(SECURITY.firewall&&SECURITY.firewall.length){
     h+='<div class="spec-section"><h2>Firewall</h2><dl class="kv">';
     SECURITY.firewall.forEach(f=>{h+='<dt>'+esc(f.profile)+'</dt><dd style="color:'+(f.enabled==='True'?'var(--ok)':'var(--err)')+'">'+(f.enabled==='True'?'Enabled':'Disabled')+'</dd>';});
+    h+='</dl></div>';
+  }
+  if(SECURITY.rdp||SECURITY.acctType){
+    h+='<div class="spec-section"><h2>Remote Desktop (RDP)</h2><dl class="kv">';
+    if(SECURITY.acctType)h+='<dt>Signed-in account</dt><dd>'+esc(SECURITY.acctType)+'</dd>';
+    if(SECURITY.rdp){
+      const r=SECURITY.rdp;
+      h+='<dt>Status</dt><dd style="color:'+(r.enabled?'var(--warn)':'var(--ok)')+'">'+(r.enabled?'Enabled':'Disabled')+'</dd>';
+      if(r.enabled){
+        h+='<dt>Service</dt><dd>'+esc(r.serviceStatus)+'</dd>';
+        if(r.nlaRequired!==null)h+='<dt>Network Level Authentication</dt><dd style="color:'+(r.nlaRequired?'var(--ok)':'var(--err)')+'">'+(r.nlaRequired?'Required':'Not required')+'</dd>';
+      }
+    }
     h+='</dl></div>';
   }
   if(SECURITY.bitlocker&&SECURITY.bitlocker.length){
@@ -2346,6 +2366,35 @@ function reliabilityexport {
                 })
             } catch { }
 
+            # RDP (Remote Desktop) status: registry setting + listening service
+            $rdp = $null
+            try {
+                $deny = (Get-ItemProperty -Path 'HKLM:\SYSTEM\CurrentControlSet\Control\Terminal Server' -Name fDenyTSConnections -ErrorAction Stop).fDenyTSConnections
+                $enabled = ($deny -eq 0)
+                $svc = Get-Service -Name TermService -ErrorAction SilentlyContinue
+                $nla = $null
+                try {
+                    $nla = (Get-ItemProperty -Path 'HKLM:\SYSTEM\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -Name UserAuthentication -ErrorAction Stop).UserAuthentication
+                } catch { }
+                $rdp = [PSCustomObject]@{
+                    enabled       = $enabled
+                    serviceStatus = if ($svc) { "$($svc.Status)" } else { "Unknown" }
+                    nlaRequired   = if ($null -ne $nla) { ($nla -eq 1) } else { $null }
+                }
+            } catch { }
+
+            # Signed-in account type: Microsoft account, Domain-joined, or Local
+            $acctType = $null
+            try {
+                $curSid = ([System.Security.Principal.WindowsIdentity]::GetCurrent()).User.Value
+                if ($curSid -match '^S-1-12-1-') {
+                    $acctType = "Microsoft / Entra ID account"
+                } else {
+                    $cs = Get-CimInstance Win32_ComputerSystem -ErrorAction Stop
+                    $acctType = if ($cs.PartOfDomain) { "Domain account" } else { "Local account" }
+                }
+            } catch { }
+
             # Scheduled Tasks: user-created, non-Microsoft, enabled - flag unsigned/Temp-run actions
             try {
                 $tasks = Get-ScheduledTask -ErrorAction Stop | Where-Object {
@@ -2505,6 +2554,8 @@ function reliabilityexport {
                 firewall         = $firewall
                 stalledServices  = $stalledServices
                 bitlocker        = $bitlocker
+                rdp              = $rdp
+                acctType         = $acctType
             }
         } catch { }
 
