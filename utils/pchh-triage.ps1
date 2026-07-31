@@ -107,10 +107,7 @@ body{background:var(--bg);color:var(--text);font-family:'Albert Sans',sans-serif
 #summary{padding:0;display:flex;flex-direction:column;gap:6px;font-size:15.5px;line-height:1.55}
 
 
-#summary .sline{color:var(--dim)}
-#summary .sline b{color:inherit;font-weight:500}
 #summary .slabel{color:var(--dim)}
-#summary .sline{color:var(--text)}
 .summary-kv{grid-template-columns:165px 1fr;margin-bottom:4px}
 .summary-kv dt{color:var(--dim)}
 .summary-kv dd b{font-weight:500}
@@ -131,6 +128,7 @@ body.tab-drives #drivesView{display:block}
 body.tab-gpu #gpuView{display:block}
 body.tab-memory #memoryView{display:block}
 body.tab-net #netView{display:block}
+body.tab-devices #devicesView{display:block}
 body.tab-security #securityView{display:block}
 body.tab-processes #processesView{display:block}
 body.tab-apps #appsView{display:block}
@@ -145,6 +143,11 @@ body.tab-dumps #dumpsView{display:block}
 .sys-ok{color:var(--ok);padding:24px 0;font-size:16px}
 .sys-note{color:var(--faint);font-size:13px;margin-bottom:14px}
 .spec-section{margin-bottom:40px}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:100;align-items:center;justify-content:center;padding:24px}
+.modal-overlay.open{display:flex}
+.modal-box{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:28px 30px;max-width:480px;width:100%;max-height:82vh;overflow-y:auto;position:relative}
+.modal-close{position:absolute;top:16px;right:16px;background:none;border:none;color:var(--dim);font-size:22px;line-height:1;cursor:pointer;padding:4px}
+.modal-close:hover{color:var(--text)}
 .spec-section h2{font-size:14px;font-weight:600;color:var(--faint);text-transform:uppercase;letter-spacing:.08em;padding:4px 0 14px;border-bottom:1px solid var(--line);margin-bottom:20px}
 .kv{display:grid;grid-template-columns:210px 1fr;gap:7px 16px;font-size:15px}
 #wuHistList,#hfList{grid-template-columns:145px 1fr}
@@ -230,7 +233,6 @@ body.dragging #drop{color:var(--info);border-color:var(--info)}
 .chip.on{color:var(--text);border-color:var(--dim)}
 .chip.on.c-err{color:var(--err);border-color:var(--err)}
 .chip.on.c-warn{color:var(--warn);border-color:var(--warn)}
-.chip.on.c-ok{color:var(--ok);border-color:var(--ok)}
 .chip.on.c-info{color:var(--info);border-color:var(--info)}
 #search{background:var(--panel);border:1px solid var(--line);border-radius:6px;color:var(--text);padding:9px 13px;font-size:14px;font-family:inherit;width:220px;margin-left:auto}
 #search:focus{outline:none;border-color:var(--dim)}
@@ -246,7 +248,7 @@ body.dragging #drop{color:var(--info);border-color:var(--info)}
 .row.open{background:var(--panel2)}
 .time{color:var(--faint);font-size:14px}
 .dot{width:8px;height:8px;border-radius:50%;align-self:center}
-.d-err{background:var(--err)}.d-warn{background:var(--warn)}.d-ok{background:var(--ok)}.d-info{background:var(--info)}
+.d-err{background:var(--err)}.d-warn{background:var(--warn)}.d-info{background:var(--info)}
 .title{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .row.open .title{white-space:normal}
 .src{color:var(--dim);font-size:14px;margin-left:10px}
@@ -293,6 +295,7 @@ body.dragging #drop{color:var(--info);border-color:var(--info)}
         <button class="tab" data-tab="gpu">GPU and Display(s)</button>
         <button class="tab" data-tab="memory">Memory (RAM)</button>
         <button class="tab" data-tab="net">Network</button>
+        <button class="tab" data-tab="devices">Connected Devices</button>
       </div>
     </div>
     <div class="nav-group">
@@ -352,6 +355,7 @@ body.dragging #drop{color:var(--info);border-color:var(--info)}
 <div id="gpuView" class="view"></div>
 <div id="memoryView" class="view"></div>
 <div id="netView" class="view"></div>
+<div id="devicesView" class="view"></div>
 <div id="securityView" class="view"></div>
 <div id="processesView" class="view"></div>
 <div id="appsView" class="view"></div>
@@ -362,6 +366,7 @@ body.dragging #drop{color:var(--info);border-color:var(--info)}
 <div id="dumpsView" class="view"></div>
 
 </main>
+<div id="smartModal" class="modal-overlay"><div class="modal-box"><button class="modal-close" id="smartModalClose">&times;</button><div id="smartModalBody"></div></div></div>
 </div>
 
 <script>
@@ -387,8 +392,11 @@ const NET = /*__NET__*/null;
 const SECURITY = /*__SECURITY__*/null;
 const HOTFIXES = /*__HOTFIXES__*/[];
 const WINDOWSOLD = /*__WINDOWSOLD__*/null;
+const CBS = /*__CBS__*/null;
 const DEVERR = /*__DEVERR__*/[];
 const AUDIO = /*__AUDIO__*/null;
+const USBDEVS = /*__USB__*/[];
+const CAMERAS = /*__CAMERAS__*/[];
 const VER = /*__VER__*/"";
 const GEN = /*__GEN__*/"";
 
@@ -544,7 +552,7 @@ function summary(e){
   }
   return esc(e.s);
 }
-function esc(s){return (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+function esc(s){return String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
 
 document.querySelectorAll('.chip[data-cat]').forEach(c=>c.onclick=()=>{
   const cat=c.dataset.cat;
@@ -638,9 +646,6 @@ function renderSpecs(){
     });
     h+='</dl></div>';
   }
-  if(AUDIO&&AUDIO.playback){
-    h+='<div class="spec-section"><h2>Audio</h2><dl class="kv"><dt>Default playback device</dt><dd>'+esc(AUDIO.playback)+'</dd></dl></div>';
-  }
   if(DEVERR.length){
     h+='<div class="spec-section" id="devErrSection"><h2>Device Manager errors ('+DEVERR.length+')</h2><dl class="kv">';
     const DEVERR_CODES={
@@ -675,27 +680,23 @@ function renderSpecs(){
     h+='</dl></div>';
   }
   let dh='';
-  if(sp.drives.length){
-    dh+='<div class="spec-section"><h2>Drives ('+sp.drives.length+')</h2><div class="drive-grid">';
-    sp.drives.forEach(d=>{
-      const total=parseFloat(d['Total Size (GB)'])||0, free=parseFloat(d['Free Space (GB)'])||0;
-      const pctFree=total?Math.round(free/total*100):0, pctUsed=100-pctFree;
-      const name=d['Drive Name']&&d['Drive Name']!=='No Name Found'?d['Drive Name']:'';
-      dh+='<div class="drive"><h3>'+esc(d['Drive Label']||'?')+(name?' <span style="color:var(--dim);font-weight:400">'+esc(name)+'</span>':'')+
-        (d['Windows Drive']==='True'?' <span style="color:var(--dim);font-weight:400">Windows</span>':'')+'</h3>'+
-        '<div class="sub">'+esc(d['Drive Type']||'Unknown')+' · '+esc(d['Drive Status']||'Unknown')+'</div>'+
-        (DIRTY.some(v=>String(d['Drive Label']||'').toUpperCase().startsWith(v.toUpperCase()))?'<div style="color:var(--warn);font-size:13.5px;margin-bottom:6px">Dirty bit set</div>':'')+
-        '<div class="meter'+(pctFree<15?' low':'')+'"><div style="width:'+pctUsed+'%"></div></div>'+
-        '<div class="use mono">'+free.toFixed(0)+' GB free of '+total.toFixed(0)+' GB ('+pctFree+'%)</div></div>';
-    });
-    dh+='</div></div>';
-  }
   if(DISKLAYOUT.length){
+    const smartByDisk={};
+    SMART.forEach(d=>{smartByDisk[String(d.disk)]=d;});
+    const disksSorted=[...DISKLAYOUT].sort((a,b)=>(+a.disk)-(+b.disk));
     dh+='<div class="spec-section"><h2>Disk layout</h2>';
     const TYPE_COLOR={'EFI System Partition':'var(--info)','Recovery':'var(--warn)','Recovery (MBR)':'var(--warn)','Microsoft Reserved':'var(--faint)','Data':'var(--ok)','System':'var(--dim)'};
-    DISKLAYOUT.forEach(dk=>{
+    disksSorted.forEach(dk=>{
       const total=dk.partitions.reduce((a,p)=>a+p.sizeGB,0)||dk.sizeGB||1;
-      dh+='<div class="drive" style="margin-bottom:14px"><h3>Disk '+dk.disk+' <span style="color:var(--dim);font-weight:400">'+esc(dk.style||'Unknown')+' \u00b7 '+dk.sizeGB+' GB</span></h3>';
+      const sm=smartByDisk[String(dk.disk)];
+      const probs=sm?smartProbs(sm):[];
+      const bad=probs.length>0;
+      const healthLabel=sm&&sm.health?sm.health+(sm.op&&sm.op!=='OK'&&sm.op!==sm.health?' ('+sm.op+')':''):'';
+      dh+='<div class="drive'+(bad?' smart-bad':'')+'" style="margin-bottom:14px'+(bad?';cursor:pointer':'')+'"'+(bad?' onclick="openSmartModal(\''+esc(dk.disk)+'\')"':'')+'>';
+      dh+='<h3>Disk '+esc(dk.disk)+(sm&&sm.name?' <span style="color:var(--dim);font-weight:400">'+esc(sm.name)+'</span>':'')+'</h3>';
+      dh+='<div class="sub">'+esc(dk.style||'Unknown')+' \u00b7 '+dk.sizeGB+' GB'+(sm&&sm.bus?' \u00b7 '+esc(sm.bus):'')+
+        (healthLabel?' \u00b7 <span style="color:'+(bad?'var(--err)':'var(--ok)')+'">'+esc(healthLabel)+'</span>':'')+'</div>'+
+        (bad?'<div style="color:var(--err);font-size:13.5px;margin-bottom:6px">\u26a0 SMART warning &mdash; click for details</div>':'');
       dh+='<div style="display:flex;height:22px;border-radius:6px;overflow:hidden;margin:10px 0;background:var(--panel2)">';
       dk.partitions.forEach(p=>{
         const pct=Math.max(1.5,(p.sizeGB/total*100));
@@ -709,32 +710,6 @@ function renderSpecs(){
       dh+='</dl></div>';
     });
     dh+='</div>';
-  }
-  if(SMART.length){
-    dh+='<div class="spec-section"><h2>SMART data</h2><div class="drive-grid">';
-    SMART.forEach(d=>{
-      const bad=(d.health&&d.health!=='Healthy')||(+d.reu>0)||(+d.weu>0)||(+d.rl>0)||(+d.pend>0)||(+d.unc>0)||(+d.crc>0)||d.pf==='1';
-      let rows='';
-      const add=(l,val)=>{if(val!=='')rows+='<dt>'+l+'</dt><dd>'+esc(val)+'</dd>';};
-      add('Health',d.health+(d.op&&d.op!=='OK'?' ('+d.op+')':''));
-      add('Temperature',d.temp?d.temp+'\u00b0C'+(d.tmax?' (max '+d.tmax+'\u00b0C)':''):'');
-      add('Power-on hours',d.hours);
-      add('Wear',d.wear?d.wear+'%':'');
-      add('Read errors (uncorrected)',d.reu);
-      add('Read errors (corrected)',d.rec);
-      add('Write errors (uncorrected)',d.weu);
-      add('Write errors (corrected)',d.wec);
-      add('Reallocated sectors',d.rl);
-      add('Pending sectors',d.pend);
-      add('Uncorrectable sectors',d.unc);
-      add('UltraDMA CRC errors',d.crc);
-      add('Command timeouts',d.cto);
-      if(d.pf==='1')rows+='<dt style="color:var(--err)">Failure predicted</dt><dd style="color:var(--err)">Yes (drive self-report)</dd>';
-      dh+='<div class="drive'+(bad?' smart-bad':'')+'"><h3>Disk '+esc(d.disk)+'<br><span style="color:var(--dim);font-weight:400;font-size:14px">'+esc(d.name)+'</span></h3>'+
-        '<div class="sub">'+esc(d.media||'Unknown')+(d.bus?' \u00b7 '+esc(d.bus):'')+'</div>'+
-        '<dl class="kv smart-kv">'+rows+'</dl></div>';
-    });
-    dh+='</div></div>';
     const alerts=[];
     SMART.forEach(d=>{
       const probs=smartProbs(d);
@@ -849,6 +824,7 @@ const FAQ_DATA=[
 {id:'startup-flagged',q:"Flagged Startup Entries",a:"These are programs set to launch automatically with Windows that either run from a Temp folder or don't have a valid digital signature. Neither is automatically a problem. Plenty of legitimate small or hobbyist tools are unsigned, but it's exactly the pattern malware persistence uses, so anything unfamiliar here is worth a closer look.",tools:[]},
 {id:'gpu-tdr',q:"Display Driver Timeout (TDR)",a:"The graphics driver stopped responding briefly and Windows had to recover it (often called a TDR event). This usually shows up as a brief flicker or freeze rather than a full crash, though it can escalate to one.<br><br>Common causes are an unstable GPU overclock, an outdated or corrupted graphics driver, or the GPU overheating under load.",tools:["Display Driver Uninstaller (DDU)","FurMark","HWiNFO"]},
 {id:'high-uptime',q:"Long System Uptime",a:"The PC hasn't been restarted in over a week. This is common and not inherently a problem, but pending Windows/driver updates won't take effect until a reboot, and memory leaks or resource creep in long-running processes become more likely to cause slowdowns the longer a session goes on.<br><br>If something on this PC is running slow or behaving oddly, a restart is a cheap first thing to try before digging further.",tools:[]},
+{id:'cbs-corruption',q:"Unresolved Component Corruption (CBS.log)",a:"CBS.log records Windows' component servicing activity, including any system file repairs. A 'Cannot repair member' entry means a corrupted system file was found during a check (from Windows Update, an in-place upgrade, or a manual sfc/DISM run) that couldn't be automatically fixed.<br><br>This can cause update failures, missing features, or general instability depending on what's affected. Running <span class=\"mono\">sfc /scannow</span> followed by <span class=\"mono\">DISM /Online /Cleanup-Image /RestoreHealth</span> is the standard next step; if DISM can't find a good copy of the file locally it will need a network connection or Windows installation media to pull one from.",tools:["sfc /scannow","DISM"]},
 {id:'livekernelevent',q:"LiveKernelEvent",a:"Windows' record of a serious problem severe enough to be crash-like, but that the system managed to recover from without a full restart, most often tied to a graphics driver failing and recovering.<br><br>Frequent LiveKernelEvents point to the same kinds of causes as display driver timeouts.",tools:["Display Driver Uninstaller (DDU)","FurMark","HWiNFO"]},
 {id:'wifi-signal',q:"Weak Wi-Fi Signal",a:"The wireless connection's signal strength was weak at the moment this report was generated. A weak signal can cause slow speeds, dropped connections, and higher ping in games, and is usually down to distance from the router, walls/obstructions, or interference from other devices.",tools:[]},
 {id:'commit-charge',q:"Commit Charge",a:"This measures how much memory (RAM plus the page file combined) the system had committed to running programs at the moment this report was generated.<br><br>Running close to the limit can cause slowdowns, stuttering, or 'out of memory' errors, and often points to either too little RAM for the workload or a page file set too small.",tools:["HWiNFO"]},
@@ -1011,6 +987,35 @@ function smartProbs(d){
   if(+d.weu>0)probs.push(d.weu+' uncorrected write errors');
   return probs;
 }
+function openSmartModal(diskNum){
+  const d=SMART.find(x=>String(x.disk)===String(diskNum));
+  if(!d)return;
+  let rows='';
+  const add=(l,val)=>{if(val!=='')rows+='<dt>'+l+'</dt><dd>'+esc(val)+'</dd>';};
+  add('Health',d.health+(d.op&&d.op!=='OK'?' ('+d.op+')':''));
+  add('Temperature',d.temp?d.temp+'\u00b0C'+(d.tmax?' (max '+d.tmax+'\u00b0C)':''):'');
+  add('Power-on hours',d.hours);
+  add('Wear',d.wear?d.wear+'%':'');
+  add('Read errors (uncorrected)',d.reu);
+  add('Read errors (corrected)',d.rec);
+  add('Write errors (uncorrected)',d.weu);
+  add('Write errors (corrected)',d.wec);
+  add('Reallocated sectors',d.rl);
+  add('Pending sectors',d.pend);
+  add('Uncorrectable sectors',d.unc);
+  add('UltraDMA CRC errors',d.crc);
+  add('Command timeouts',d.cto);
+  if(d.pf==='1')rows+='<dt style="color:var(--err)">Failure predicted</dt><dd style="color:var(--err)">Yes (drive self-report)</dd>';
+  document.getElementById('smartModalBody').innerHTML=
+    '<h2 style="margin:0 0 4px">Disk '+esc(d.disk)+'</h2>'+
+    '<div class="sub" style="margin-bottom:16px">'+esc(d.name)+(d.media?' \u00b7 '+esc(d.media):'')+(d.bus?' \u00b7 '+esc(d.bus):'')+'</div>'+
+    '<dl class="kv smart-kv">'+rows+'</dl>';
+  document.getElementById('smartModal').classList.add('open');
+}
+function closeSmartModal(){ document.getElementById('smartModal').classList.remove('open'); }
+document.getElementById('smartModalClose').onclick=closeSmartModal;
+document.getElementById('smartModal').onclick=e=>{ if(e.target.id==='smartModal')closeSmartModal(); };
+document.addEventListener('keydown',e=>{ if(e.key==='Escape')closeSmartModal(); });
 function friendlyMedia(m){
   const map={ '802.3':'Ethernet (802.3)', 'Native 802.11':'Wi-Fi (802.11)', '802.11':'Wi-Fi (802.11)', 'Bluetooth':'Bluetooth', 'WiMax':'WiMAX', 'Unspecified':'' };
   return map.hasOwnProperty(m)?map[m]:m;
@@ -1246,6 +1251,7 @@ function renderSummary(){
     }
   }
   if(WINDOWSOLD&&WINDOWSOLD.present)notes.push(flagLink('windows-old','<span style="color:var(--dim)">Windows.old folder present. Windows was upgraded or reset around '+esc(WINDOWSOLD.date)+'</span>'));
+  if(CBS&&CBS.unresolvedCount>0)notes.push(dataLink('sys','cbs-corruption','<span class="r"><b>'+CBS.unresolvedCount+'</b> unresolved component corruption entr'+(CBS.unresolvedCount>1?'ies':'y')+' in CBS.log</span>'));
   if(up){
     const upDays=parseInt((up.match(/^(\d+)\s*days?/i)||[])[1]||'0',10);
     if(upDays>=7)notes.push(dataLink('sys','high-uptime','<span class="y">System has been running for <b>'+upDays+'</b> days without a restart</span>'));
@@ -1521,6 +1527,43 @@ function renderNet(){
   }
   v.innerHTML=h;
 }
+function renderDevices(){
+  const v=document.getElementById('devicesView');
+  let h='';
+  if(AUDIO&&(AUDIO.playbackDevices&&AUDIO.playbackDevices.length||AUDIO.recordingDevices&&AUDIO.recordingDevices.length)){
+    const isVirtual=n=>/vb-audio|voicemeeter|cable (input|output)|virtual audio/i.test(n);
+    const devRow=d=>'<dt style="grid-column:1/-1">'+esc(d.name)+(isVirtual(d.name)?' <span style="color:var(--info)">(virtual)</span>':'')+'</dt>';
+    h+='<div class="spec-section"><h2>Audio</h2>';
+    if(AUDIO.playbackDevices&&AUDIO.playbackDevices.length){
+      h+='<div style="color:var(--faint);font-size:13px;text-transform:uppercase;letter-spacing:.06em;margin:8px 0 4px">Playback (output)</div><dl class="kv">';
+      AUDIO.playbackDevices.forEach(d=>{h+=devRow(d);});
+      h+='</dl>';
+    }
+    if(AUDIO.recordingDevices&&AUDIO.recordingDevices.length){
+      h+='<div style="color:var(--faint);font-size:13px;text-transform:uppercase;letter-spacing:.06em;margin:12px 0 4px">Recording (input)</div><dl class="kv">';
+      AUDIO.recordingDevices.forEach(d=>{h+=devRow(d);});
+      h+='</dl>';
+    }
+    h+='</div>';
+  }
+  if(CAMERAS&&CAMERAS.length){
+    h+='<div class="spec-section"><h2>Webcams &amp; Capture Devices ('+CAMERAS.length+')</h2><dl class="kv">';
+    CAMERAS.forEach(c=>{
+      const ok=/^ok$/i.test(c.status);
+      h+='<dt>'+esc(c.name)+'</dt><dd style="color:'+(ok?'var(--ok)':'var(--warn)')+'">'+esc(c.status||'Unknown')+'</dd>';
+    });
+    h+='</dl></div>';
+  }
+  if(USBDEVS&&USBDEVS.length){
+    h+='<div class="spec-section"><h2>Peripherals ('+USBDEVS.length+')</h2><dl class="kv">';
+    USBDEVS.forEach(u=>{
+      h+='<dt style="grid-column:1/-1">'+esc(u.name)+'</dt>';
+    });
+    h+='</dl></div>';
+  }
+  if(!h)h='<div class="spec-section"><h2>Connected Devices</h2><div style="color:var(--faint)">No audio, webcam, or USB peripheral data was collected.</div></div>';
+  v.innerHTML=h;
+}
 function renderDumps(){
   if(!DUMPS.length)return;
   document.getElementById('dumpsTab').style.display='';
@@ -1544,6 +1587,7 @@ renderSys();
 renderShutdowns();
 renderDumps();
 renderNet();
+renderDevices();
 renderGPU();
 renderMemory();
 renderSecurity();
@@ -1611,7 +1655,7 @@ function dmpcheck {
     # Detect minidumps only - files on the user's PC are never deleted by this script.
     if (Test-Path $minidump) {
         if (Test-Path $source) {
-            $dmpfound = $true
+            $script:dmpfound = $true
         }
     }
     
@@ -1638,7 +1682,6 @@ function fileadd {
     $secCompat = $false
     $cpu = Get-WmiObject Win32_Processor
     $cpuName = $cpu | Select-Object -ExpandProperty Name
-    $cpuSpeed = $cpu | Select-Object -ExpandProperty MaxClockSpeed
     $gpu = Get-WmiObject Win32_VideoController | Select-Object -ExpandProperty Name
     $compSys = Get-WmiObject Win32_ComputerSystem
     $sysName = $env:COMPUTERNAME
@@ -1665,8 +1708,6 @@ function fileadd {
     $os = Get-WmiObject Win32_OperatingSystem
     $osName = $os | Select-Object -ExpandProperty Caption
     $osVersion = $os | Select-Object -ExpandProperty Version
-    $bootDevice = $os | Select-Object -ExpandProperty BootDevice
-    $systemDirectory = $env:SystemDrive
     $secureBoot = try { Confirm-SecureBootUEFI } catch { $secCompat = $true }
     $fastboot = (Get-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Power" -Name HiberbootEnabled).HiberbootEnabled
 
@@ -1697,12 +1738,7 @@ function fileadd {
     specs "Manufacturer: $sysMfr"
     specs "Model: $sysModel"
     specs "`nCPU Name: $cpuName"
-    specs "CPU Speed (MHz): $cpuSpeed"
     specs "GPU: $gpu"
-    specs "`nTPM Status: $tpmEnabled"
-    if ($tpmEnabled -eq "Enabled") {
-        specs "TPM Version: $tpmVersion"
-    }
     specs "`nMotherboard Manufacturer: $motherboardMfr"
     specs "Motherboard: $motherboardModel"
     specs "BIOS Version: $biosVersion"
@@ -1711,11 +1747,13 @@ function fileadd {
     specs "OS Version: $osVersion"
     specs "System Uptime: $($uptime.Days) days, $($uptime.Hours) hours, $($uptime.Minutes) minutes"
     specs "Build: $build"
-    specs "Page File Size: $pgfilesize MB"
-    specs "Boot Device: $bootDevice"
-    specs "System Directory: $systemDirectory\"
+    specs "`nTPM Status: $tpmEnabled"
+    if ($tpmEnabled -eq "Enabled") {
+        specs "TPM Version: $tpmVersion"
+    }
     specs "Secure Boot State: $secureBootState"
     specs "Fast Boot State: $fastbootState"
+    specs "Page File Size: $pgfilesize MB"
     specs "CPU Cores/Threads: ${cpuCores}C / ${cpuThreads}T"
     if ($osInstallDate) { specs "Windows Install Date: $osInstallDate" }
     if ($uacEnabled) { specs "UAC: $uacEnabled" }
@@ -1772,6 +1810,11 @@ function fileadd {
             'Percentage Free (%)' = $percentageFree
         }
     }
+
+    # Win32_LogicalDisk enumerates by drive letter (C, D, E...), which doesn't necessarily match
+    # physical disk order - a drive letter on Disk 1 can easily sort before one on Disk 0. Sort by
+    # the actual disk number so the Drives tab always reads Disk 0, Disk 1, Disk 2... in order.
+    $drives = @($drives | Sort-Object { if ($_.'Drive ID' -is [int]) { $_.'Drive ID' } else { [int]::MaxValue } })
 
     specs "`n`nDrive Information:`n`n"
 
@@ -2132,6 +2175,27 @@ function reliabilityexport {
             }
         } catch { }
 
+        # CBS.log: read-only check for unresolved component corruption ("Cannot repair member" is the
+        # marker SFC leaves when it found damage it couldn't fix). We don't run a fresh sfc/DISM scan
+        # here - that takes minutes - we just read whatever CBS.log already has on disk.
+        $cbs = $null
+        try {
+            $cbsPath = "$env:SystemRoot\Logs\CBS\CBS.log"
+            if (Test-Path $cbsPath) {
+                $cbsLines = Get-Content -Path $cbsPath -ErrorAction Stop
+                $unresolved = @($cbsLines | Select-String -Pattern 'Cannot repair member')
+                $lastLine = $cbsLines | Select-Object -Last 1
+                $lastDate = $null
+                if ($lastLine -match '^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})') {
+                    try { $lastDate = [datetime]::ParseExact($matches[1], 'yyyy-MM-dd HH:mm:ss', $null).ToString("dd/MM/yyyy HH:mm") } catch { }
+                }
+                $cbs = [PSCustomObject]@{
+                    unresolvedCount = $unresolved.Count
+                    lastActivity    = $lastDate
+                }
+            }
+        } catch { }
+
         $hotfixes = @()
         try {
             $hotfixes = @(Get-HotFix -ErrorAction Stop | Where-Object { $_.Description -notmatch 'Security Intelligence Update' -and $_.HotFixID -ne 'KB2267602' } | Sort-Object InstalledOn -Descending | ForEach-Object {
@@ -2189,10 +2253,71 @@ function reliabilityexport {
             })
         } catch { }
 
+        # Full audio device list: Windows stores every render (output) and capture (input) endpoint,
+        # active or not, under these two documented registry trees. DeviceState is a standard MMDevice
+        # API value (1=Active, 2=Disabled, 4=Not present, 8=Unplugged). We don't attempt to mark which
+        # one is the "default" - that's set via an undocumented COM interface with no reliable registry
+        # read, so mislabelling it would be worse than leaving it out.
+        function Get-AudioEndpoints($direction) {
+            $out = @()
+            try {
+                $base = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\MMDevices\Audio\$direction"
+                Get-ChildItem -Path $base -ErrorAction Stop | ForEach-Object {
+                    $name = $null
+                    try {
+                        $name = (Get-ItemProperty -Path "$($_.PSPath)\Properties" -Name '{a45c254e-df1c-4efd-8020-67d146a850e0},2' -ErrorAction Stop).'{a45c254e-df1c-4efd-8020-67d146a850e0},2'
+                    } catch { }
+                    if ($name) {
+                        $stateVal = (Get-ItemProperty -Path $_.PSPath -Name 'DeviceState' -ErrorAction SilentlyContinue).DeviceState
+                        $state = switch ($stateVal) { 1 {"Active"} 2 {"Disabled"} 4 {"Not present"} 8 {"Unplugged"} default {"Unknown"} }
+                        $out += [PSCustomObject]@{ name = "$name"; state = $state }
+                    }
+                }
+            } catch { }
+            return $out
+        }
         $audio = $null
         try {
-            $playback = (Get-CimInstance Win32_SoundDevice -ErrorAction Stop | Where-Object { $_.Status -eq 'OK' } | Select-Object -First 1).Name
-            $audio = [PSCustomObject]@{ playback = "$playback" }
+            $playbackDevs  = @(Get-AudioEndpoints 'Render'  | Where-Object { $_.state -eq 'Active' })
+            $recordingDevs = @(Get-AudioEndpoints 'Capture' | Where-Object { $_.state -eq 'Active' })
+            if ($playbackDevs.Count -or $recordingDevs.Count) {
+                $audio = [PSCustomObject]@{ playbackDevices = $playbackDevs; recordingDevices = $recordingDevs }
+            }
+        } catch { }
+
+        # Webcams / capture devices: PNPClass Camera covers modern USB Video Class webcams,
+        # Image covers older webcams and scanners/imaging devices. -PresentOnly is the important
+        # part here: Win32_PnPEntity has no reliable "still actually plugged in" flag and happily
+        # lists devices that were unplugged or removed long ago ("ghost" devices). Get-PnpDevice's
+        # -PresentOnly switch is the documented, correct way to filter those out.
+        $cameras = @()
+        try {
+            $camRaw = @(Get-PnpDevice -PresentOnly -Class Camera,Image -ErrorAction Stop)
+            $cameras = @($camRaw | Group-Object FriendlyName,Status | ForEach-Object {
+                $g = $_.Group[0]
+                [PSCustomObject]@{ name = "$($g.FriendlyName)$(if($_.Count -gt 1){" (x$($_.Count))"})"; status = "$($g.Status)" }
+            })
+        } catch { }
+
+        # Other connected USB peripherals: filtered to actual endpoint devices (mice, keyboards,
+        # controllers, capture cards, storage, audio interfaces, etc), excluding hub/composite-parent
+        # entries that don't mean anything to a person reading the report, and excluding cameras
+        # (shown separately above). Identical repeats (e.g. several HID collections belonging to
+        # the same wireless dongle) are collapsed into one line with a count instead of one line each.
+        $usbDevices = @()
+        try {
+            $camNames = @($cameras | ForEach-Object { $_.name -replace ' \(x\d+\)$','' })
+            $usbRaw = @(Get-PnpDevice -PresentOnly -ErrorAction Stop | Where-Object {
+                $_.InstanceId -like 'USB*' -and
+                $_.Class -ne 'USB' -and
+                $_.Status -eq 'OK' -and
+                $_.Service -notin @('usbhub','USBHUB3','usbccgp','UMB','USBSTOR') -and
+                $_.FriendlyName -notin $camNames
+            })
+            $usbDevices = @($usbRaw | Group-Object FriendlyName | ForEach-Object {
+                $g = $_.Group[0]
+                [PSCustomObject]@{ name = "$($g.FriendlyName)$(if($_.Count -gt 1){" (x$($_.Count))"})"; status = "$($g.Status)" }
+            })
         } catch { }
 
         # Hardware-accelerated GPU Scheduling (system-wide setting, not per-adapter)
@@ -2352,6 +2477,16 @@ function reliabilityexport {
 
             # Suspicious startup entries: no publisher/signature, or launching from Temp/AppData with odd naming
             $startupFlags = @()
+            function Test-SuspiciousStartupExe($exePath) {
+                if ($exePath -match '\\(Temp|AppData\\Local\\Temp)\\') { return @{ Suspicious = $true; Reason = "runs from Temp folder" } }
+                if (Test-Path $exePath -ErrorAction SilentlyContinue) {
+                    try {
+                        $sig = Get-AuthenticodeSignature -FilePath $exePath -ErrorAction Stop
+                        if ($sig.Status -ne 'Valid') { return @{ Suspicious = $true; Reason = "unsigned or invalid signature" } }
+                    } catch { }
+                }
+                return @{ Suspicious = $false; Reason = "" }
+            }
             try {
                 $runKeys = @(
                     'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Run',
@@ -2363,16 +2498,8 @@ function reliabilityexport {
                         $props.PSObject.Properties | Where-Object { $_.Name -notmatch '^PS' } | ForEach-Object {
                             $val = "$($_.Value)"
                             $exePath = ($val -replace '^"?([^"]+\.exe)"?.*$', '$1')
-                            $suspicious = $false
-                            $reason = ""
-                            if ($exePath -match '\\(Temp|AppData\\Local\\Temp)\\') { $suspicious = $true; $reason = "runs from Temp folder" }
-                            elseif (Test-Path $exePath -ErrorAction SilentlyContinue) {
-                                try {
-                                    $sig = Get-AuthenticodeSignature -FilePath $exePath -ErrorAction Stop
-                                    if ($sig.Status -ne 'Valid') { $suspicious = $true; $reason = "unsigned or invalid signature" }
-                                } catch { }
-                            }
-                            if ($suspicious) { $startupFlags += "$($_.Name): $reason" }
+                            $check = Test-SuspiciousStartupExe $exePath
+                            if ($check.Suspicious) { $startupFlags += "$($_.Name): $($check.Reason)" }
                         }
                     }
                 }
@@ -2424,16 +2551,8 @@ function reliabilityexport {
                     $act = ($t.Actions | Where-Object { $_.Execute } | Select-Object -First 1).Execute
                     if (-not $act) { continue }
                     $exePath = $act -replace '^"?([^"]+)"?.*$', '$1'
-                    $suspicious = $false
-                    $reason = ""
-                    if ($exePath -match '\\(Temp|AppData\\Local\\Temp)\\') { $suspicious = $true; $reason = "runs from Temp folder" }
-                    elseif (Test-Path $exePath -ErrorAction SilentlyContinue) {
-                        try {
-                            $sig = Get-AuthenticodeSignature -FilePath $exePath -ErrorAction Stop
-                            if ($sig.Status -ne 'Valid') { $suspicious = $true; $reason = "unsigned or invalid signature" }
-                        } catch { }
-                    }
-                    if ($suspicious) { $startupFlags += "Scheduled task '$($t.TaskName)': $reason" }
+                    $check = Test-SuspiciousStartupExe $exePath
+                    if ($check.Suspicious) { $startupFlags += "Scheduled task '$($t.TaskName)': $($check.Reason)" }
                 }
             } catch { }
 
@@ -2682,11 +2801,14 @@ function reliabilityexport {
         $securityJson = if ($security) { (ConvertTo-Json $security -Compress -Depth 5).Replace('</', '<\/') } else { 'null' }
         $hotfixesJson = if ($hotfixes.Count -gt 0) { (ConvertTo-Json @($hotfixes) -Compress -Depth 3).Replace('</', '<\/') } else { '[]' }
         $windowsOldJson = if ($windowsOld) { (ConvertTo-Json $windowsOld -Compress).Replace('</', '<\/') } else { 'null' }
+        $cbsJson = if ($cbs) { (ConvertTo-Json $cbs -Compress).Replace('</', '<\/') } else { 'null' }
         $wuHistoryJson = if ($wuHistory.Count -gt 0) { (ConvertTo-Json @($wuHistory) -Compress -Depth 3).Replace('</', '<\/') } else { '[]' }
         $winUpdateInfo = [PSCustomObject]@{ pendingReboot = $pendingReboot; serviceStatus = $wuServiceStatus }
         $winUpdateJson = (ConvertTo-Json $winUpdateInfo -Compress).Replace('</', '<\/')
         $devErrorsJson = if ($devErrors.Count -gt 0) { (ConvertTo-Json @($devErrors) -Compress -Depth 3).Replace('</', '<\/') } else { '[]' }
         $audioJson = if ($audio) { (ConvertTo-Json $audio -Compress).Replace('</', '<\/') } else { 'null' }
+        $usbJson = (ConvertTo-Json @($usbDevices) -Compress).Replace('</', '<\/')
+        $camerasJson = (ConvertTo-Json @($cameras) -Compress).Replace('</', '<\/')
         $memuseJson = if ($memuse) { (ConvertTo-Json $memuse -Compress).Replace('</', '<\/') } else { 'null' }
         $ramJson = if ($ram.Count -gt 0) { (ConvertTo-Json @($ram) -Compress -Depth 3).Replace('</', '<\/') } else { '[]' }
         $smartJson = if ($smart.Count -gt 0) { (ConvertTo-Json @($smart) -Compress -Depth 3).Replace('</', '<\/') } else { '[]' }
@@ -2697,7 +2819,7 @@ function reliabilityexport {
         $specsJson = (ConvertTo-Json "$specsRaw" -Compress).Replace('</', '<\/')
 
         $genStamp = (Get-Date).ToString("dd/MM/yyyy HH:mm")
-        $viewerHtml = $viewerTemplate.Replace('/*__VER__*/""', "`"$scriptVersion`"").Replace('/*__GEN__*/""', "`"$genStamp`"").Replace('/*__DATA__*/[]', $json).Replace('/*__SPECS__*/""', $specsJson).Replace('/*__DUMPS__*/[]', $dumpsJson).Replace('/*__SYSEVT__*/[]', $sysJson).Replace('/*__SMART__*/[]', $smartJson).Replace('/*__DIRTY__*/[]', $dirtyJson).Replace('/*__DISKLAYOUT__*/[]', $diskLayoutJson).Replace('/*__RAM__*/[]', $ramJson).Replace('/*__GPUS__*/[]', $gpusJson).Replace('/*__HAGS__*/null', $hagsJson).Replace('/*__ISLAPTOP__*/false', $isLaptopJson).Replace('/*__MONS__*/[]', $monsJson).Replace('/*__DISPLAYS__*/[]', $displaysJson).Replace('/*__PROCS__*/[]', $procsJson).Replace('/*__MEMUSE__*/null', $memuseJson).Replace('/*__NET__*/null', $netJson).Replace('/*__SECURITY__*/null', $securityJson).Replace('/*__HOTFIXES__*/[]', $hotfixesJson).Replace('/*__WINDOWSOLD__*/null', $windowsOldJson).Replace('/*__WUHISTORY__*/[]', $wuHistoryJson).Replace('/*__WINUPDATE__*/null', $winUpdateJson).Replace('/*__DEVERR__*/[]', $devErrorsJson).Replace('/*__AUDIO__*/null', $audioJson)
+        $viewerHtml = $viewerTemplate.Replace('/*__VER__*/""', "`"$scriptVersion`"").Replace('/*__GEN__*/""', "`"$genStamp`"").Replace('/*__DATA__*/[]', $json).Replace('/*__SPECS__*/""', $specsJson).Replace('/*__DUMPS__*/[]', $dumpsJson).Replace('/*__SYSEVT__*/[]', $sysJson).Replace('/*__SMART__*/[]', $smartJson).Replace('/*__DIRTY__*/[]', $dirtyJson).Replace('/*__DISKLAYOUT__*/[]', $diskLayoutJson).Replace('/*__RAM__*/[]', $ramJson).Replace('/*__GPUS__*/[]', $gpusJson).Replace('/*__HAGS__*/null', $hagsJson).Replace('/*__ISLAPTOP__*/false', $isLaptopJson).Replace('/*__MONS__*/[]', $monsJson).Replace('/*__DISPLAYS__*/[]', $displaysJson).Replace('/*__PROCS__*/[]', $procsJson).Replace('/*__MEMUSE__*/null', $memuseJson).Replace('/*__NET__*/null', $netJson).Replace('/*__SECURITY__*/null', $securityJson).Replace('/*__HOTFIXES__*/[]', $hotfixesJson).Replace('/*__WINDOWSOLD__*/null', $windowsOldJson).Replace('/*__CBS__*/null', $cbsJson).Replace('/*__WUHISTORY__*/[]', $wuHistoryJson).Replace('/*__WINUPDATE__*/null', $winUpdateJson).Replace('/*__DEVERR__*/[]', $devErrorsJson).Replace('/*__AUDIO__*/null', $audioJson).Replace('/*__USB__*/[]', $usbJson).Replace('/*__CAMERAS__*/[]', $camerasJson)
         try {
             Set-Content -Path $reliability_html_path -Value $viewerHtml -Encoding UTF8
         } catch {
@@ -2768,7 +2890,7 @@ function eof {
     Write-Host "  Want to see the report yourself? Open the zip and" -ForegroundColor Gray
     Write-Host "  double-click triage-report.html - it opens in your browser." -ForegroundColor Gray
     Start-Process explorer.exe -ArgumentList $File
-    $eofcomplete = $true
+    $script:eofcomplete = $true
 
     endmessage
 }
