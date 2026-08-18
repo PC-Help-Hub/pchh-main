@@ -788,7 +788,7 @@ function renderUpdates(){
   if(w){
     h+='<div class="spec-section"><h2>Windows Update status</h2><dl class="kv">';
     h+='<dt>Pending Reboot?</dt><dd style="color:'+(w.pendingReboot?'var(--warn)':'var(--ok)')+'">'+(w.pendingReboot?'Yes':'No')+'</dd>';
-    if(w.serviceStatus)h+='<dt>Windows Update service</dt><dd style="color:'+(w.serviceStatus==='Running'?'var(--ok)':'var(--warn)')+'">'+esc(w.serviceStatus)+'</dd>';
+    if(w.serviceStatus)h+='<dt>Windows Update service</dt><dd style="color:'+(w.serviceStartType==='Disabled'?'var(--warn)':'var(--ok)')+'">'+esc(w.serviceStatus)+(w.serviceStartType?' <span style="color:var(--faint)">('+esc(w.serviceStartType)+')</span>':'')+'</dd>';
     h+='</dl></div>';
   }
   if(WUHISTORY.length){
@@ -829,7 +829,7 @@ const FAQ_DATA=[
 {id:'device-manager-errors',q:"Device Manager Errors",a:"Windows found a piece of hardware but couldn't properly load a driver for it, or the device itself reported a problem. This usually means a missing, outdated, or corrupted driver. Occasionally it's a genuine hardware fault.",tools:["AMD Drivers & Support","NVIDIA Drivers & Support","Intel Drivers & Support"]},
 {id:'mbr-secureboot',q:"MBR Partitioning",a:"Windows drives use one of two partitioning styles: MBR or the newer GPT. Secure Boot, a feature that helps stop malware loading before Windows starts, requires GPT.<br><br>If the main drive (the one with Windows installed on it) is MBR, Secure Boot can't be turned on without converting the drive or doing a clean reinstall of Windows, which is a bigger job and best not attempted without guidance.",tools:[]},
 {id:'pending-reboot',q:"Pending Reboot",a:"Windows or an update has made changes that only take full effect after a restart, and it's currently waiting on one. Until then the system can behave oddly and further updates may queue up behind it.<br><br>A normal restart resolves this.",tools:[]},
-{id:'wu-service',q:"Windows Update Service",a:"The background service that lets Windows check for and install updates isn't running. If it's disabled, Windows won't be able to update at all until it's turned back on, which can leave the system missing important security fixes over time.",tools:[]},
+{id:'wu-service',q:"Windows Update Service",a:"The background service that lets Windows check for and install updates is disabled. Normally it's set to start on demand (so it's often shown as 'Stopped' when idle - that's expected and not a problem), but 'Disabled' means it can't start at all, so Windows won't be able to update until it's turned back on.",tools:[]},
 {id:'wu-failed',q:"Failed Windows Updates",a:"One or more recent update attempts failed partway through rather than installing cleanly. This can happen for lots of reasons: a bad download, low disk space, corrupted update files, or a conflict with other software.<br><br>It can sometimes leave a PC feeling unstable or repeatedly nagging about the same update.",tools:["Windows 11 Download"]},
 {id:'ram-speed',q:"RAM Speed (XMP/EXPO)",a:"Your memory (RAM) is capable of running faster than it currently is. This almost always means that a feature called XMP (Intel) or EXPO (AMD) isn't enabled.<br><br>XMP/EXPO is a one-click profile in the BIOS that allows your RAM to run at its advertised speed. When it's disabled, your RAM will default to a lower speed. Enabling it isn't overclocking, and isn't dangerous. We'd recommend enabling it, which can be done through your BIOS. If you're unsure how to do that, you can ask one of our advisors for more help.<br><br><i>Note: some systems can struggle to run RAM at its full advertised speed for various reasons, which is why it isn't enabled by default. When this happens, it can sometimes help to disable it, to prevent system instability or crashes.</i><br><br>This isn't dangerous either way, but running below the rated speed does mean the RAM isn't performing the way it was bought to.",tools:["CPU-Z"]},
 {id:'antivirus-conflict',q:"Multiple Antivirus Programs",a:"More than one antivirus program is trying to actively scan the system at the same time. This is a common, often-overlooked cause of slowdowns, false-positive quarantines, and general instability, since the two programs can end up fighting over the same files.",tools:[]},
@@ -1154,7 +1154,7 @@ function renderSummary(){
   const sysDisk=DISKLAYOUT.find(dk=>dk.partitions.some(p=>p.letter==='C:'));
   if(sysDisk&&sysDisk.style&&sysDisk.style.toUpperCase()==='MBR')notes.push(dataLink('drives','mbr-secureboot','<span class="y">System disk uses MBR partitioning (Secure Boot requires GPT)</span>'));
   if(WINUPDATE&&WINUPDATE.pendingReboot)notes.push(dataLink('updates','pending-reboot','<span class="y">System has a pending reboot (Windows Update or servicing)</span>'));
-  if(WINUPDATE&&WINUPDATE.serviceStatus&&WINUPDATE.serviceStatus!=='Running')notes.push(dataLink('updates','wu-service','<span class="y">Windows Update service is '+esc(WINUPDATE.serviceStatus)+'</span>'));
+  if(WINUPDATE&&WINUPDATE.serviceStartType==='Disabled')notes.push(dataLink('updates','wu-service','<span class="y">Windows Update service is disabled</span>'));
   const wuFails=WUHISTORY.filter(u=>u.result==='Failed'||u.result==='Cancelled').length;
   if(wuFails)notes.push(dataLink('updates','wu-failed','<span class="y"><b>'+wuFails+'</b> Windows Update'+(wuFails>1?'s':'')+' did not complete successfully</span>'));
   if(RAM.length){
@@ -1274,8 +1274,8 @@ function renderSummary(){
   }
   if(WINDOWSOLD&&WINDOWSOLD.present)notes.push(flagLink('windows-old','<span style="color:var(--dim)">Windows.old folder present. Windows was upgraded or reset around '+esc(WINDOWSOLD.date)+'</span>'));
   if(POWERPLAN&&!POWERPLAN.isDefault)notes.push('<span style="color:var(--dim)">Non-default power plan active: '+esc(POWERPLAN.name)+'</span>');
-  if(GENFLAGS&&GENFLAGS.tpmDisabled)notes.push('<span style="color:var(--dim)">TPM is present but disabled</span>');
-  if(GENFLAGS&&GENFLAGS.secureBootDisabled)notes.push('<span style="color:var(--dim)">Secure Boot is supported but disabled</span>');
+  if(GENFLAGS&&GENFLAGS.tpmDisabled)notes.push(flagLink('tpm','<span style="color:var(--dim)">TPM is present but disabled</span>'));
+  if(GENFLAGS&&GENFLAGS.secureBootDisabled)notes.push(flagLink('secure-boot','<span style="color:var(--dim)">Secure Boot disabled</span>'));
   if(CBS&&CBS.unresolvedCount>0)notes.push(dataLink('sys','cbs-corruption','<span class="r"><b>'+CBS.unresolvedCount+'</b> unresolved component corruption entr'+(CBS.unresolvedCount>1?'ies':'y')+' in CBS.log</span>'));
   if(up){
     const upDays=parseInt((up.match(/^(\d+)\s*days?/i)||[])[1]||'0',10);
@@ -2266,9 +2266,17 @@ function reliabilityexport {
             }
         } catch { }
 
-        # Windows Update service status
+        # Windows Update service status. wuauserv is a Manual/Trigger-Start service by default from
+        # Windows 10 onward - it's normal for it to sit "Stopped" when idle and only start when
+        # Windows Update actually runs, so a live Status of anything but "Running" is not itself a
+        # problem. StartType is the useful signal: "Disabled" means Windows genuinely can't update.
         $wuServiceStatus = ""
-        try { $wuServiceStatus = "$((Get-Service -Name wuauserv -ErrorAction Stop).Status)" } catch { }
+        $wuServiceStartType = ""
+        try {
+            $wuSvc = Get-Service -Name wuauserv -ErrorAction Stop
+            $wuServiceStatus = "$($wuSvc.Status)"
+            $wuServiceStartType = "$($wuSvc.StartType)"
+        } catch { }
 
         # Recent Windows Update history, including FAILED/pending attempts that Get-HotFix cannot show.
         # Defender's daily "Security Intelligence Update" entries can dominate the most recent history,
@@ -2950,7 +2958,7 @@ namespace PCHH {
         $generalFlagsJson = (ConvertTo-Json $generalFlags -Compress).Replace('</', '<\/')
         $cbsJson = if ($cbs) { (ConvertTo-Json $cbs -Compress).Replace('</', '<\/') } else { 'null' }
         $wuHistoryJson = if ($wuHistory.Count -gt 0) { (ConvertTo-Json @($wuHistory) -Compress -Depth 3).Replace('</', '<\/') } else { '[]' }
-        $winUpdateInfo = [PSCustomObject]@{ pendingReboot = $pendingReboot; serviceStatus = $wuServiceStatus }
+        $winUpdateInfo = [PSCustomObject]@{ pendingReboot = $pendingReboot; serviceStatus = $wuServiceStatus; serviceStartType = $wuServiceStartType }
         $winUpdateJson = (ConvertTo-Json $winUpdateInfo -Compress).Replace('</', '<\/')
         $devErrorsJson = if ($devErrors.Count -gt 0) { (ConvertTo-Json @($devErrors) -Compress -Depth 3).Replace('</', '<\/') } else { '[]' }
         $audioJson = if ($audio) { (ConvertTo-Json $audio -Compress).Replace('</', '<\/') } else { 'null' }
