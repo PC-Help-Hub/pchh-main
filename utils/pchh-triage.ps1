@@ -50,8 +50,6 @@ $infofile = "$File\specs-programs.txt"
 
 $ziptar = "$File\PCHH-Triage_$random.zip"
 
-$sys_eventlog_path = "$File\system_eventlogs.evtx"
-
 $scriptVersion = "1.0"
 $lookbackDays = 365   # match reliability history's ~1 year span; System log is size-capped anyway
 $reliability_csv_path = "$File\reliability.csv"
@@ -413,13 +411,30 @@ function parseDate(s){
   return new Date(+y, mon-1, day, h, +mi, +se);
 }
 function classify(r){
-  const src=r.s, msg=(r.m||'').toLowerCase();
+  const src=r.s, msg=(r.m||'').trim();
   if(src==='Application Error'||src==='Windows Error Reporting'||/bugcheck/i.test(src)) return 'err';
   // SourceName 'EventLog' within reliability history is specifically Windows' own unexpected-
   // shutdown marker - no need to also match the English word "unexpected" in the message,
   // which is localized and would misclassify this as a lower severity on non-English systems.
   if(src==='EventLog') return 'err';
-  if(/fail|error status: 1|not.*success/i.test(msg) && !/status: 0/.test(msg)) return 'warn';
+  // MsiInstaller (1033 install / 1034 uninstall / 1035 reconfigure) and WindowsUpdateClient
+  // (19 success / 20 failure) always carry a numeric status/result code. SourceName and
+  // EventIdentifier are fixed internal identifiers - never localized - so gating on those and
+  // reading the trailing number in the message means this still works when the message text
+  // itself is in a language other than English, unlike matching English words like "fail" or
+  // "success or error status".
+  if(src==='MsiInstaller' && ['1033','1034','1035'].includes(r.e)){
+    const m=msg.match(/(\d+)\.?\s*$/);
+    if(m) return m[1]==='0' ? 'info' : 'warn';
+  }
+  if(src==='Microsoft-Windows-WindowsUpdateClient'){
+    if(r.e==='20') return 'warn';
+    if(r.e==='19') return 'info';
+  }
+  // Fallback for everything else: English keyword match on the message. Only reliable on
+  // English-language systems, but there's no locale-independent field to fall back to for the
+  // long tail of other SourceNames.
+  if(/fail|error status: 1|not.*success/i.test(msg.toLowerCase()) && !/status: 0/.test(msg)) return 'warn';
   return 'info';
 }
 const CATNAMES={err:'Critical events',warn:'Warnings',info:'Informational events'};
@@ -536,18 +551,20 @@ function render(){
   document.getElementById('empty').style.display=shown.length?'none':'block';
 }
 function summary(e){
-  const msg=(e.m||'').toLowerCase();
   if(e.cat==='err'){
     if(e.s==='Application Error')return 'Stopped working';
     if(e.s==='EventLog')return 'Windows was not properly shut down';
     return 'Critical event';
   }
+  // EventIdentifier (like SourceName) is a fixed internal code, never localized, so branching on
+  // it instead of matching English words in the message keeps these labels correct regardless of
+  // the system's display language.
   if(e.s==='Microsoft-Windows-WindowsUpdateClient')
-    return /success/.test(msg)?'Successful Windows Update':'Windows Update';
+    return e.e==='19'?'Successful Windows Update':'Windows Update';
   if(e.s==='MsiInstaller'){
-    if(/installed the product/.test(msg))return 'Successful application installation';
-    if(/removed the product/.test(msg))return 'Successful application removal';
-    if(/reconfigured/.test(msg))return 'Successful application reconfiguration';
+    if(e.e==='1033')return 'Successful application installation';
+    if(e.e==='1034')return 'Successful application removal';
+    if(e.e==='1035')return 'Successful application reconfiguration';
     return 'Application event';
   }
   return esc(e.s);
@@ -1230,7 +1247,10 @@ function renderSummary(){
     const drv=[...new Set(tdrEvents.map(r=>{const m2=(r.prov+' '+(r.msg||'')).match(gpuDrvRe);return m2?m2[0].toLowerCase():null;}).filter(Boolean))];
     notes.push(dataLink('sys','gpu-tdr','<span class="r"><b>'+tdrEvents.length+'</b> display driver timeout/reset event'+(tdrEvents.length>1?'s':'')+(drv.length?' ('+esc(drv.join(', '))+')':'')+'</span>'));
   }
-  const lke=RAW.filter(r=>/LiveKernelEvent/i.test(r.m||'')).length;
+  // SourceName is 'LiveKernelEvent' for these reliability records - a fixed internal identifier,
+  // never localized - so matching it directly is safer than matching the word "LiveKernelEvent"
+  // inside the (potentially translated) message text.
+  const lke=RAW.filter(r=>r.s==='LiveKernelEvent').length;
   if(lke)notes.push(dataLink('rel','livekernelevent','<span class="r"><b>'+lke+'</b> LiveKernelEvent record'+(lke>1?'s':'')+' in reliability history</span>'));
   if(NET&&NET.wifi&&NET.wifi.signal){
     const sig=parseInt(NET.wifi.signal)||0;
@@ -1608,7 +1628,6 @@ $dmpfound = $false
 $errors = @{
     fileCreate  = $false
     Compress    = $false
-    event       = $false
     reliability = $false
 }
 
@@ -1650,7 +1669,7 @@ function dmpcheck {
     Write-Host "This collects crash logs, specs and diagnostics into" -ForegroundColor Gray
     Write-Host "a single zip on your Desktop. This can take time, please be patient." -ForegroundColor Gray
     Write-Host ""
-    Write-Host "[1/4] Collecting system specs.." -ForegroundColor Blue
+    Write-Host "[1/3] Collecting system specs.." -ForegroundColor Blue
 
     # Detect minidumps only - files on the user's PC are never deleted by this script.
     if (Test-Path $minidump) {
@@ -1844,7 +1863,7 @@ function fileadd {
     Write-Host -NoNewline -ForegroundColor Green "$(cmark)"
     Write-Host " System specs collected"
 
-    eventlogexport
+    reliabilityexport
 }
 
 
@@ -1855,26 +1874,6 @@ function specs {
     Add-Content -Path $infofile -Value "$value"
 }
 
-
-function eventlogexport {
-    Write-Host ""
-    Write-Host "[2/4] Exporting Windows event logs.." -ForegroundColor Blue
-
-    $startTime = (Get-Date).AddDays(-$lookbackDays).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss")
-
-    try {
-        wevtutil epl System $sys_eventlog_path /q:"*[System[TimeCreated[@SystemTime>='$startTime']]]"
-    }
-    catch {
-        $errors.event = $true
-        functionerror
-    }
-
-    Write-Host -NoNewline -ForegroundColor Green "$(cmark)"
-    Write-Host " Event logs exported"
-
-    reliabilityexport
-}
 # Curated System event log entries (crash / hardware / storage / GPU / service failures)
 function Get-CuratedSystemEvents {
     $allow = @(
@@ -1947,7 +1946,7 @@ function Get-CuratedSystemEvents {
 # Exports reliability history + system specs and builds an interactive HTML viewer
 function reliabilityexport {
     Write-Host ""
-    Write-Host "[3/4] Collecting diagnostics.." -ForegroundColor Blue
+    Write-Host "[2/3] Collecting diagnostics.." -ForegroundColor Blue
 
         Write-Host "      - Reliability history" -ForegroundColor DarkGray
         $recs = @()
@@ -2735,29 +2734,130 @@ function reliabilityexport {
                 if ($sig) { $wifiSignalPct = [int]$sig.Ndis80211ReceivedSignalStrength }
             } catch { }
 
-            # The supplementary fields (band/channel/radio type/rates/auth) don't have as clean a
-            # locale-independent source, so these remain best-effort via netsh and may come back
-            # empty on a non-English system. Signal strength - the one this tool actually acts on -
-            # no longer depends on that.
+            # Radio type / auth / rx-tx rate via the native WLAN API (wlanapi.dll) instead of text-
+            # matching netsh's localized field labels - this returns raw enum/numeric values from the
+            # OS regardless of display language, so it no longer silently comes back empty on a
+            # non-English system the way the old netsh parsing did.
+            $radioType = $null; $authDisplay = $null; $rxMbps = $null; $txMbps = $null
+            try {
+                if (-not ("PCHH.Wlan" -as [type])) {
+                    Add-Type -Namespace PCHH -Name Wlan -MemberDefinition @'
+[DllImport("wlanapi.dll")] public static extern int WlanOpenHandle(uint clientVersion, IntPtr reserved, out uint negotiatedVersion, out IntPtr clientHandle);
+[DllImport("wlanapi.dll")] public static extern int WlanCloseHandle(IntPtr clientHandle, IntPtr reserved);
+[DllImport("wlanapi.dll")] public static extern int WlanEnumInterfaces(IntPtr clientHandle, IntPtr reserved, out IntPtr interfaceList);
+[DllImport("wlanapi.dll")] public static extern int WlanQueryInterface(IntPtr clientHandle, ref Guid interfaceGuid, int opCode, IntPtr reserved, out uint dataSize, out IntPtr data, IntPtr valueType);
+[DllImport("wlanapi.dll")] public static extern void WlanFreeMemory(IntPtr memory);
+'@ -ErrorAction Stop
+
+                    Add-Type -TypeDefinition @'
+using System;
+using System.Runtime.InteropServices;
+namespace PCHH {
+    [StructLayout(LayoutKind.Sequential)]
+    public struct WLAN_INTERFACE_INFO {
+        public Guid InterfaceGuid;
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 256)] public string strInterfaceDescription;
+        public int isState;
+    }
+    [StructLayout(LayoutKind.Sequential)]
+    public struct DOT11_SSID {
+        public uint uSSIDLength;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 32)] public byte[] ucSSID;
+    }
+    [StructLayout(LayoutKind.Sequential)]
+    public struct WLAN_ASSOCIATION_ATTRIBUTES {
+        public DOT11_SSID dot11Ssid;
+        public int dot11BssType;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 6)] public byte[] dot11Bssid;
+        public uint dot11PhyType;
+        public uint uDot11PhyIndex;
+        public uint wlanSignalQuality;
+        public uint ulRxRate;
+        public uint ulTxRate;
+    }
+    [StructLayout(LayoutKind.Sequential)]
+    public struct WLAN_SECURITY_ATTRIBUTES {
+        [MarshalAs(UnmanagedType.Bool)] public bool bSecurityEnabled;
+        [MarshalAs(UnmanagedType.Bool)] public bool bOneXEnabled;
+        public uint dot11AuthAlgorithm;
+        public uint dot11CipherAlgorithm;
+    }
+    [StructLayout(LayoutKind.Sequential)]
+    public struct WLAN_CONNECTION_ATTRIBUTES {
+        public int isState;
+        public int wlanConnectionMode;
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 256)] public string strProfileName;
+        public WLAN_ASSOCIATION_ATTRIBUTES wlanAssociationAttributes;
+        public WLAN_SECURITY_ATTRIBUTES wlanSecurityAttributes;
+    }
+}
+'@ -ErrorAction Stop
+                }
+
+                $clientHandle = [IntPtr]::Zero
+                $negotiatedVersion = 0
+                if ([PCHH.Wlan]::WlanOpenHandle(2, [IntPtr]::Zero, [ref]$negotiatedVersion, [ref]$clientHandle) -eq 0) {
+                    try {
+                        $ifaceListPtr = [IntPtr]::Zero
+                        if ([PCHH.Wlan]::WlanEnumInterfaces($clientHandle, [IntPtr]::Zero, [ref]$ifaceListPtr) -eq 0) {
+                            try {
+                                $numItems = [Runtime.InteropServices.Marshal]::ReadInt32($ifaceListPtr, 0)
+                                $ifaceStructSize = [Runtime.InteropServices.Marshal]::SizeOf([type][PCHH.WLAN_INTERFACE_INFO])
+                                for ($i = 0; $i -lt $numItems; $i++) {
+                                    # dwNumberOfItems (4 bytes) + dwIndex (4 bytes) precede the interface array
+                                    $ifaceInfoPtr = [IntPtr]::Add($ifaceListPtr, 8 + ($i * $ifaceStructSize))
+                                    $ifaceInfo = [Runtime.InteropServices.Marshal]::PtrToStructure($ifaceInfoPtr, [type][PCHH.WLAN_INTERFACE_INFO])
+                                    if ($ifaceInfo.isState -ne 1) { continue } # 1 = connected
+
+                                    $dataSize = 0; $dataPtr = [IntPtr]::Zero
+                                    $guidCopy = $ifaceInfo.InterfaceGuid
+                                    $qres = [PCHH.Wlan]::WlanQueryInterface($clientHandle, [ref]$guidCopy, 7, [IntPtr]::Zero, [ref]$dataSize, [ref]$dataPtr, [IntPtr]::Zero)
+                                    if ($qres -eq 0) {
+                                        try {
+                                            $conn = [Runtime.InteropServices.Marshal]::PtrToStructure($dataPtr, [type][PCHH.WLAN_CONNECTION_ATTRIBUTES])
+                                            $assoc = $conn.wlanAssociationAttributes
+                                            $sec = $conn.wlanSecurityAttributes
+
+                                            $phyMap = @{ 4 = '802.11a'; 5 = '802.11b'; 6 = '802.11g'; 7 = '802.11n'; 8 = '802.11ac'; 9 = '802.11ad'; 10 = '802.11ax'; 11 = '802.11be' }
+                                            if ($phyMap.ContainsKey([int]$assoc.dot11PhyType)) { $radioType = $phyMap[[int]$assoc.dot11PhyType] }
+
+                                            $authMap = @{ 1 = 'Open'; 2 = 'Shared key'; 3 = 'WPA-Enterprise'; 4 = 'WPA-Personal'; 5 = 'WPA-None'; 6 = 'WPA2-Enterprise'; 7 = 'WPA2-Personal'; 8 = 'WPA3-Enterprise'; 9 = 'WPA3-Personal'; 10 = 'OWE'; 11 = 'WPA3-Enterprise (192-bit)' }
+                                            if ($authMap.ContainsKey([int]$sec.dot11AuthAlgorithm)) { $authDisplay = $authMap[[int]$sec.dot11AuthAlgorithm] }
+
+                                            if ($null -eq $wifiSignalPct) { $wifiSignalPct = [int]$assoc.wlanSignalQuality }
+                                            $rxMbps = [math]::Round($assoc.ulRxRate / 1000)
+                                            $txMbps = [math]::Round($assoc.ulTxRate / 1000)
+                                        } finally { [PCHH.Wlan]::WlanFreeMemory($dataPtr) }
+                                    }
+                                    break
+                                }
+                            } finally { [PCHH.Wlan]::WlanFreeMemory($ifaceListPtr) }
+                        }
+                    } finally { [PCHH.Wlan]::WlanCloseHandle($clientHandle, [IntPtr]::Zero) }
+                }
+            } catch { }
+
+            # Band/Channel have no clean locale-independent source (the WLAN API's connection
+            # attributes don't carry frequency), so these two remain best-effort via netsh and may
+            # come back empty on a non-English system.
             $wl = netsh wlan show interfaces 2>$null
             $wf = @{}
             if ($wl) {
                 foreach ($line in $wl) {
-                    if ($line -match '^\s*(Radio type|Band|Channel|Signal|Authentication|Receive rate \(Mbps\)|Transmit rate \(Mbps\))\s*:\s*(.+)$') {
+                    if ($line -match '^\s*(Band|Channel)\s*:\s*(.+)$') {
                         $wf[$Matches[1]] = $Matches[2].Trim()
                     }
                 }
             }
-            $signalDisplay = if ($null -ne $wifiSignalPct) { "$wifiSignalPct%" } elseif ($wf['Signal']) { $wf['Signal'] } else { $null }
-            if ($signalDisplay) {
+            if ($null -ne $wifiSignalPct) {
                 $wifi = [PSCustomObject]@{
-                    signal  = "$signalDisplay"
+                    signal  = "$wifiSignalPct%"
                     band    = "$($wf['Band'])"
                     channel = "$($wf['Channel'])"
-                    radio   = "$($wf['Radio type'])"
-                    auth    = "$($wf['Authentication'])"
-                    rx      = "$($wf['Receive rate (Mbps)'])"
-                    tx      = "$($wf['Transmit rate (Mbps)'])"
+                    radio   = "$radioType"
+                    auth    = "$authDisplay"
+                    rx      = "$rxMbps"
+                    tx      = "$txMbps"
                 }
             }
             $net = [PSCustomObject]@{ adapters = $adapters; vpns = $vpns; wifi = $wifi }
@@ -2837,11 +2937,11 @@ function reliabilityexport {
 # Compresses files
 function compression {
     Write-Host ""
-    Write-Host "[4/4] Compressing everything into one zip.." -ForegroundColor Blue
+    Write-Host "[3/3] Compressing everything into one zip.." -ForegroundColor Blue
 
     Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\CrashControl" -Name "DisplayParameters" -Value 1 -Type DWord -Force | Out-Null
 
-    $filesToCompress = @($infofile, $sys_eventlog_path, $reliability_csv_path, $reliability_html_path)
+    $filesToCompress = @($infofile, $reliability_csv_path, $reliability_html_path)
 
     if ($dmpfound) {
         # Only include dumps from the last 60 days in the zip - older ones are left alone on disk
@@ -2867,7 +2967,7 @@ function compression {
         functionerror
     }
 
-    Remove-Item -Path $infofile, $sys_eventlog_path, $reliability_csv_path, $reliability_html_path -Force -Recurse -ErrorAction SilentlyContinue > $null 2>&1
+    Remove-Item -Path $infofile, $reliability_csv_path, $reliability_html_path -Force -Recurse -ErrorAction SilentlyContinue > $null 2>&1
 
     Write-Host -NoNewline -ForegroundColor Green "$(cmark)"
     Write-Host " Zip created"
@@ -2900,9 +3000,6 @@ function functionerror {
 
     if ($errors.Compress -eq "true") {
         Write-Host " There was an error during compression.."
-    }
-    elseif ($errors.event -eq "true") {
-        Write-Host "There was an error while grabbing the event logs.."
     }
     elseif ($errors.fileCreate -eq "true") {
         Write-Host "There was an error while creating files.."
