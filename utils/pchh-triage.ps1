@@ -390,6 +390,8 @@ const NET = /*__NET__*/null;
 const SECURITY = /*__SECURITY__*/null;
 const HOTFIXES = /*__HOTFIXES__*/[];
 const WINDOWSOLD = /*__WINDOWSOLD__*/null;
+const POWERPLAN = /*__POWERPLAN__*/null;
+const GENFLAGS = /*__GENFLAGS__*/null;
 const CBS = /*__CBS__*/null;
 const DEVERR = /*__DEVERR__*/[];
 const AUDIO = /*__AUDIO__*/null;
@@ -1271,6 +1273,9 @@ function renderSummary(){
     }
   }
   if(WINDOWSOLD&&WINDOWSOLD.present)notes.push(flagLink('windows-old','<span style="color:var(--dim)">Windows.old folder present. Windows was upgraded or reset around '+esc(WINDOWSOLD.date)+'</span>'));
+  if(POWERPLAN&&!POWERPLAN.isDefault)notes.push('<span style="color:var(--dim)">Non-default power plan active: '+esc(POWERPLAN.name)+'</span>');
+  if(GENFLAGS&&GENFLAGS.tpmDisabled)notes.push('<span style="color:var(--dim)">TPM is present but disabled</span>');
+  if(GENFLAGS&&GENFLAGS.secureBootDisabled)notes.push('<span style="color:var(--dim)">Secure Boot is supported but disabled</span>');
   if(CBS&&CBS.unresolvedCount>0)notes.push(dataLink('sys','cbs-corruption','<span class="r"><b>'+CBS.unresolvedCount+'</b> unresolved component corruption entr'+(CBS.unresolvedCount>1?'ies':'y')+' in CBS.log</span>'));
   if(up){
     const upDays=parseInt((up.match(/^(\d+)\s*days?/i)||[])[1]||'0',10);
@@ -2161,7 +2166,47 @@ function reliabilityexport {
             }
         } catch { }
 
-        Write-Host "      - Hotfixes, Device Manager and audio devices" -ForegroundColor DarkGray
+        # Custom power plan: compare the active scheme's GUID against Microsoft's small, fixed set
+        # of built-in plans, rather than matching the (renameable, localized) friendly name - some
+        # tweaking tools clone "Balanced" and keep the name identical, and some legitimate OEM/AMD
+        # plans have odd names too, so the GUID is the only reliable signal either way.
+        $powerPlanInfo = $null
+        try {
+            $builtInSchemes = @(
+                '381b4222-f694-41f0-9685-ff5bb260df2e', # Balanced
+                '8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c', # High performance
+                'a1841308-3541-4fab-bc81-f71556f20b4a', # Power saver
+                'e9a42b02-d5df-448d-aa00-03f14749eb61'  # Ultimate Performance
+            )
+            $activeSchemeOut = powercfg /getactivescheme
+            if ($activeSchemeOut -match '([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})') {
+                $activeGuid = $Matches[1].ToLower()
+                $planName = if ($activeSchemeOut -match '\((.+)\)\s*$') { $Matches[1] } else { $activeGuid }
+                $powerPlanInfo = [PSCustomObject]@{
+                    name      = $planName
+                    isDefault = [bool]($builtInSchemes -contains $activeGuid)
+                }
+            }
+        } catch { }
+
+        # A small, extensible set of general "worth mentioning" flags - not inherently a problem
+        # (unlike the red/yellow findings above), just useful context for a conversation, e.g.
+        # Windows 11 eligibility or general security posture.
+        $generalFlags = [PSCustomObject]@{
+            tpmDisabled         = $false
+            secureBootDisabled  = $false
+        }
+        try {
+            $tpmCheck = Get-Tpm -ErrorAction Stop
+            if ($tpmCheck.TpmPresent -and -not $tpmCheck.TpmEnabled) { $generalFlags.tpmDisabled = $true }
+        } catch { }
+        try {
+            # Confirm-SecureBootUEFI throws on legacy BIOS/unsupported hardware rather than
+            # returning $false - only a hard $false (UEFI present, Secure Boot turned off) counts
+            # here, since "not supported" isn't something the user can just switch on.
+            if ((Confirm-SecureBootUEFI -ErrorAction Stop) -eq $false) { $generalFlags.secureBootDisabled = $true }
+        } catch { }
+
         # Windows.old: left behind after an in-place upgrade or a "Reset this PC" that kept files.
         # Presence + date is a useful proxy for "this OS install is newer than the hardware", but it's
         # not a reliable way to detect every reset path (a full wipe-and-reinstall leaves no trace here).
@@ -2714,7 +2759,7 @@ function reliabilityexport {
             $vpns = @(Get-NetAdapter -ErrorAction SilentlyContinue | Where-Object {
                 -not $_.Physical -and (
                     $_.Status -eq 'Up' -or
-                    "$($_.InterfaceDescription) $($_.Name)" -match 'TAP|Wintun|WireGuard|OpenVPN|Tailscale|Nord|ExpressVPN|Proton|Surfshark|Mullvad|ZeroTier|Hamachi|Radmin|VPN'
+                    "$($_.InterfaceDescription) $($_.Name)" -match 'TAP|Wintun|WireGuard|OpenVPN|Tailscale|Nord|ExpressVPN|Proton|Surfshark|Mullvad|ZeroTier|Hamachi|Radmin|Bright|VPN'
                 ) -and "$($_.InterfaceDescription)" -notmatch 'WAN Miniport|Bluetooth|Loopback|Kernel Debug'
             } | ForEach-Object {
                 [PSCustomObject]@{
@@ -2901,6 +2946,8 @@ namespace PCHH {
         $securityJson = if ($security) { (ConvertTo-Json $security -Compress -Depth 5).Replace('</', '<\/') } else { 'null' }
         $hotfixesJson = if ($hotfixes.Count -gt 0) { (ConvertTo-Json @($hotfixes) -Compress -Depth 3).Replace('</', '<\/') } else { '[]' }
         $windowsOldJson = if ($windowsOld) { (ConvertTo-Json $windowsOld -Compress).Replace('</', '<\/') } else { 'null' }
+        $powerPlanJson = if ($powerPlanInfo) { (ConvertTo-Json $powerPlanInfo -Compress).Replace('</', '<\/') } else { 'null' }
+        $generalFlagsJson = (ConvertTo-Json $generalFlags -Compress).Replace('</', '<\/')
         $cbsJson = if ($cbs) { (ConvertTo-Json $cbs -Compress).Replace('</', '<\/') } else { 'null' }
         $wuHistoryJson = if ($wuHistory.Count -gt 0) { (ConvertTo-Json @($wuHistory) -Compress -Depth 3).Replace('</', '<\/') } else { '[]' }
         $winUpdateInfo = [PSCustomObject]@{ pendingReboot = $pendingReboot; serviceStatus = $wuServiceStatus }
@@ -2919,7 +2966,7 @@ namespace PCHH {
         $specsJson = (ConvertTo-Json "$specsRaw" -Compress).Replace('</', '<\/')
 
         $genStamp = (Get-Date).ToString("dd/MM/yyyy HH:mm")
-        $viewerHtml = $viewerTemplate.Replace('/*__VER__*/""', "`"$scriptVersion`"").Replace('/*__GEN__*/""', "`"$genStamp`"").Replace('/*__DATA__*/[]', $json).Replace('/*__SPECS__*/""', $specsJson).Replace('/*__DUMPS__*/[]', $dumpsJson).Replace('/*__SYSEVT__*/[]', $sysJson).Replace('/*__SMART__*/[]', $smartJson).Replace('/*__DIRTY__*/[]', $dirtyJson).Replace('/*__DISKLAYOUT__*/[]', $diskLayoutJson).Replace('/*__RAM__*/[]', $ramJson).Replace('/*__GPUS__*/[]', $gpusJson).Replace('/*__HAGS__*/null', $hagsJson).Replace('/*__ISLAPTOP__*/false', $isLaptopJson).Replace('/*__MONS__*/[]', $monsJson).Replace('/*__DISPLAYS__*/[]', $displaysJson).Replace('/*__PROCS__*/[]', $procsJson).Replace('/*__MEMUSE__*/null', $memuseJson).Replace('/*__NET__*/null', $netJson).Replace('/*__SECURITY__*/null', $securityJson).Replace('/*__HOTFIXES__*/[]', $hotfixesJson).Replace('/*__WINDOWSOLD__*/null', $windowsOldJson).Replace('/*__CBS__*/null', $cbsJson).Replace('/*__WUHISTORY__*/[]', $wuHistoryJson).Replace('/*__WINUPDATE__*/null', $winUpdateJson).Replace('/*__DEVERR__*/[]', $devErrorsJson).Replace('/*__AUDIO__*/null', $audioJson).Replace('/*__USB__*/[]', $usbJson).Replace('/*__CAMERAS__*/[]', $camerasJson)
+        $viewerHtml = $viewerTemplate.Replace('/*__VER__*/""', "`"$scriptVersion`"").Replace('/*__GEN__*/""', "`"$genStamp`"").Replace('/*__DATA__*/[]', $json).Replace('/*__SPECS__*/""', $specsJson).Replace('/*__DUMPS__*/[]', $dumpsJson).Replace('/*__SYSEVT__*/[]', $sysJson).Replace('/*__SMART__*/[]', $smartJson).Replace('/*__DIRTY__*/[]', $dirtyJson).Replace('/*__DISKLAYOUT__*/[]', $diskLayoutJson).Replace('/*__RAM__*/[]', $ramJson).Replace('/*__GPUS__*/[]', $gpusJson).Replace('/*__HAGS__*/null', $hagsJson).Replace('/*__ISLAPTOP__*/false', $isLaptopJson).Replace('/*__MONS__*/[]', $monsJson).Replace('/*__DISPLAYS__*/[]', $displaysJson).Replace('/*__PROCS__*/[]', $procsJson).Replace('/*__MEMUSE__*/null', $memuseJson).Replace('/*__NET__*/null', $netJson).Replace('/*__SECURITY__*/null', $securityJson).Replace('/*__HOTFIXES__*/[]', $hotfixesJson).Replace('/*__WINDOWSOLD__*/null', $windowsOldJson).Replace('/*__POWERPLAN__*/null', $powerPlanJson).Replace('/*__GENFLAGS__*/null', $generalFlagsJson).Replace('/*__CBS__*/null', $cbsJson).Replace('/*__WUHISTORY__*/[]', $wuHistoryJson).Replace('/*__WINUPDATE__*/null', $winUpdateJson).Replace('/*__DEVERR__*/[]', $devErrorsJson).Replace('/*__AUDIO__*/null', $audioJson).Replace('/*__USB__*/[]', $usbJson).Replace('/*__CAMERAS__*/[]', $camerasJson)
         try {
             Set-Content -Path $reliability_html_path -Value $viewerHtml -Encoding UTF8
         } catch {
