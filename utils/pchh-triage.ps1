@@ -50,7 +50,7 @@ $infofile = "$File\specs-programs.txt"
 
 $ziptar = "$File\PCHH-Triage_$random.zip"
 
-$scriptVersion = "1.0"
+$scriptVersion = "1.1"
 $lookbackDays = 365   # match reliability history's ~1 year span; System log is size-capped anyway
 $reliability_csv_path = "$File\reliability.csv"
 $reliability_html_path = "$File\triage-report.html"
@@ -1662,7 +1662,7 @@ function dmpcheck {
     Clear-Host 
     Write-Host ""
     Write-Host "==================================================" -ForegroundColor DarkGreen
-    Write-Host "         PCHH Triage v1.0 - 23/07/2026            " -ForegroundColor Green
+    Write-Host "         PCHH Triage v1.1 - 18/08/2026            " -ForegroundColor Green
     Write-Host "       Developed by Rory (ctrl.alt.repeat)		  " -ForegroundColor DarkGray
     Write-Host "==================================================" -ForegroundColor DarkGreen
     Write-Host ""
