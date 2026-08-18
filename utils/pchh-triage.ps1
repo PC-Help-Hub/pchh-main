@@ -852,6 +852,7 @@ const FAQ_DATA=[
 {id:'software-rgb',q:"RGB / Peripheral Software",a:"Software like Corsair iCUE, Razer Synapse, Logitech G HUB, and similar RGB/peripheral control suites has a real history of causing background crashes, high idle CPU/RAM usage, and driver conflicts, even though each individual program is legitimate.",tools:[]},
 {id:'software-audio',q:"Audio / Overlay Software",a:"Tools like Nahimic, GeForce Experience, Xbox Game Bar, and Streamlabs OBS can conflict with each other or with games, particularly when more than one is trying to add an overlay at the same time.",tools:[]},
 {id:'software-network',q:"Flagged Network Software",a:"Software like Killer Network Manager or Hola VPN has a known history of causing latency spikes, packet loss, or other connectivity problems on some systems.",tools:[]},
+{id:'software-shell',q:"Shell/Taskbar Tweak Tools",a:"Tools like TranslucentTB, ExplorerPatcher, StartAllBack, Start11, Open-Shell, or Windhawk modify Windows Explorer or the taskbar/Start menu's appearance and behaviour, often by hooking into or patching explorer.exe itself.<br><br>They're generally safe day-to-day, but because they hook into core shell processes, they're a common cause of taskbar/Start menu glitches, explorer.exe crashes, or freezes after a Windows feature update changes something they relied on. Worth ruling out first if that's the symptom.",tools:[]},
 {id:'windows-old',q:"Windows.old Folder",a:"Windows.old is a backup of the previous Windows installation, automatically created when Windows is upgraded in place or reset while keeping personal files. It lets Windows roll back to the previous version for about 10 days before it's automatically deleted to free up space, though it can stick around longer if that cleanup didn't run.<br><br>Its presence is a useful sign that this installation is newer than the hardware, which is handy context if a problem only started recently. It doesn't cover every case, though: a full wipe-and-reinstall or a reset that removes everything doesn't leave a Windows.old folder behind at all, so its absence doesn't rule out a recent reset.",tools:[]},
 {id:'secure-boot',q:"Secure Boot",a:"Secure Boot is a security feature that checks the software involved in starting Windows hasn't been tampered with, before the operating system even loads. It helps stop a specific but nasty category of malware (called bootkits or rootkits) that tries to run before Windows, and before any antivirus, gets a chance to load.<br><br>Microsoft requires it for Windows 11, and leaving it disabled removes a real layer of protection for no real-world upside on most PCs. It requires the system disk to use GPT partitioning. See the note about MBR partitioning in this report if that's relevant.",tools:[]},
 {id:'tpm',q:"TPM",a:"A TPM (Trusted Platform Module) is a small, dedicated security chip, or a feature built into the CPU (fTPM) on newer systems, that securely stores encryption keys and other sensitive data separately from the rest of the PC. It's what Windows 11 relies on for BitLocker drive encryption and for meeting its own minimum security requirements.<br><br>If it's disabled, Windows Hello, BitLocker, and some newer Windows security features either can't be used or fall back to a weaker mode. It can usually be turned on in the BIOS/UEFI settings (often listed as 'TPM', 'fTPM', 'PTT', or 'Security Device').",tools:[]},
@@ -1171,6 +1172,12 @@ function renderSummary(){
     {re:/rtss|rivatuner/i,       label:'RTSS (RivaTuner Statistics)',grp:'oc'},
     {re:/intel.*extreme tuning|intel\(r\) xtu/i, label:'Intel XTU', grp:'oc'},
     {re:/ryzen master/i,         label:'AMD Ryzen Master',           grp:'oc'},
+    {re:/evga precision/i,       label:'EVGA Precision X1/XOC',      grp:'oc'},
+    {re:/gpu tweak/i,            label:'ASUS GPU Tweak',             grp:'oc'},
+    {re:/firestorm/i,            label:'Zotac Firestorm',            grp:'oc'},
+    {re:/sapphire trixx/i,       label:'Sapphire TriXX',             grp:'oc'},
+    {re:/aorus engine/i,         label:'Gigabyte AORUS Engine',      grp:'oc'},
+    {re:/throttlestop/i,         label:'ThrottleStop',               grp:'oc'},
     {re:/corsair icue/i,         label:'Corsair iCUE',               grp:'periph'},
     {re:/razer synapse/i,        label:'Razer Synapse',              grp:'periph'},
     {re:/(logitech|logi) g ?hub/i, label:'Logitech G HUB',           grp:'periph'},
@@ -1184,6 +1191,13 @@ function renderSummary(){
     {re:/reimage|restoro/i,      label:'Restoro/Reimage',            grp:'bloat'},
     {re:/pc cleaner pro|mycleanpc|pc healthboost|systweak/i, label:'PC "cleaner" utility', grp:'bloat'},
     {re:/driverfix|smart driver care|driver updater/i, label:'Third-party driver updater', grp:'bloat'},
+    {re:/driverpack solution/i,  label:'DriverPack Solution',        grp:'bloat'},
+    {re:/snappy driver installer/i, label:'Snappy Driver Installer', grp:'bloat'},
+    {re:/driver ?easy/i,         label:'Driver Easy',                grp:'bloat'},
+    {re:/drivermax/i,            label:'DriverMax',                  grp:'bloat'},
+    {re:/avast driver updater|avg driver updater/i, label:'Avast/AVG Driver Updater', grp:'bloat'},
+    {re:/auslogics driver updater/i, label:'Auslogics Driver Updater', grp:'bloat'},
+    {re:/tweakbit/i,             label:'TweakBit Driver Updater',    grp:'bloat'},
     {re:/nzxt cam/i,             label:'NZXT CAM',                   grp:'periph'},
     {re:/msi dragon center|dragon center/i, label:'MSI Dragon Center', grp:'periph'},
     {re:/nahimic/i,              label:'Nahimic Audio',              grp:'audio'},
@@ -1192,6 +1206,12 @@ function renderSummary(){
     {re:/streamlabs/i,           label:'Streamlabs OBS',             grp:'audio'},
     {re:/hola vpn/i,             label:'Hola VPN',                   grp:'net'},
     {re:/killer network|killer control center/i, label:'Killer Network Manager', grp:'net'},
+    {re:/translucenttb/i,        label:'TranslucentTB',              grp:'shell'},
+    {re:/explorerpatcher/i,      label:'ExplorerPatcher',            grp:'shell'},
+    {re:/startallback/i,         label:'StartAllBack',               grp:'shell'},
+    {re:/^start11$|stardock start11/i, label:'Start11',              grp:'shell'},
+    {re:/open-?shell|classic shell/i, label:'Open-Shell/Classic Shell', grp:'shell'},
+    {re:/windhawk/i,             label:'Windhawk',                   grp:'shell'},
     {re:/teamviewer/i,           label:'TeamViewer',                 grp:'remote'},
     {re:/anydesk/i,              label:'AnyDesk',                    grp:'remote'},
     {re:/screenconnect|connectwise control|connectwise screenconnect/i, label:'ScreenConnect', grp:'remote'},
@@ -1207,19 +1227,20 @@ function renderSummary(){
     {re:/zoho assist/i,          label:'Zoho Assist',                grp:'remote'},
     {re:/chrome remote desktop/i,label:'Chrome Remote Desktop',      grp:'remote'},
   ];
-  const GRP_NAME={ac:'Anti-cheat / kernel driver',oc:'Overclock / monitoring tool',periph:'RGB / peripheral suite',audio:'Audio / overlay software',net:'Network software',bloat:'Potential bloatware/PUP',remote:'Remote access software'};
+  const GRP_NAME={ac:'Anti-cheat / kernel driver',oc:'Overclock / monitoring tool',periph:'RGB / peripheral suite',audio:'Audio / overlay software',net:'Network software',bloat:'Potential bloatware/PUP',remote:'Remote access software',shell:'Shell/taskbar tweak tool'};
   const foundSoft={};
   (sp.programs||[]).forEach(p=>{
     SOFT_FLAGS.forEach(f=>{ if(f.re.test(p)){ (foundSoft[f.grp]=foundSoft[f.grp]||new Set()).add(f.label); } });
   });
+  const softNotes=[];
   if(SECURITY&&SECURITY.avProducts&&SECURITY.avProducts.length){
     const avList=SECURITY.avProducts.filter(a=>a.enabled).map(a=>a.name);
-    if(avList.length>1)notes.push(dataLink('security','antivirus-conflict','<span class="y">Multiple real-time antivirus products active: '+esc(avList.join(', '))+'</span>'));
+    if(avList.length>1)softNotes.push(dataLink('security','antivirus-conflict','<span class="y">Multiple real-time antivirus products active: '+esc(avList.join(', '))+'</span>'));
   }
   Object.keys(foundSoft).forEach(grp=>{
     const items=[...foundSoft[grp]].sort().join(', ');
-    const SOFT_FAQ={ac:'software-anticheat',oc:'software-overclock',periph:'software-rgb',audio:'software-audio',net:'software-network',bloat:'software-bloatware'};
-    notes.push(dataLink('apps',SOFT_FAQ[grp]||'','<span class="'+(grp==='bloat'||grp==='remote'?'y':'')+'"><span class="slabel">'+GRP_NAME[grp]+':</span> '+esc(items)+'</span>'));
+    const SOFT_FAQ={ac:'software-anticheat',oc:'software-overclock',periph:'software-rgb',audio:'software-audio',net:'software-network',bloat:'software-bloatware',shell:'software-shell'};
+    softNotes.push(dataLink('apps',SOFT_FAQ[grp]||'','<span class="'+(grp==='bloat'||grp==='remote'?'y':'')+'"><span class="slabel">'+GRP_NAME[grp]+':</span> '+esc(items)+'</span>'));
   });
 
   if(SECURITY){
@@ -1284,16 +1305,16 @@ function renderSummary(){
   const nEl=document.getElementById('notesBody');
   el.innerHTML=pairs.length?'<dl class="kv summary-kv">'+pairs.map(([k,v])=>'<dt>'+k+'</dt><dd>'+v+'</dd>').join('')+'</dl>':'';
   const NOTE_GROUPS=[
-    {label:'Critical',   test:n=>/class="r"/.test(n)},
-    {label:'Warnings',   test:n=>/class="y"/.test(n)},
-    {label:'Informational', test:n=>!/class="[ry]"/.test(n)&&!/class="g"/.test(n)},
-    {label:'All good',   test:n=>/class="g"/.test(n)},
+    {label:'Critical',   items:notes.filter(n=>/class="r"/.test(n))},
+    {label:'Warnings',   items:notes.filter(n=>/class="y"/.test(n))},
+    {label:'Notable software', items:softNotes},
+    {label:'Informational', items:notes.filter(n=>!/class="[ry]"/.test(n)&&!/class="g"/.test(n))},
+    {label:'All good',   items:notes.filter(n=>/class="g"/.test(n))},
   ];
   let notesHtml='';
   NOTE_GROUPS.forEach(g=>{
-    const items=notes.filter(g.test);
-    if(!items.length)return;
-    notesHtml+='<div class="notes-group"><div class="notes-head">'+g.label+'</div><ul class="notes">'+items.map(n=>'<li>'+n+'</li>').join('')+'</ul></div>';
+    if(!g.items.length)return;
+    notesHtml+='<div class="notes-group"><div class="notes-head">'+g.label+'</div><ul class="notes">'+g.items.map(n=>'<li>'+n+'</li>').join('')+'</ul></div>';
   });
   nEl.innerHTML=notesHtml;
 }
