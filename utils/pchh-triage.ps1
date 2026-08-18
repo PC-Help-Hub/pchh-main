@@ -846,6 +846,7 @@ const FAQ_DATA=[
 {id:'cbs-corruption',q:"Unresolved Component Corruption (CBS.log)",a:"CBS.log records Windows' component servicing activity, including any system file repairs. A 'Cannot repair member' entry means a corrupted system file was found during a check (from Windows Update, an in-place upgrade, or a manual sfc/DISM run) that couldn't be automatically fixed.<br><br>This can cause update failures, missing features, or general instability depending on what's affected. Running <span class=\"mono\">sfc /scannow</span> followed by <span class=\"mono\">DISM /Online /Cleanup-Image /RestoreHealth</span> is the standard next step; if DISM can't find a good copy of the file locally it will need a network connection or Windows installation media to pull one from.",tools:["sfc /scannow","DISM"]},
 {id:'livekernelevent',q:"LiveKernelEvent",a:"Windows' record of a serious problem severe enough to be crash-like, but that the system managed to recover from without a full restart, most often tied to a graphics driver failing and recovering.<br><br>Frequent LiveKernelEvents point to the same kinds of causes as display driver timeouts.",tools:["Display Driver Uninstaller (DDU)","FurMark","HWiNFO"]},
 {id:'wifi-signal',q:"Weak Wi-Fi Signal",a:"The wireless connection's signal strength was weak at the moment this report was generated. A weak signal can cause slow speeds, dropped connections, and higher ping in games, and is usually down to distance from the router, walls/obstructions, or interference from other devices.",tools:[]},
+{id:'gigabit-slow',q:"Gigabit Adapter Running Below Rated Speed",a:"This network adapter supports Gigabit Ethernet (1000 Mbps) but is currently connected at a much lower speed, most often 100 Mbps.<br><br>This is a very common symptom of a damaged or low-quality cable, a loose connection, or a faulty port on either end - Gigabit needs all 4 wire pairs in the cable to be good, while 100 Mbps only needs 2, so a cable can work perfectly well at the lower speed while silently capping the connection. Try a known-good cable (ideally Cat5e or better) and a different port on the router/switch first.",tools:[]},
 {id:'commit-charge',q:"Commit Charge",a:"This measures how much memory (RAM plus the page file combined) the system had committed to running programs at the moment this report was generated.<br><br>Running close to the limit can cause slowdowns, stuttering, or 'out of memory' errors, and often points to either too little RAM for the workload or a page file set too small.",tools:["HWiNFO"]},
 {id:'software-anticheat',q:"Anti-Cheat / Kernel Drivers",a:"Anti-cheat systems like Vanguard, Easy Anti-Cheat, and BattlEye run at a very deep level in Windows (a 'kernel driver') to detect cheating in games. That deep access makes them a common (though not the only) suspect when troubleshooting crashes tied to a specific game.<br><br>This is a factual note that it's installed, not a claim that it's causing a problem.",tools:[]},
 {id:'software-overclock',q:"Overclocking / Monitoring Tools",a:"Tools like MSI Afterburner, RTSS, Intel XTU, and Ryzen Master can adjust CPU/GPU clock speeds, voltages, and power limits beyond default settings. If a system is unstable, an aggressive overclock applied through one of these is a common and easy-to-test cause.",tools:["OCCT"]},
@@ -1279,6 +1280,11 @@ function renderSummary(){
     const sig=parseInt(NET.wifi.signal)||0;
     if(sig&&sig<50)notes.push(dataLink('net','wifi-signal','<span class="y">Wi-Fi signal at '+sig+'%'+(NET.wifi.band?' on '+esc(NET.wifi.band):'')+'</span>'));
   }
+  if(NET&&NET.adapters){
+    NET.adapters.filter(a=>a.gigabitBelowRated).forEach(a=>{
+      notes.push(dataLink('net','gigabit-slow','<span class="y">'+esc(a.name)+' is Gigabit-capable but connected at only '+esc(a.speed)+'</span>'));
+    });
+  }
   if(MEMUSE&&MEMUSE.ct&&MEMUSE.cu/MEMUSE.ct>0.9)notes.push(dataLink('memory','commit-charge','<span class="y">Commit charge at '+Math.round(MEMUSE.cu/MEMUSE.ct*100)+'% of limit at time of capture</span>'));
   // Display connected to the integrated GPU while a dedicated GPU sits unused - the classic
   // "wrong slot" cable mistake. Desktops only: laptops normally route the built-in panel
@@ -1538,7 +1544,7 @@ function renderNet(){
         '<div class="sub">'+esc(a.desc||'')+'</div>'+
         '<dl class="kv smart-kv">'+
         '<dt>Status</dt><dd style="color:'+stCol+'">'+esc(a.status)+'</dd>'+
-        (up&&a.speed?'<dt>Link speed</dt><dd>'+esc(a.speed)+'</dd>':'')+
+        (up&&a.speed?'<dt>Link speed</dt><dd'+(a.gigabitBelowRated?' style="color:var(--warn)"':'')+'>'+esc(a.speed)+(a.gigabitBelowRated?' <span style="color:var(--faint)">(Gigabit-capable)</span>':'')+'</dd>':'')+
         (a.media?'<dt>Media</dt><dd>'+esc(friendlyMedia(a.media))+'</dd>':'')+
         '</dl></div>';
     });
@@ -2777,12 +2783,31 @@ function reliabilityexport {
         $net = $null
         try {
             $adapters = @(Get-NetAdapter -Physical -ErrorAction Stop | ForEach-Object {
+                # Flag an Ethernet link that's connected well below what the hardware can do - a
+                # classic sign of a bad/damaged cable, a bad port, or a cheap Cat5 run. We check the
+                # driver's own advertised speed options (ValidDisplayValues) rather than guessing
+                # gigabit capability from the adapter's name, since plenty of genuine gigabit NICs
+                # (e.g. most Intel ones) don't say "Gigabit" anywhere in their description.
+                $gigabitBelowRated = $false
+                try {
+                    if ($_.Status -eq 'Up' -and $_.PhysicalMediaType -eq '802.3') {
+                        $speedProp = Get-NetAdapterAdvancedProperty -Name $_.Name -RegistryKeyword '*SpeedDuplex' -ErrorAction Stop
+                        if ($speedProp.ValidDisplayValues -match '1\.?0?\s*Gbps|1000') {
+                            if ("$($_.LinkSpeed)" -match '^([\d.,]+)\s*(Gbps|Mbps|Kbps)') {
+                                $val = [double]($Matches[1] -replace ',', '.')
+                                $mbps = switch -Regex ($Matches[2]) { 'Gbps' { $val * 1000 }; 'Mbps' { $val }; 'Kbps' { $val / 1000 } }
+                                if ($mbps -lt 1000) { $gigabitBelowRated = $true }
+                            }
+                        }
+                    }
+                } catch { }
                 [PSCustomObject]@{
                     name   = "$($_.Name)"
                     desc   = "$($_.InterfaceDescription)"
                     status = "$($_.Status)"
                     speed  = "$($_.LinkSpeed)"
                     media  = "$($_.PhysicalMediaType)"
+                    gigabitBelowRated = $gigabitBelowRated
                 }
             })
             $vpns = @(Get-NetAdapter -ErrorAction SilentlyContinue | Where-Object {
@@ -2827,7 +2852,7 @@ function reliabilityexport {
 using System;
 using System.Runtime.InteropServices;
 namespace PCHH {
-    [StructLayout(LayoutKind.Sequential)]
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
     public struct WLAN_INTERFACE_INFO {
         public Guid InterfaceGuid;
         [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 256)] public string strInterfaceDescription;
@@ -2856,7 +2881,7 @@ namespace PCHH {
         public uint dot11AuthAlgorithm;
         public uint dot11CipherAlgorithm;
     }
-    [StructLayout(LayoutKind.Sequential)]
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
     public struct WLAN_CONNECTION_ATTRIBUTES {
         public int isState;
         public int wlanConnectionMode;
