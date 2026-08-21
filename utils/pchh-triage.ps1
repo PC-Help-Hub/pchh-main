@@ -250,10 +250,9 @@ body.dragging #drop{color:var(--info);border-color:var(--info)}
 .title{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .row.open .title{white-space:normal}
 .src{color:var(--dim);font-size:14px;margin-left:10px}
-.msg{grid-column:3;color:var(--dim);font-size:14px;line-height:1.5;padding:6px 0 2px;white-space:pre-wrap;display:none;word-break:break-word}
+.msg{grid-column:3;color:var(--dim);font-size:14px;line-height:1.5;padding:6px 0 2px;white-space:pre-wrap;display:none;word-break:break-word;cursor:text;user-select:text}
 .row.open .msg{display:block}
 .faq-row{grid-template-columns:12px 1fr}
-.faq-row .msg{cursor:text;user-select:text}
 .faq-row .msg{grid-column:2}
 #empty{color:var(--faint);padding:40px 0;text-align:center;display:none}
 @media (max-width:600px){
@@ -546,6 +545,7 @@ function render(){
           '<span class="title">'+esc(e.p||'(unnamed)')+'<span class="src">'+summary(e)+'</span></span>'+
           '<div class="msg mono">'+esc(e.m)+'</div>';
         row.onclick=(e)=>{ if(e.target.closest('.msg'))return; row.classList.toggle('open'); };
+        row.querySelector('.msg').onclick=e=>e.stopPropagation();
         list.appendChild(row);
       });
     });
@@ -821,7 +821,7 @@ function renderWuHistList(){
 }
 const FAQ_DATA=[
 {id:'app-crashes',q:"Application Crashes",a:"This counts how many times a program on your PC has crashed and forced Windows to close it, based on the "+tabLink('rel','Windows Reliability History')+".<br><br>Occasional crashes are normal, especially in games or browsers. A rising number, especially if they're all the same program or all mention the same driver file, usually points to that specific program, a graphics driver, or a plugin/mod rather than Windows itself.",tools:["WhoCrashed","Display Driver Uninstaller (DDU)"]},
-{id:'unexpected-shutdown',q:"Unexpected Shutdowns",a:"Windows didn't shut down properly last time, meaning it never received the normal 'the user is turning off the PC' signal. This can be caused by:<ul style='margin:8px 0 8px 20px;padding:0'><li>a full system crash (a 'blue screen')</li><li>a power cut</li><li>someone holding the power button</li><li>the PC freezing and being force-restarted</li></ul>If a specific bugcheck code is shown, that's the technical reason Windows gave. It can point toward whether this is a hardware, driver, or Windows problem. Most bugcheck codes are Google-able and have common fixes.",tools:["WhoCrashed","OCCT","MemTest86","Display Driver Uninstaller (DDU)"]},
+{id:'unexpected-shutdown',q:"Unexpected Shutdowns",a:"Windows didn't shut down properly last time, meaning it never received the normal 'the user is turning off the PC' signal. This can be caused by:<ul style='margin:8px 0 8px 20px;padding:0'><li>a full system crash (a 'blue screen')</li><li>a power cut</li><li>overheating (thermal shutdown)</li><li>someone holding the power button</li><li>the PC freezing and being force-restarted</li></ul>If a specific bugcheck code is shown, that's the technical reason Windows gave. It can point toward whether this is a hardware, driver, or Windows problem. Most bugcheck codes are Google-able and have common fixes.<br><br>When Windows detects the power button was physically held down for 4+ seconds, it records that moment separately from the shutdown itself - that's shown as 'Power button held down' with the exact time, which usually means the PC was unresponsive and had to be force-closed rather than crashing cleanly with a bugcheck.",tools:["WhoCrashed","OCCT","MemTest86","Display Driver Uninstaller (DDU)"]},
 {id:'memory-dump',q:"Memory Dump",a:"When Windows crashes badly, a 'blue screen' happens. Windows tries to save a snapshot of exactly what the computer was doing at that moment to a file called a memory dump.<br><br>Memory dump(s) are included in the zip this tool creates. If you have them, you can share the zip file with us and we'll try to debug for you. Memory dumps are one of the most useful pieces of evidence for figuring out precisely what caused a crash.<br><br>If there are no memory dumps in the zip file but you've been experiencing crashes, shutdowns, or freezing, that means Windows wasn't able to create one. This can (but not always) indicate a hardware problem over a software one. Windows will usually try to generate a memory dump when the system crashes.",tools:["WhoCrashed"]},
 {id:'whea',q:"Fatal Hardware Error (WHEA)",a:"WHEA is Windows' hardware error reporting system. A fatal WHEA error means a core piece of hardware, usually the CPU, memory controller, or a PCIe device, reported a serious problem Windows couldn't recover from, and the machine likely crashed or rebooted as a result.<br><br>This is a strong indication that something is physically wrong or unstable, often an overclock, degraded hardware, or insufficient voltage, rather than a software issue.",tools:["OCCT","MemTest86","HWiNFO"]},
 {id:'disk-smart',q:"Drive / SMART Warnings",a:"Your drives (SSD, NVMe, hard drive) constantly track their own health statistics using something called SMART data. This data lists specific problems the drive itself has self-reported, such as:<ul style='margin:8px 0 8px 20px;padding:0'><li>reallocated sectors (damaged areas it's had to work around)</li><li>pending or uncorrectable sectors (data that couldn't be read reliably)</li><li>a high UltraDMA CRC error count (usually a loose or failing cable)</li></ul>If a drive predicts its own failure, it's important that you back up anything important from it immediately. Drive failures are often random and unpredictable.",tools:["CrystalDiskInfo"]},
@@ -876,6 +876,7 @@ function renderFAQ(){
   h+='</div>';
   v.innerHTML=h;
   v.querySelectorAll('.faq-row').forEach(r=>r.onclick=(e)=>{ if(e.target.closest('.msg'))return; r.classList.toggle('open'); });
+  v.querySelectorAll('.faq-row .msg').forEach(m=>m.onclick=e=>e.stopPropagation());
 }
 function goFaq(id){
   document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('on',x.dataset.tab==='faq'));
@@ -1341,13 +1342,15 @@ function renderSys(){
     let title=esc(e.prov)+' '+esc(e.id);
     if(e.bc&&e.bc!=='0')title+=' <span class="r" style="color:var(--err)">\u00b7 Bugcheck 0x'+esc(parseInt(e.bc).toString(16).toUpperCase())+'</span>';
     if(e.cnt)title+=' \u00d7'+e.cnt;
+    const overheatNote=String(e.id)==='41'?' <span style="color:var(--faint)">(this can also include overheating)</span>':'';
     h+='<div class="row"><span class="time mono">'+fmtTime(e.dt)+'</span>'+
       '<span class="dot d-'+cat+'"></span>'+
       '<span class="title">'+title+'</span>'+
-      '<div class="msg mono">'+esc(e.msg||'')+'</div></div>';
+      '<div class="msg mono">'+esc(e.msg||'')+overheatNote+'</div></div>';
   });
   v.innerHTML=h;
   v.querySelectorAll('.row').forEach(r=>r.onclick=(e)=>{ if(e.target.closest('.msg'))return; r.classList.toggle('open'); });
+  v.querySelectorAll('.row .msg').forEach(m=>m.onclick=e=>e.stopPropagation());
 }
 function renderShutdowns(){
   const v=document.getElementById('shutdownsView');
@@ -1359,15 +1362,17 @@ function renderShutdowns(){
   const kp41=SYSEVT.filter(r=>String(r.id)==='41').map(r=>{
     const dt=parseDate(r.t);
     const bc=(r.bc&&String(r.bc)!=='0')?String(r.bc):'';
-    return {d:dt,bc,src:'Kernel-Power (41)'};
+    const pbt=r.pbt?parseDate(r.pbt):null;
+    return {d:dt,bc,pbt,src:'Kernel-Power (41)'};
   }).filter(x=>x.d);
-  const relOnly=events.filter(e=>e.s==='EventLog').map(e=>({d:e.d,bc:'',src:'Reliability history'}));
+  const relOnly=events.filter(e=>e.s==='EventLog').map(e=>({d:e.d,bc:'',pbt:null,src:'Reliability history'}));
   const all=[...kp41,...relOnly].sort((a,b)=>b.d-a.d);
   const merged=[];
   all.forEach(item=>{
     const dup=merged.find(m=>Math.abs(m.d-item.d)<2*60*1000);
     if(dup){
       if(!dup.bc&&item.bc)dup.bc=item.bc;
+      if(!dup.pbt&&item.pbt)dup.pbt=item.pbt;
       if(!dup.src.includes(item.src))dup.src+=' + '+item.src;
     }else merged.push({...item});
   });
@@ -1376,13 +1381,17 @@ function renderShutdowns(){
     return;
   }
   let h='<div class="spec-section"><h2>Unexpected Shutdowns ('+merged.length+')</h2>'+
-    '<div class="sys-note">A shutdown Windows never got a clean "powering off" signal for &mdash; caused by a crash, power loss, a hard reset, or a freeze that needed a force restart.</div>'+
+    '<div class="sys-note">A shutdown Windows never got a clean "powering off" signal for &mdash; caused by a crash, power loss, overheating, a hard reset, or a freeze that needed a force restart.</div>'+
     '<dl class="kv">';
   merged.forEach(x=>{
     const bcLabel=x.bc?('0x'+parseInt(x.bc).toString(16).toUpperCase()+(BC_NAMES[x.bc]?' '+BC_NAMES[x.bc]:'')):'';
-    h+='<dt class="mono">'+esc(fmtDay(x.d.toISOString().slice(0,10)))+', '+esc(fmtTime(x.d))+'</dt>'+
-      '<dd>'+(bcLabel?'<span class="r">Bugcheck '+esc(bcLabel)+'</span>':'<span style="color:var(--faint)">No bugcheck &mdash; power loss, hard reset, or hang</span>')+
-      ' <span style="color:var(--faint);font-size:13px">\u00b7 '+esc(x.src)+'</span></dd>';
+    let cause;
+    if(bcLabel)cause='<span class="r">Bugcheck '+esc(bcLabel)+'</span>';
+    else if(x.pbt)cause='<span class="y">Power button held down</span>';
+    else cause='<span style="color:var(--faint)">No crash code recorded &mdash; likely a power loss, hard reset, or hang</span>';
+    const pbtNote=x.pbt?' <span style="color:var(--faint);font-size:13px">\u00b7 button held at '+esc(fmtTime(x.pbt))+(x.pbt.toISOString().slice(0,10)!==x.d.toISOString().slice(0,10)?' on '+esc(fmtDay(x.pbt.toISOString().slice(0,10))):'')+'</span>':'';
+    h+='<dt class="mono" title="Source: '+esc(x.src)+'">'+esc(fmtDay(x.d.toISOString().slice(0,10)))+', '+esc(fmtTime(x.d))+'</dt>'+
+      '<dd>'+cause+pbtNote+'</dd>';
   });
   h+='</dl></div>';
   v.innerHTML=h;
@@ -1943,10 +1952,18 @@ function Get-CuratedSystemEvents {
 
     $out = @($keep | Select-Object -First 400 | ForEach-Object {
         $bc = ''
+        $pbt = ''
         if ($_.ProviderName -like '*Kernel-Power' -and $_.Id -eq 41) {
             try {
                 $x = [xml]$_.ToXml()
                 $bc = "$(($x.Event.EventData.Data | Where-Object { $_.Name -eq 'BugcheckCode' }).'#text')"
+                # PowerButtonTimestamp is a FILETIME (100ns intervals since 1601), non-zero only when
+                # the power button was physically held for 4+ seconds to force the shutdown - see
+                # https://learn.microsoft.com/en-us/archive/technet-wiki/14246.kernel-power-event-id-41
+                $pbtRaw = ($x.Event.EventData.Data | Where-Object { $_.Name -eq 'PowerButtonTimestamp' }).'#text'
+                if ($pbtRaw -and [long]$pbtRaw -gt 0) {
+                    $pbt = ([DateTime]::FromFileTime([long]$pbtRaw)).ToString("dd/MM/yyyy HH:mm:ss")
+                }
             } catch { }
         }
         [PSCustomObject]@{
@@ -1955,6 +1972,7 @@ function Get-CuratedSystemEvents {
             id   = "$($_.Id)"
             lvl  = [int]$_.Level
             bc   = $bc
+            pbt  = $pbt
             msg  = "$($_.Message)"
         }
     })
