@@ -50,7 +50,7 @@ $infofile = "$File\specs-programs.txt"
 
 $ziptar = "$File\PCHH-Triage_$random.zip"
 
-$scriptVersion = "1.1"
+$scriptVersion = "1.2"
 $lookbackDays = 365   # match reliability history's ~1 year span; System log is size-capped anyway
 $reliability_csv_path = "$File\reliability.csv"
 $reliability_html_path = "$File\triage-report.html"
@@ -1098,15 +1098,18 @@ function renderSummary(){
   const bver=specVal(sp.info,'BIOS Version');
   if(bver||mb){
     const val=bver?esc(bver):'';
-    // A few vendors have a reliable model-search URL; everyone else falls back to a plain web
-    // search, which reliably lands on the right support page without needing per-vendor scraping.
+    // Vendor support sites are single-page apps that get restructured often (MSI's own
+    // "/Search?searchKeyword=" link 404s as of 2026, and ASUS's has since moved behind a
+    // region prefix) - hard-coding another guessed URL just sets up the next 404. A
+    // site-scoped Google search always lands on the current support page regardless of how
+    // the vendor's frontend changes, so every vendor uses that instead of a direct link.
+    const vendorSite={asus:'asus.com',msi:'msi.com','micro-star':'msi.com',gigabyte:'gigabyte.com',asrock:'asrock.com'};
     const mfrL=(mbMfr||'').toLowerCase();
     const q=encodeURIComponent(((mbMfr||'').replace(/ASUSTeK COMPUTER INC\./i,'ASUS').replace(/Micro-Star International.*/i,'MSI').replace(/Gigabyte Technology.*/i,'Gigabyte')+' '+(mb||'')).trim()+' bios update download');
     let url='https://www.google.com/search?q='+q;
     if(mb){
-      if(/asus/.test(mfrL))url='https://www.asus.com/support/AllSupport/?keyword='+encodeURIComponent(mb);
-      else if(/msi|micro-star/.test(mfrL))url='https://www.msi.com/Search?searchKeyword='+encodeURIComponent(mb);
-      else if(/gigabyte/.test(mfrL))url='https://www.gigabyte.com/Search?search='+encodeURIComponent(mb);
+      const vendorKey=Object.keys(vendorSite).find(k=>mfrL.includes(k));
+      if(vendorKey)url='https://www.google.com/search?q='+encodeURIComponent('site:'+vendorSite[vendorKey]+' '+mb);
     }
     pairs.push(['BIOS version', (val?val+' \u00b7 ':'')+'<a href="'+url+'" target="_blank" rel="noopener" style="color:var(--info)">Check for updates</a>']);
   }
@@ -1161,8 +1164,12 @@ function renderSummary(){
   const wuFails=WUHISTORY.filter(u=>u.result==='Failed'||u.result==='Cancelled').length;
   if(wuFails)notes.push(dataLink('updates','wu-failed','<span class="y"><b>'+wuFails+'</b> Windows Update'+(wuFails>1?'s':'')+' did not complete successfully</span>'));
   if(RAM.length){
-    const slow=RAM.filter(m=>m.rated&&m.conf&&+m.conf<+m.rated);
-    if(slow.length)notes.push(dataLink('memory','ram-speed','<span class="y">RAM configured at '+esc(slow[0].conf)+' MT/s, rated '+esc(slow[0].rated)+' MT/s</span>'));
+    // Prefer the speed embedded in the part number over Win32_PhysicalMemory.Speed when it's
+    // higher - Speed often just reflects the JEDEC default the stick is currently running at,
+    // not what it's actually rated for, which silently hides an XMP/EXPO-off situation.
+    const effRated=m=>Math.max(+m.rated||0,+m.pnSpeed||0)||'';
+    const slow=RAM.filter(m=>effRated(m)&&m.conf&&+m.conf<+effRated(m));
+    if(slow.length)notes.push(dataLink('memory','ram-speed','<span class="y">RAM configured at '+esc(slow[0].conf)+' MT/s, rated '+esc(effRated(slow[0]))+' MT/s</span>'));
   }
   // Known software flags: anti-cheat/kernel drivers, OC & monitoring tools, RGB/peripheral suites, bloatware/PUPs
   const SOFT_FLAGS=[
@@ -1516,6 +1523,7 @@ function renderMemory(){
         '<dt>Part number</dt><dd>'+esc(m.pn||'?')+'</dd>'+
         '<dt>Capacity</dt><dd>'+esc(m.cap)+' GB</dd>'+
         (m.rated?'<dt>Rated speed</dt><dd>'+esc(m.rated)+' MT/s</dd>':'')+
+        (m.pnSpeed?'<dt>Speed (from part number)</dt><dd>'+esc(m.pnSpeed)+' MT/s'+(m.rated&&+m.pnSpeed>+m.rated?' <span style="color:var(--faint)">(higher than reported rated speed)</span>':'')+'</dd>':'')+
         (m.conf?'<dt>Configured speed</dt><dd>'+esc(m.conf)+' MT/s</dd>':'')+
         '</dl></div>';
     });
@@ -1776,7 +1784,7 @@ function fileadd {
     $build = "$buildNumber.$ubr"
 
 
-    $osInstallDate = try { ([System.Management.ManagementDateTimeConverter]::ToDateTime($os.InstallDate)).ToString("dd/MM/yyyy") } catch { "" }
+    $osInstallDate = try { ([System.Management.ManagementDateTimeConverter]::ToDateTime($os.InstallDate)).ToString("dd'/'MM'/'yyyy") } catch { "" }
     $cpuCores = ($cpu | Select-Object -ExpandProperty NumberOfCores) -join "+"
     $cpuThreads = ($cpu | Select-Object -ExpandProperty ThreadCount) -join "+"
     $uacEnabled = try { if ((Get-ItemProperty "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" -ErrorAction Stop).EnableLUA -eq 1) { "Enabled" } else { "Disabled" } } catch { "" }
@@ -1962,12 +1970,12 @@ function Get-CuratedSystemEvents {
                 # https://learn.microsoft.com/en-us/archive/technet-wiki/14246.kernel-power-event-id-41
                 $pbtRaw = ($x.Event.EventData.Data | Where-Object { $_.Name -eq 'PowerButtonTimestamp' }).'#text'
                 if ($pbtRaw -and [long]$pbtRaw -gt 0) {
-                    $pbt = ([DateTime]::FromFileTime([long]$pbtRaw)).ToString("dd/MM/yyyy HH:mm:ss")
+                    $pbt = ([DateTime]::FromFileTime([long]$pbtRaw)).ToString("dd'/'MM'/'yyyy HH:mm:ss")
                 }
             } catch { }
         }
         [PSCustomObject]@{
-            t    = $_.TimeCreated.ToString("dd/MM/yyyy HH:mm:ss")
+            t    = $_.TimeCreated.ToString("dd'/'MM'/'yyyy HH:mm:ss")
             prov = ($_.ProviderName -replace '^Microsoft-Windows-', '')
             id   = "$($_.Id)"
             lvl  = [int]$_.Level
@@ -1980,7 +1988,7 @@ function Get-CuratedSystemEvents {
     if ($whea17.Count -gt 0) {
         $latest = $whea17 | Sort-Object TimeCreated -Descending | Select-Object -First 1
         $out += [PSCustomObject]@{
-            t    = $latest.TimeCreated.ToString("dd/MM/yyyy HH:mm:ss")
+            t    = $latest.TimeCreated.ToString("dd'/'MM'/'yyyy HH:mm:ss")
             prov = 'WHEA-Logger'
             id   = '17'
             lvl  = 3
@@ -2003,7 +2011,7 @@ function reliabilityexport {
         try {
             $recs = @(Get-CimInstance Win32_ReliabilityRecords -ErrorAction Stop | ForEach-Object {
                 [PSCustomObject]@{
-                    t = $_.TimeGenerated.ToString("dd/MM/yyyy HH:mm:ss")
+                    t = $_.TimeGenerated.ToString("dd'/'MM'/'yyyy HH:mm:ss")
                     s = $_.SourceName
                     e = "$($_.EventIdentifier)"
                     p = $_.ProductName
@@ -2147,9 +2155,16 @@ function reliabilityexport {
             @{ p = '(KHX|KF4|KF3|KVR)'; b = 'Kingston / HyperX' },
             @{ p = '(BLS|BLM|CT\d)'; b = 'Crucial' },
             @{ p = '(TLZ|TED4|TF\d|TPD4)'; b = 'Team Group' },
-            @{ p = 'M[3478][45AB]'; b = 'Samsung' },
+            # Samsung's own module numbering is M3xx (UDIMM/RDIMM) or M4xx (SODIMM), e.g.
+            # M378, M391, M393, M471, M472 - the previous pattern (M[3478][45AB]) required a
+            # 4/5/A/B as the third character and so never matched any real Samsung part number.
+            @{ p = '^M[34]\d{2}';    b = 'Samsung' },
             @{ p = 'HMA|HMT';       b = 'SK Hynix' },
-            @{ p = 'MTA|MT\d{2}';  b = 'Micron' }
+            @{ p = 'MTA|MT\d{2}';  b = 'Micron' },
+            @{ p = '^MD\d';          b = 'PNY' },
+            @{ p = '^AD4U|^AX4U|^AD5U'; b = 'ADATA' },
+            @{ p = '^PSD|^PVS|^PVB'; b = 'Patriot' },
+            @{ p = '^99[UA]|^MR[AB]'; b = 'Mushkin' }
         )
         function Resolve-RamBrand($mfr, $pn) {
             if ($mfr -and $mfr -notmatch '^(Unknown|Undefined|To Be Filled|0*)$') { return $mfr }
@@ -2157,6 +2172,17 @@ function reliabilityexport {
                 if ($pn -match $entry.p) { return "$($entry.b) (identified from part number)" }
             }
             return $mfr
+        }
+        # Most consumer DDR4/DDR5 part numbers embed the kit's rated speed as a bare 4-digit
+        # number (e.g. "MD16GSD43200-SI" -> 3200 MT/s). Win32_PhysicalMemory.Speed is often just
+        # the JEDEC default the module happens to be running at, not what it's actually rated
+        # for, so this catches XMP/EXPO-off cases that comparing Speed to ConfiguredClockSpeed
+        # alone would miss. Matches only against known real DDR speeds (with no leading/trailing
+        # digit) to avoid picking up capacity or revision numbers.
+        $knownDdrSpeeds = '1600|1866|2133|2400|2666|2800|2933|3000|3200|3466|3600|3733|4000|4133|4266|4400|4600|4800|5200|5333|5600|5800|6000|6400|6800|7200|7600|8000|8400|8800'
+        function Resolve-RamSpeedFromPartNumber($pn) {
+            if ($pn -match "(?<!\d)($knownDdrSpeeds)(?!\d)") { return $Matches[1] }
+            return ""
         }
         $ram = @()
         try {
@@ -2177,18 +2203,20 @@ function reliabilityexport {
             $slotIndex = @{}
             $ram = @($rawRam | ForEach-Object {
                 $mfrResolved = Resolve-RamBrand $_.mfr $_.pn
+                $pnSpeed = Resolve-RamSpeedFromPartNumber $_.pn
                 $displaySlot = $_.slot
                 if ($slotSeen[$_.slot] -gt 1) {
                     $slotIndex[$_.slot] = ($slotIndex[$_.slot] + 1)
                     $displaySlot = "$($_.slot) (position $($slotIndex[$_.slot]))"
                 }
                 [PSCustomObject]@{
-                    slot  = $displaySlot
-                    mfr   = $mfrResolved
-                    pn    = $_.pn
-                    cap   = $_.cap
-                    rated = $_.rated
-                    conf  = $_.conf
+                    slot     = $displaySlot
+                    mfr      = $mfrResolved
+                    pn       = $_.pn
+                    cap      = $_.cap
+                    rated    = $_.rated
+                    conf     = $_.conf
+                    pnSpeed  = $pnSpeed
                 }
             })
         } catch { }
@@ -2259,7 +2287,7 @@ function reliabilityexport {
         try {
             $woPath = "$env:SystemDrive\Windows.old"
             if (Test-Path $woPath -PathType Container) {
-                $woDate = (Get-Item $woPath -ErrorAction Stop).LastWriteTime.ToString("dd/MM/yyyy")
+                $woDate = (Get-Item $woPath -ErrorAction Stop).LastWriteTime.ToString("dd'/'MM'/'yyyy")
                 $windowsOld = [PSCustomObject]@{ present = $true; date = $woDate }
             }
         } catch { }
@@ -2276,7 +2304,7 @@ function reliabilityexport {
                 $lastLine = $cbsLines | Select-Object -Last 1
                 $lastDate = $null
                 if ($lastLine -match '^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})') {
-                    try { $lastDate = [datetime]::ParseExact($matches[1], 'yyyy-MM-dd HH:mm:ss', $null).ToString("dd/MM/yyyy HH:mm") } catch { }
+                    try { $lastDate = [datetime]::ParseExact($matches[1], 'yyyy-MM-dd HH:mm:ss', $null).ToString("dd'/'MM'/'yyyy HH:mm") } catch { }
                 }
                 $cbs = [PSCustomObject]@{
                     unresolvedCount = $unresolved.Count
@@ -2291,7 +2319,7 @@ function reliabilityexport {
                 [PSCustomObject]@{
                     id   = "$($_.HotFixID)"
                     desc = "$($_.Description)"
-                    date = if ($_.InstalledOn) { $_.InstalledOn.ToString("dd/MM/yyyy") } else { "" }
+                    date = if ($_.InstalledOn) { $_.InstalledOn.ToString("dd'/'MM'/'yyyy") } else { "" }
                 }
             })
         } catch { }
@@ -2336,7 +2364,7 @@ function reliabilityexport {
                 $wuHistory = @($searcher.QueryHistory(0, [Math]::Min($historyCount, 200)) | Where-Object { $_.Title -notmatch 'Security Intelligence Update' } | Select-Object -First 40 | ForEach-Object {
                     [PSCustomObject]@{
                         title  = "$($_.Title)"
-                        date   = if ($_.Date) { $_.Date.ToString("dd/MM/yyyy HH:mm") } else { "" }
+                        date   = if ($_.Date) { $_.Date.ToString("dd'/'MM'/'yyyy HH:mm") } else { "" }
                         result = if ($resultMap.ContainsKey([int]$_.ResultCode)) { $resultMap[[int]$_.ResultCode] } else { "Unknown" }
                     }
                 } | Sort-Object date -Descending)
@@ -2505,8 +2533,8 @@ function reliabilityexport {
             $defender = if ($mpStatus) {
                 [PSCustomObject]@{
                     rtp        = "$($mpStatus.RealTimeProtectionEnabled)"
-                    lastQuick  = if ($mpStatus.QuickScanEndTime) { $mpStatus.QuickScanEndTime.ToString("dd/MM/yyyy HH:mm") } else { "" }
-                    lastFull   = if ($mpStatus.FullScanEndTime) { $mpStatus.FullScanEndTime.ToString("dd/MM/yyyy HH:mm") } else { "" }
+                    lastQuick  = if ($mpStatus.QuickScanEndTime) { $mpStatus.QuickScanEndTime.ToString("dd'/'MM'/'yyyy HH:mm") } else { "" }
+                    lastFull   = if ($mpStatus.FullScanEndTime) { $mpStatus.FullScanEndTime.ToString("dd'/'MM'/'yyyy HH:mm") } else { "" }
                     sigAge     = "$($mpStatus.AntivirusSignatureAge)"
                     sigVersion = "$($mpStatus.AntivirusSignatureVersion)"
                 }
@@ -2528,7 +2556,7 @@ function reliabilityexport {
                 $threats = @(Get-MpThreatDetection -ErrorAction Stop | Select-Object -First 25 | ForEach-Object {
                     [PSCustomObject]@{
                         name = "$($_.ThreatName)"
-                        time = $_.InitialDetectionTime.ToString("dd/MM/yyyy HH:mm")
+                        time = $_.InitialDetectionTime.ToString("dd'/'MM'/'yyyy HH:mm")
                         act  = "$($_.ActionSuccess)"
                     }
                 })
@@ -2998,7 +3026,7 @@ namespace PCHH {
             $dumps = @(Get-ChildItem -Path $source -ErrorAction SilentlyContinue | ForEach-Object {
                 [PSCustomObject]@{
                     n = $_.Name
-                    d = $_.LastWriteTime.ToString("dd/MM/yyyy HH:mm")
+                    d = $_.LastWriteTime.ToString("dd'/'MM'/'yyyy HH:mm")
                     z = "{0:N1} MB" -f ($_.Length / 1MB)
                 }
             })
@@ -3037,7 +3065,7 @@ namespace PCHH {
         if ($null -eq $specsRaw) { $specsRaw = "" }
         $specsJson = (ConvertTo-Json "$specsRaw" -Compress).Replace('</', '<\/')
 
-        $genStamp = (Get-Date).ToString("dd/MM/yyyy HH:mm")
+        $genStamp = (Get-Date).ToString("dd'/'MM'/'yyyy HH:mm")
         $viewerHtml = $viewerTemplate.Replace('/*__VER__*/""', "`"$scriptVersion`"").Replace('/*__GEN__*/""', "`"$genStamp`"").Replace('/*__DATA__*/[]', $json).Replace('/*__SPECS__*/""', $specsJson).Replace('/*__DUMPS__*/[]', $dumpsJson).Replace('/*__SYSEVT__*/[]', $sysJson).Replace('/*__SMART__*/[]', $smartJson).Replace('/*__DIRTY__*/[]', $dirtyJson).Replace('/*__DISKLAYOUT__*/[]', $diskLayoutJson).Replace('/*__RAM__*/[]', $ramJson).Replace('/*__GPUS__*/[]', $gpusJson).Replace('/*__HAGS__*/null', $hagsJson).Replace('/*__ISLAPTOP__*/false', $isLaptopJson).Replace('/*__MONS__*/[]', $monsJson).Replace('/*__DISPLAYS__*/[]', $displaysJson).Replace('/*__PROCS__*/[]', $procsJson).Replace('/*__MEMUSE__*/null', $memuseJson).Replace('/*__NET__*/null', $netJson).Replace('/*__SECURITY__*/null', $securityJson).Replace('/*__HOTFIXES__*/[]', $hotfixesJson).Replace('/*__WINDOWSOLD__*/null', $windowsOldJson).Replace('/*__POWERPLAN__*/null', $powerPlanJson).Replace('/*__GENFLAGS__*/null', $generalFlagsJson).Replace('/*__CBS__*/null', $cbsJson).Replace('/*__WUHISTORY__*/[]', $wuHistoryJson).Replace('/*__WINUPDATE__*/null', $winUpdateJson).Replace('/*__DEVERR__*/[]', $devErrorsJson).Replace('/*__AUDIO__*/null', $audioJson).Replace('/*__USB__*/[]', $usbJson).Replace('/*__CAMERAS__*/[]', $camerasJson)
         try {
             Set-Content -Path $reliability_html_path -Value $viewerHtml -Encoding UTF8
