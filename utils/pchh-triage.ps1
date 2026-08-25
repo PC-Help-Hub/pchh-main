@@ -1492,6 +1492,13 @@ function renderGPU(){
   let h='<div class="spec-section"><h2>Graphics adapters ('+gnames.length+')</h2>';
   if(HAGS)h+='<div style="color:var(--dim);font-size:14px;margin-bottom:16px">Hardware-accelerated GPU Scheduling: <b style="color:var(--text)">'+esc(HAGS)+'</b></div>';
   h+='<div class="drive-grid">';
+  // dxdiag's MonitorName is the generic driver's friendly name, not the panel's actual model -
+  // Windows shows "Generic PnP Monitor" here even when it has perfectly good EDID data (which
+  // is exactly how Settings > Display gets the real model name to show). Swap in the real
+  // name from MONS (read via WmiMonitorID/EDID) wherever dxdiag's name is one of these generic
+  // placeholders, consuming MONS entries in order across all adapters for multi-monitor setups.
+  const genericMonRe=/^(generic\s+(pnp|non-pnp|plug\s*and\s*play)\s+monitor|default\s+monitor|pnp\s+monitor)\s*$/i;
+  const monsPool=MONS.slice();
   gnames.forEach(g=>{
     const drv=drvByName[g]?friendlyDriver(g,esc(drvByName[g]),radByName[g]?esc(radByName[g]):''):'';
     const vram=vramByName[g];
@@ -1499,7 +1506,8 @@ function renderGPU(){
     h+='<div class="drive"><h3>'+esc(g)+'</h3>'+
       (drv?'<div class="sub">Driver '+drv+(vram?' \u00b7 '+vram+' GB VRAM':'')+'</div>':(vram?'<div class="sub">'+vram+' GB VRAM</div>':''));
     const dispRows=displays.filter(d=>d.mon||d.mode);
-    const fallbackMons=(!Object.keys(byGpu).length && MONS.length)?MONS:[];
+    dispRows.forEach(d=>{ if(!d.mon||genericMonRe.test(d.mon.trim())){ const real=monsPool.shift(); if(real)d.mon=real; } });
+    const fallbackMons=(!Object.keys(byGpu).length && monsPool.length)?monsPool.splice(0):[];
     if(dispRows.length||fallbackMons.length){
       h+='<div class="sev-head" style="color:var(--dim);padding:12px 0 5px 0">Connected Display'+((dispRows.length+fallbackMons.length)>1?'s':'')+'</div><dl class="kv smart-kv" style="font-size:15.5px">';
       dispRows.forEach(d=>{h+='<dt>'+esc(d.mon||'Display')+'</dt><dd>'+esc(d.mode||'')+'</dd>';});
@@ -2169,7 +2177,7 @@ function reliabilityexport {
         function Resolve-RamBrand($mfr, $pn) {
             if ($mfr -and $mfr -notmatch '^(Unknown|Undefined|To Be Filled|0*)$') { return $mfr }
             foreach ($entry in $ramBrandByPrefix) {
-                if ($pn -match $entry.p) { return "$($entry.b) (identified from part number)" }
+                if ($pn -match $entry.p) { return $entry.b }
             }
             return $mfr
         }
