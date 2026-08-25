@@ -50,7 +50,7 @@ $infofile = "$File\specs-programs.txt"
 
 $ziptar = "$File\PCHH-Triage_$random.zip"
 
-$scriptVersion = "1.2"
+$scriptVersion = "1.2 25-08-2026"
 $lookbackDays = 365   # match reliability history's ~1 year span; System log is size-capped anyway
 $reliability_csv_path = "$File\reliability.csv"
 $reliability_html_path = "$File\triage-report.html"
@@ -72,6 +72,7 @@ $viewerTemplate = @'
   --err:#ff6b6b; --warn:#ffc069; --ok:#3ddc97; --info:#6aa7ff;
 }
 *{box-sizing:border-box;margin:0;padding:0}
+@media (prefers-reduced-motion: reduce){*{animation-duration:.001ms!important;animation-iteration-count:1!important}}
 body{background:var(--bg);color:var(--text);font-family:'Albert Sans',sans-serif;font-size:16px;min-height:100vh}
 #appShell{display:flex;background:var(--bg);padding:40px 16px 40px 40px;gap:16px;min-height:100vh;width:100%}
 .mono{font-family:'IBM Plex Mono',monospace}
@@ -118,23 +119,8 @@ body{background:var(--bg);color:var(--text);font-family:'Albert Sans',sans-serif
 .r{color:var(--err)}
 .y{color:var(--warn)}
 .view{display:none}
-body.tab-summary #summaryView{display:block}
-body.tab-rel #relView{display:block}
-body.tab-sys #sysView{display:block}
-body.tab-shutdowns #shutdownsView{display:block}
-body.tab-drives #drivesView{display:block}
-body.tab-gpu #gpuView{display:block}
-body.tab-memory #memoryView{display:block}
-body.tab-net #netView{display:block}
-body.tab-devices #devicesView{display:block}
-body.tab-security #securityView{display:block}
-body.tab-processes #processesView{display:block}
-body.tab-apps #appsView{display:block}
-body.tab-updates #updatesView{display:block}
-body.tab-extensions #extensionsView{display:block}
-body.tab-faq #faqView{display:block}
-body.tab-tools #toolsView{display:block}
-body.tab-dumps #dumpsView{display:block}
+@keyframes viewFadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+body.tab-summary #summaryView,body.tab-rel #relView,body.tab-sys #sysView,body.tab-shutdowns #shutdownsView,body.tab-drives #drivesView,body.tab-gpu #gpuView,body.tab-memory #memoryView,body.tab-net #netView,body.tab-devices #devicesView,body.tab-security #securityView,body.tab-processes #processesView,body.tab-apps #appsView,body.tab-updates #updatesView,body.tab-extensions #extensionsView,body.tab-faq #faqView,body.tab-tools #toolsView,body.tab-dumps #dumpsView{display:block;animation:viewFadeIn .28s cubic-bezier(.16,1,.3,1)}
 #pageTitle{padding:36px 36px 0;font-size:40px;font-weight:700;letter-spacing:-.01em;color:var(--text);max-width:1160px}
 #pageTitleSub{color:var(--info);font-weight:600}
 #summaryView,#sysView,#shutdownsView,#drivesView,#netView,#securityView,#appsView,#dumpsView,#memoryView,#gpuView,#processesView,#extensionsView,#updatesView,#toolsView,#faqView{padding:20px 36px 64px;max-width:1160px}
@@ -290,7 +276,7 @@ body.dragging #drop{color:var(--info);border-color:var(--info)}
       <div class="nav-group-items">
         <button class="tab" data-tab="drives">Drives</button>
         <button class="tab" data-tab="gpu">GPU and Display(s)</button>
-        <button class="tab" data-tab="memory">Memory (RAM)</button>
+        <button class="tab" data-tab="memory">Memory</button>
         <button class="tab" data-tab="net">Network</button>
         <button class="tab" data-tab="devices">Connected Devices</button>
       </div>
@@ -544,7 +530,7 @@ function render(){
           '<span class="dot d-'+e.cat+'"></span>'+
           '<span class="title">'+esc(e.p||'(unnamed)')+'<span class="src">'+summary(e)+'</span></span>'+
           '<div class="msg mono">'+esc(e.m)+'</div>';
-        row.onclick=(e)=>{ if(e.target.closest('.msg'))return; row.classList.toggle('open'); };
+        row.onclick=(e)=>{ if(e.target.closest('.msg')||hasTextSelection())return; row.classList.toggle('open'); };
         row.querySelector('.msg').onclick=e=>e.stopPropagation();
         list.appendChild(row);
       });
@@ -572,6 +558,12 @@ function summary(e){
   return esc(e.s);
 }
 function esc(s){return String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+// Guards accordion-row toggles against text selection. Checking only whether the click
+// *landed* inside .msg isn't enough - drag-selecting a long/wrapped message often ends with
+// the mouse released just outside its box, which used to collapse the row mid-selection and
+// made it hard to copy anything. Checking for a live selection catches that regardless of
+// where the mouseup happened.
+function hasTextSelection(){ const s=window.getSelection(); return !!(s && s.toString().length>0); }
 
 document.querySelectorAll('.chip[data-cat]').forEach(c=>c.onclick=()=>{
   const cat=c.dataset.cat;
@@ -854,6 +846,8 @@ const FAQ_DATA=[
 {id:'software-audio',q:"Audio / Overlay Software",a:"Tools like Nahimic, GeForce Experience, Xbox Game Bar, and Streamlabs OBS can conflict with each other or with games, particularly when more than one is trying to add an overlay at the same time.",tools:[]},
 {id:'software-network',q:"Flagged Network Software",a:"Software like Killer Network Manager or Hola VPN has a known history of causing latency spikes, packet loss, or other connectivity problems on some systems.",tools:[]},
 {id:'software-shell',q:"Shell/Taskbar Tweak Tools",a:"Tools like TranslucentTB, ExplorerPatcher, StartAllBack, Start11, Open-Shell, or Windhawk modify Windows Explorer or the taskbar/Start menu's appearance and behaviour, often by hooking into or patching explorer.exe itself.<br><br>They're generally safe day-to-day, but because they hook into core shell processes, they're a common cause of taskbar/Start menu glitches, explorer.exe crashes, or freezes after a Windows feature update changes something they relied on. Worth ruling out first if that's the symptom.",tools:[]},
+{id:'software-cheat',q:"Game Exploit / Cheat Tool",a:"Tools like JJSploit, Synapse X, Krnl, Fluxus, and similar Roblox/game script executors, along with general memory-editors like Cheat Engine, are flagged here because they carry real risk beyond just breaking the rules of a game:<ul style='margin:8px 0 8px 20px;padding:0'><li>they're a very common way to end up with genuine malware, since many are distributed through cracked/pirated download sites with a trojan bundled in</li><li>most inject code into a running game process, which is exactly the pattern antivirus and anti-cheat software is built to catch - a wave of false-positive detections or a sudden anti-cheat ban often traces straight back to one of these</li><li>some game accounts can be permanently banned the moment one of these is detected running, even once</li></ul>This is a factual note that it's installed, not an accusation - but if unexplained AV detections, game bans, or crashes tied to a specific game are the symptom, this is worth checking first.",tools:[]},
+{id:'software-fancontrol',q:"Multiple Fan-Control Programs",a:"Programs like Lian Li L-Connect, FanControl, SpeedFan, Fan Xpert, and RGB/fan hubs such as Corsair iCUE, NZXT CAM, MSI Dragon Center, or ASUS Armoury Crate can all set fan curves directly through the motherboard or a fan controller.<br><br>Running more than one of these at the same time means they can end up fighting over the same fans - each one periodically re-applying its own curve over the other's - which shows up as fans that surge, stall, or cycle speed for no clear reason. The fix is usually to pick one and fully close (not just minimize) the others, since some keep running in the background even without a visible window.",tools:[]},
 {id:'windows-old',q:"Windows.old Folder",a:"Windows.old is a backup of the previous Windows installation, automatically created when Windows is upgraded in place or reset while keeping personal files. It lets Windows roll back to the previous version for about 10 days before it's automatically deleted to free up space, though it can stick around longer if that cleanup didn't run.<br><br>Its presence is a useful sign that this installation is newer than the hardware, which is handy context if a problem only started recently. It doesn't cover every case, though: a full wipe-and-reinstall or a reset that removes everything doesn't leave a Windows.old folder behind at all, so its absence doesn't rule out a recent reset.",tools:[]},
 {id:'secure-boot',q:"Secure Boot",a:"Secure Boot is a security feature that checks the software involved in starting Windows hasn't been tampered with, before the operating system even loads. It helps stop a specific but nasty category of malware (called bootkits or rootkits) that tries to run before Windows, and before any antivirus, gets a chance to load.<br><br>Microsoft requires it for Windows 11, and leaving it disabled removes a real layer of protection for no real-world upside on most PCs. It requires the system disk to use GPT partitioning. See the note about MBR partitioning in this report if that's relevant.",tools:[]},
 {id:'tpm',q:"TPM",a:"A TPM (Trusted Platform Module) is a small, dedicated security chip, or a feature built into the CPU (fTPM) on newer systems, that securely stores encryption keys and other sensitive data separately from the rest of the PC. It's what Windows 11 relies on for BitLocker drive encryption and for meeting its own minimum security requirements.<br><br>If it's disabled, Windows Hello, BitLocker, and some newer Windows security features either can't be used or fall back to a weaker mode. It can usually be turned on in the BIOS/UEFI settings (often listed as 'TPM', 'fTPM', 'PTT', or 'Security Device').",tools:[]},
@@ -875,7 +869,7 @@ function renderFAQ(){
   });
   h+='</div>';
   v.innerHTML=h;
-  v.querySelectorAll('.faq-row').forEach(r=>r.onclick=(e)=>{ if(e.target.closest('.msg'))return; r.classList.toggle('open'); });
+  v.querySelectorAll('.faq-row').forEach(r=>r.onclick=(e)=>{ if(e.target.closest('.msg')||hasTextSelection())return; r.classList.toggle('open'); });
   v.querySelectorAll('.faq-row .msg').forEach(m=>m.onclick=e=>e.stopPropagation());
 }
 function goFaq(id){
@@ -1073,7 +1067,12 @@ function renderSummary(){
   const pairs=[];
   const sysName=specVal(sp.info,'System Name'), sysMfr=realSpec(specVal(sp.info,'Manufacturer')), sysModel=realSpec(specVal(sp.info,'Model'));
   if(sysName)pairs.push(['System name', esc(sysName)]);
-  if(sysMfr||sysModel)pairs.push(['Manufacturer / Model', esc([sysMfr,sysModel].filter(Boolean).join(' \u00b7 '))]);
+  // On DIY/homebuilt PCs, Win32_ComputerSystemProduct's "Model" is often just the motherboard's
+  // own part number restated (e.g. "MS-7C96") - already shown in full in the Motherboard row
+  // below. Only show it here when it adds something the Motherboard line doesn't already say.
+  const mbForDedupe=specVal(sp.info,'Motherboard')||'';
+  const sysModelIsDupe=sysModel && mbForDedupe.toLowerCase().includes(sysModel.toLowerCase());
+  if(sysMfr||(sysModel&&!sysModelIsDupe))pairs.push(sysModel&&!sysModelIsDupe?['Manufacturer / Model', esc([sysMfr,sysModel].filter(Boolean).join(' \u00b7 '))]:['Manufacturer', esc(sysMfr)]);
   const os=specVal(sp.info,'OS'), build=specVal(sp.info,'Build'), up=specVal(sp.info,'System Uptime');
   const WINVER={ '26200':'25H2','26100':'24H2','22631':'23H2','22621':'22H2','22000':'21H2','19045':'22H2','19044':'21H2' };
   if(os){
@@ -1116,7 +1115,7 @@ function renderSummary(){
   if(RAM.length){
     const totGB=RAM.reduce((a,x)=>a+(+x.cap||0),0);
     const conf=[...new Set(RAM.map(m=>m.conf).filter(Boolean))].join('/');
-    pairs.push(['Memory', totGB+' GB total'+(conf?' @ '+esc(conf)+' MT/s':'')]);
+    pairs.push(['Memory', totGB+' GB'+(conf?' @ '+esc(conf)+' MT/s':'')]);
   } else {
     const rc=specVal(sp.info,'Ram Capacity');
     if(rc)pairs.push(['Memory', esc(rc)]);
@@ -1235,8 +1234,37 @@ function renderSummary(){
     {re:/supremo/i,              label:'Supremo',                    grp:'remote'},
     {re:/zoho assist/i,          label:'Zoho Assist',                grp:'remote'},
     {re:/chrome remote desktop/i,label:'Chrome Remote Desktop',      grp:'remote'},
+    // Roblox/game exploit executors - frequently bundled with malware, routinely
+    // quarantined or flagged by antivirus/anti-cheat, and a common cause of game bans.
+    // Worth calling out even factually, since it explains a lot of "random" AV
+    // detections, crashes, or account bans people bring to tech support.
+    {re:/jjsploit/i,              label:'JJSploit',                   grp:'cheat'},
+    {re:/synapse ?x/i,            label:'Synapse X',                  grp:'cheat'},
+    {re:/\bkrnl\b/i,              label:'Krnl',                       grp:'cheat'},
+    {re:/fluxus/i,                label:'Fluxus',                     grp:'cheat'},
+    {re:/\belectron\b.*executor|electron executor/i, label:'Electron', grp:'cheat'},
+    {re:/sentinel executor|sentinel roblox/i, label:'Sentinel',       grp:'cheat'},
+    {re:/wave executor/i,         label:'Wave',                       grp:'cheat'},
+    {re:/\bcodex\b.*executor|codex executor/i, label:'Codex',         grp:'cheat'},
+    {re:/\bevon\b/i,              label:'Evon',                       grp:'cheat'},
+    {re:/solara/i,                label:'Solara',                     grp:'cheat'},
+    {re:/seliware/i,              label:'Seliware',                   grp:'cheat'},
+    {re:/arceus ?x/i,             label:'Arceus X',                   grp:'cheat'},
+    {re:/hydrogen executor/i,     label:'Hydrogen',                   grp:'cheat'},
+    {re:/cheat engine/i,          label:'Cheat Engine',               grp:'cheat'},
+    {re:/wemod/i,                 label:'WeMod',                      grp:'cheat'},
+    // Dedicated fan-curve controllers - see the multi-app conflict check below, which
+    // also folds in the multi-purpose RGB hubs (iCUE, CAM, etc.) that control fans too.
+    {re:/l-?connect/i,            label:'Lian Li L-Connect',          grp:'fan'},
+    {re:/^fan ?control$/i,        label:'FanControl',                 grp:'fan'},
+    {re:/speedfan/i,              label:'SpeedFan',                   grp:'fan'},
+    {re:/argus monitor/i,         label:'Argus Monitor',              grp:'fan'},
+    {re:/fan ?xpert/i,            label:'ASUS Fan Xpert',             grp:'fan'},
+    {re:/silverstone/i,           label:'SilverStone Fan Control',    grp:'fan'},
+    {re:/tt rgb plus/i,           label:'Thermaltake TT RGB Plus',    grp:'fan'},
+    {re:/ek loop connect/i,       label:'EK Loop Connect',            grp:'fan'},
+    {re:/gigabyte.*(smart ?fan|\bsiv\b)/i, label:'Gigabyte SIV/Smart Fan', grp:'fan'},
   ];
-  const GRP_NAME={ac:'Anti-cheat / kernel driver',oc:'Overclock / monitoring tool',periph:'RGB / peripheral suite',audio:'Audio / overlay software',net:'Network software',bloat:'Potential bloatware/PUP',remote:'Remote access software',shell:'Shell/taskbar tweak tool'};
   const foundSoft={};
   (sp.programs||[]).forEach(p=>{
     SOFT_FLAGS.forEach(f=>{ if(f.re.test(p)){ (foundSoft[f.grp]=foundSoft[f.grp]||new Set()).add(f.label); } });
@@ -1246,10 +1274,20 @@ function renderSummary(){
     const avList=SECURITY.avProducts.filter(a=>a.enabled).map(a=>a.name);
     if(avList.length>1)softNotes.push(dataLink('security','antivirus-conflict','<span class="y">Multiple real-time antivirus products active: '+esc(avList.join(', '))+'</span>'));
   }
+  // Fan-curve conflicts: dedicated fan-control tools (grp 'fan') plus the multi-purpose RGB
+  // hubs that also drive fan curves (iCUE, CAM, Dragon Center, Armoury Crate) - two or more
+  // of these fighting over the same header/fans is a real, common cause of erratic or noisy
+  // fan behaviour, so this gets its own elevated check rather than just a plain listing.
+  const fanCapablePeriph=['Corsair iCUE','NZXT CAM','MSI Dragon Center','ASUS Armoury Crate'];
+  const fanApps=new Set([...(foundSoft.fan||[]), ...[...(foundSoft.periph||[])].filter(n=>fanCapablePeriph.includes(n))]);
+  if(fanApps.size>1){
+    notes.push(dataLink('apps','software-fancontrol','<span class="y">Multiple fan-control programs active: '+esc([...fanApps].sort().join(', '))+' &mdash; these can fight over the same fan curves and cause erratic or noisy fan behaviour</span>'));
+  }
   Object.keys(foundSoft).forEach(grp=>{
     const items=[...foundSoft[grp]].sort().join(', ');
-    const SOFT_FAQ={ac:'software-anticheat',oc:'software-overclock',periph:'software-rgb',audio:'software-audio',net:'software-network',bloat:'software-bloatware',shell:'software-shell'};
-    softNotes.push(dataLink('apps',SOFT_FAQ[grp]||'','<span class="'+(grp==='bloat'||grp==='remote'?'y':'')+'"><span class="slabel">'+GRP_NAME[grp]+':</span> '+esc(items)+'</span>'));
+    const SOFT_FAQ={ac:'software-anticheat',oc:'software-overclock',periph:'software-rgb',audio:'software-audio',net:'software-network',bloat:'software-bloatware',shell:'software-shell',cheat:'software-cheat',fan:'software-fancontrol'};
+    const GRP_COLOR={cheat:'r',bloat:'y',remote:'y'};
+    softNotes.push(dataLink('apps',SOFT_FAQ[grp]||'','<span class="'+(GRP_COLOR[grp]||'')+'">'+esc(items)+'</span>'));
   });
 
   if(SECURITY){
@@ -1356,7 +1394,7 @@ function renderSys(){
       '<div class="msg mono">'+esc(e.msg||'')+overheatNote+'</div></div>';
   });
   v.innerHTML=h;
-  v.querySelectorAll('.row').forEach(r=>r.onclick=(e)=>{ if(e.target.closest('.msg'))return; r.classList.toggle('open'); });
+  v.querySelectorAll('.row').forEach(r=>r.onclick=(e)=>{ if(e.target.closest('.msg')||hasTextSelection())return; r.classList.toggle('open'); });
   v.querySelectorAll('.row .msg').forEach(m=>m.onclick=e=>e.stopPropagation());
 }
 function renderShutdowns(){
@@ -1396,7 +1434,7 @@ function renderShutdowns(){
     if(bcLabel)cause='<span class="r">Bugcheck '+esc(bcLabel)+'</span>';
     else if(x.pbt)cause='<span class="y">Power button held down</span>';
     else cause='<span style="color:var(--faint)">No crash code recorded &mdash; likely a power loss, hard reset, or hang</span>';
-    const pbtNote=x.pbt?' <span style="color:var(--faint);font-size:13px">\u00b7 button held at '+esc(fmtTime(x.pbt))+(x.pbt.toISOString().slice(0,10)!==x.d.toISOString().slice(0,10)?' on '+esc(fmtDay(x.pbt.toISOString().slice(0,10))):'')+'</span>':'';
+    const pbtNote=x.pbt?' <span style="color:var(--faint)">\u00b7 button held at '+esc(fmtTime(x.pbt))+(x.pbt.toISOString().slice(0,10)!==x.d.toISOString().slice(0,10)?' on '+esc(fmtDay(x.pbt.toISOString().slice(0,10))):'')+'</span>':'';
     h+='<dt class="mono" title="Source: '+esc(x.src)+'">'+esc(fmtDay(x.d.toISOString().slice(0,10)))+', '+esc(fmtTime(x.d))+'</dt>'+
       '<dd>'+cause+pbtNote+'</dd>';
   });
