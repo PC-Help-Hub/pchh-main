@@ -100,7 +100,9 @@ body{background:var(--bg);color:var(--text);font-family:'Albert Sans',sans-serif
 .nav-group-items{display:flex;flex-direction:column;gap:2px}
 #sideFoot{margin-top:auto;padding-top:14px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:4px}
 #sideFoot span{color:var(--faint);font-size:12px}
-.tab{display:block;width:100%;text-align:left;background:none;border:none;color:var(--dim);font-family:inherit;font-size:16px;font-weight:500;padding:9px 10px 9px 20px;cursor:pointer;border-radius:9px}
+.tab{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:none;border:none;color:var(--dim);font-family:inherit;font-size:16px;font-weight:500;padding:9px 10px 9px 20px;cursor:pointer;border-radius:9px}
+.tab svg{width:16px;height:16px;flex-shrink:0;opacity:.65;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.tab.on svg,.tab:hover svg{opacity:1}
 .tab:hover{color:var(--text);background:color-mix(in srgb,var(--panel2) 60%,transparent)}
 .tab.on{color:var(--text);background:var(--panel2)}
 #summary{padding:0;display:flex;flex-direction:column;gap:6px;font-size:15.5px;line-height:1.55}
@@ -120,7 +122,7 @@ body{background:var(--bg);color:var(--text);font-family:'Albert Sans',sans-serif
 .y{color:var(--warn)}
 .view{display:none}
 @keyframes viewFadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
-body.tab-summary #summaryView,body.tab-rel #relView,body.tab-sys #sysView,body.tab-shutdowns #shutdownsView,body.tab-drives #drivesView,body.tab-gpu #gpuView,body.tab-memory #memoryView,body.tab-net #netView,body.tab-devices #devicesView,body.tab-security #securityView,body.tab-processes #processesView,body.tab-apps #appsView,body.tab-updates #updatesView,body.tab-extensions #extensionsView,body.tab-faq #faqView,body.tab-tools #toolsView,body.tab-dumps #dumpsView{display:block;animation:viewFadeIn .28s cubic-bezier(.16,1,.3,1)}
+body.tab-summary #summaryView,body.tab-rel #relView,body.tab-sys #sysView,body.tab-shutdowns #shutdownsView,body.tab-drives #drivesView,body.tab-gpu #gpuView,body.tab-memory #memoryView,body.tab-battery #batteryView,body.tab-net #netView,body.tab-devices #devicesView,body.tab-security #securityView,body.tab-processes #processesView,body.tab-apps #appsView,body.tab-updates #updatesView,body.tab-extensions #extensionsView,body.tab-faq #faqView,body.tab-tools #toolsView,body.tab-dumps #dumpsView{display:block;animation:viewFadeIn .28s cubic-bezier(.16,1,.3,1)}
 #pageTitle{padding:36px 36px 0;font-size:40px;font-weight:700;letter-spacing:-.01em;color:var(--text);max-width:1160px}
 #pageTitleSub{color:var(--info);font-weight:600}
 #summaryView,#sysView,#shutdownsView,#drivesView,#netView,#securityView,#appsView,#dumpsView,#memoryView,#gpuView,#processesView,#extensionsView,#updatesView,#toolsView,#faqView{padding:20px 36px 64px;max-width:1160px}
@@ -259,43 +261,44 @@ body.dragging #drop{color:var(--info);border-color:var(--info)}
     <div class="nav-group">
       <div class="nav-group-title static"><span>Overview</span></div>
       <div class="nav-group-items">
-        <button class="tab on" data-tab="summary">System Summary</button>
+        <button class="tab on" data-tab="summary"><svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>System Summary</button>
       </div>
     </div>
     <div class="nav-group">
       <div class="nav-group-title"><span>Diagnostics</span><span class="chev">&#9660;</span></div>
       <div class="nav-group-items">
-        <button class="tab" data-tab="rel">Reliability History</button>
-        <button class="tab" data-tab="sys">Event Viewer</button>
-        <button class="tab" data-tab="shutdowns">Unexpected Shutdowns</button>
-        <button class="tab" data-tab="dumps" id="dumpsTab" style="display:none">Memory Dumps</button>
+        <button class="tab" data-tab="rel"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Reliability History</button>
+        <button class="tab" data-tab="sys"><svg viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>Event Viewer</button>
+        <button class="tab" data-tab="shutdowns"><svg viewBox="0 0 24 24"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"/><line x1="12" y1="2" x2="12" y2="12"/></svg>Unexpected Shutdowns</button>
+        <button class="tab" data-tab="dumps" id="dumpsTab" style="display:none"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>Memory Dumps</button>
       </div>
     </div>
     <div class="nav-group">
       <div class="nav-group-title"><span>Hardware</span><span class="chev">&#9660;</span></div>
       <div class="nav-group-items">
-        <button class="tab" data-tab="drives">Drives</button>
-        <button class="tab" data-tab="gpu">GPU and Display(s)</button>
-        <button class="tab" data-tab="memory">Memory</button>
-        <button class="tab" data-tab="net">Network</button>
-        <button class="tab" data-tab="devices">Connected Devices</button>
+        <button class="tab" data-tab="drives"><svg viewBox="0 0 24 24"><line x1="22" y1="12" x2="2" y2="12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/><line x1="6" y1="16" x2="6.01" y2="16"/><line x1="10" y1="16" x2="10.01" y2="16"/></svg>Drives</button>
+        <button class="tab" data-tab="gpu"><svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>GPU and Display(s)</button>
+        <button class="tab" data-tab="memory"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2" ry="2"/><rect x="9" y="9" width="6" height="6"/><line x1="9" y1="1" x2="9" y2="4"/><line x1="15" y1="1" x2="15" y2="4"/><line x1="9" y1="20" x2="9" y2="23"/><line x1="15" y1="20" x2="15" y2="23"/><line x1="20" y1="9" x2="23" y2="9"/><line x1="20" y1="14" x2="23" y2="14"/><line x1="1" y1="9" x2="4" y2="9"/><line x1="1" y1="14" x2="4" y2="14"/></svg>Memory</button>
+        <button class="tab" data-tab="battery" id="batteryTab" style="display:none"><svg viewBox="0 0 24 24"><rect x="1" y="6" width="18" height="12" rx="2" ry="2"/><line x1="23" y1="13" x2="23" y2="11"/></svg>Battery</button>
+        <button class="tab" data-tab="net"><svg viewBox="0 0 24 24"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>Network</button>
+        <button class="tab" data-tab="devices"><svg viewBox="0 0 24 24"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"/><line x1="8" y1="12" x2="16" y2="12"/></svg>Connected Devices</button>
       </div>
     </div>
     <div class="nav-group">
       <div class="nav-group-title"><span>System</span><span class="chev">&#9660;</span></div>
       <div class="nav-group-items">
-        <button class="tab" data-tab="security">Security</button>
-        <button class="tab" data-tab="processes">Running Processes</button>
-        <button class="tab" data-tab="apps">Installed Apps</button>
-        <button class="tab" data-tab="updates">Windows Updates</button>
-        <button class="tab" data-tab="extensions">Browser Extensions</button>
+        <button class="tab" data-tab="security"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>Security</button>
+        <button class="tab" data-tab="processes"><svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>Running Processes</button>
+        <button class="tab" data-tab="apps"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>Installed Apps</button>
+        <button class="tab" data-tab="updates"><svg viewBox="0 0 24 24"><polyline points="8 17 12 21 16 17"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.88 18.09A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.29"/></svg>Windows Updates</button>
+        <button class="tab" data-tab="extensions"><svg viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>Browser Extensions</button>
       </div>
     </div>
     <div class="nav-group">
       <div class="nav-group-title"><span>Help</span><span class="chev">&#9660;</span></div>
       <div class="nav-group-items">
-        <button class="tab" data-tab="faq">FAQ</button>
-        <button class="tab" data-tab="tools">Tools &amp; Utilities</button>
+        <button class="tab" data-tab="faq"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>FAQ</button>
+        <button class="tab" data-tab="tools"><svg viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94z"/></svg>Tools &amp; Utilities</button>
       </div>
     </div>
   </nav>
@@ -337,6 +340,7 @@ body.dragging #drop{color:var(--info);border-color:var(--info)}
 <div id="drivesView" class="view"></div>
 <div id="gpuView" class="view"></div>
 <div id="memoryView" class="view"></div>
+<div id="batteryView" class="view"></div>
 <div id="netView" class="view"></div>
 <div id="devicesView" class="view"></div>
 <div id="securityView" class="view"></div>
@@ -365,6 +369,7 @@ const RAM = /*__RAM__*/[];
 const GPUS = /*__GPUS__*/[];
 const HAGS = /*__HAGS__*/null;
 const ISLAPTOP = /*__ISLAPTOP__*/false;
+const BATTERY = /*__BATTERY__*/[];
 const WUHISTORY = /*__WUHISTORY__*/[];
 const WINUPDATE = /*__WINUPDATE__*/null;
 const MONS = /*__MONS__*/[];
@@ -1455,6 +1460,13 @@ function renderSecurity(){
     });
     h+='</dl></div>';
   }
+  if(SECURITY.firewallProducts&&SECURITY.firewallProducts.length){
+    h+='<div class="spec-section"><h2>Third-party firewall software</h2><dl class="kv">';
+    SECURITY.firewallProducts.forEach(a=>{
+      h+='<dt>'+esc(a.name)+'</dt><dd style="color:'+(a.enabled?'var(--ok)':'var(--dim)')+'">'+(a.enabled?'Active':'Inactive')+'</dd>';
+    });
+    h+='</dl></div>';
+  }
   const d=SECURITY.defender;
   if(d){
     h+='<div class="spec-section"><h2>Windows Defender</h2><dl class="kv">';
@@ -1591,6 +1603,31 @@ function renderMemory(){
   }
   v.innerHTML=h||'<div class="spec-section"><h2>Memory</h2><div style="color:var(--faint)">No memory data embedded.</div></div>';
 }
+function renderBattery(){
+  if(!BATTERY.length)return;
+  document.getElementById('batteryTab').style.display='';
+  const v=document.getElementById('batteryView');
+  let h='<div class="spec-section"><h2>Battery health ('+BATTERY.length+')</h2><div class="drive-grid">';
+  BATTERY.forEach(b=>{
+    h+='<div class="drive"><h3>'+esc(b.name)+'</h3>'+
+      (b.chemistry?'<div class="sub">'+esc(b.chemistry)+'</div>':'');
+    if(b.healthPct!=null){
+      h+='<div class="meter'+(b.healthPct<70?' low':'')+'"><div style="width:'+Math.min(b.healthPct,100)+'%"></div></div>'+
+        '<div class="use mono">'+esc(b.healthPct)+'% of original capacity'+(b.healthPct<70?' <span class="y">(significant wear)</span>':'')+'</div>';
+    }
+    h+='<dl class="kv smart-kv">'+
+      (b.designCap?'<dt>Design capacity</dt><dd>'+esc(b.designCap)+' mWh</dd>':'')+
+      (b.fullCap?'<dt>Full charge capacity</dt><dd>'+esc(b.fullCap)+' mWh</dd>':'')+
+      (b.cycleCount?'<dt>Cycle count</dt><dd>'+esc(b.cycleCount)+'</dd>':'')+
+      (b.chargePct!=null?'<dt>Charge at capture</dt><dd>'+esc(b.chargePct)+'%</dd>':'')+
+      (b.status?'<dt>Status at capture</dt><dd>'+esc(b.status)+'</dd>':'')+
+      '</dl>'+
+      (b.healthPct==null?'<div style="color:var(--faint);font-size:13px;margin-top:8px">This hardware doesn\'t report a full-charge capacity, so wear % can\'t be calculated - only the raw status below is available.</div>':'')+
+      '</div>';
+  });
+  h+='</div></div>';
+  v.innerHTML=h;
+}
 function renderNet(){
   const v=document.getElementById('netView');
   if(!NET||(!NET.adapters||!NET.adapters.length)&&!NET.wifi){
@@ -1609,6 +1646,8 @@ function renderNet(){
         '<dt>Status</dt><dd style="color:'+stCol+'">'+esc(a.status)+'</dd>'+
         (up&&a.speed?'<dt>Link speed</dt><dd'+(a.gigabitBelowRated?' style="color:var(--warn)"':'')+'>'+esc(a.speed)+(a.gigabitBelowRated?' <span style="color:var(--faint)">(Gigabit-capable)</span>':'')+'</dd>':'')+
         (a.media?'<dt>Media</dt><dd>'+esc(friendlyMedia(a.media))+'</dd>':'')+
+        (a.driverVersion?'<dt>Driver version</dt><dd class="mono">'+esc(a.driverVersion)+'</dd>':'')+
+        (a.driverDate?'<dt>Driver date</dt><dd>'+esc(a.driverDate)+'</dd>':'')+
         '</dl></div>';
     });
     h+='</div></div>';
@@ -1623,6 +1662,10 @@ function renderNet(){
     });
     h+='</div></div>';
   }
+  if(NET.dns&&NET.dns.length){
+    h+='<div class="spec-section"><h2>DNS servers</h2><dl class="kv"><dt style="grid-column:1/-1">'+esc(NET.dns.join(', '))+'</dt></dl>'+
+      '<div style="color:var(--faint);font-size:13.5px;margin-top:8px">A stale DNS override left behind by a VPN client or router misconfiguration is a common, otherwise invisible cause of connectivity issues - worth checking these are what you expect.</div></div>';
+  }
   if(NET.wifi&&NET.wifi.signal){
     const w=NET.wifi;
     const sig=parseInt(w.signal)||0;
@@ -1632,13 +1675,13 @@ function renderNet(){
       '<dl class="kv smart-kv">'+
       '<dt>Signal</dt><dd>'+esc(w.signal)+'</dd>'+
       (w.band?'<dt>Band</dt><dd>'+esc(w.band)+'</dd>':'')+
-      (w.channel?'<dt>Channel</dt><dd>'+esc(w.channel)+'</dd>':'')+
+      (w.channel?'<dt>Channel</dt><dd>'+esc(w.channel)+(w.width?' ('+esc(w.width)+')':'')+'</dd>':'')+
       (w.radio?'<dt>Radio type</dt><dd>'+esc(w.radio)+'</dd>':'')+
       (w.rx?'<dt>Receive rate</dt><dd>'+esc(w.rx)+' Mbps</dd>':'')+
       (w.tx?'<dt>Transmit rate</dt><dd>'+esc(w.tx)+' Mbps</dd>':'')+
       (w.auth?'<dt>Authentication</dt><dd>'+esc(w.auth)+'</dd>':'')+
       '</dl></div>'+
-      '<div style="color:var(--faint);font-size:13.5px;margin-top:10px">SSID, BSSID and IP details are intentionally not collected.</div></div>';
+      '<div style="color:var(--faint);font-size:13.5px;margin-top:10px">SSID, BSSID and IP address are intentionally not collected.</div></div>';
   }
   v.innerHTML=h;
 }
@@ -1705,6 +1748,7 @@ renderNet();
 renderDevices();
 renderGPU();
 renderMemory();
+renderBattery();
 renderSecurity();
 renderAppsList(SPECS_PROGRAMS);
 renderProcesses();
@@ -2501,6 +2545,41 @@ function reliabilityexport {
             if ($batt) { $isLaptop = $true }
         } catch { }
 
+        # Battery health: Win32_Battery only gives current charge % and a coarse status, not
+        # the wear that actually matters. The real numbers - design capacity vs. what it can
+        # currently hold when full - live in root\wmi, the same data powercfg /batteryreport
+        # pulls from, just without needing to parse a report file.
+        $batteryInfo = @()
+        if ($isLaptop) {
+            try {
+                $bStatic = @(Get-CimInstance -Namespace root\wmi -ClassName BatteryStaticData -ErrorAction SilentlyContinue)
+                $bFull = @(Get-CimInstance -Namespace root\wmi -ClassName BatteryFullChargedCapacity -ErrorAction SilentlyContinue)
+                $bCycle = @(Get-CimInstance -Namespace root\wmi -ClassName BatteryCycleCount -ErrorAction SilentlyContinue)
+                $chemNames = @{1='Other';2='Unknown';3='Lead Acid';4='Nickel Cadmium';5='Nickel Metal Hydride';6='Lithium-ion';7='Zinc Air';8='Lithium Polymer'}
+                $battArr = @($batt)
+                for ($i = 0; $i -lt $battArr.Count; $i++) {
+                    $w32 = $battArr[$i]
+                    $static = $bStatic | Where-Object { $_.InstanceName -eq $w32.DeviceID -or $bStatic.Count -eq $battArr.Count } | Select-Object -Index ([Math]::Min($i, [Math]::Max(0,$bStatic.Count-1)))
+                    $full = $bFull | Select-Object -Index ([Math]::Min($i, [Math]::Max(0,$bFull.Count-1)))
+                    $cycle = $bCycle | Select-Object -Index ([Math]::Min($i, [Math]::Max(0,$bCycle.Count-1)))
+                    $designCap = if ($static -and $static.DesignedCapacity -gt 0) { $static.DesignedCapacity } else { $null }
+                    $fullCap = if ($full -and $full.FullChargedCapacity -gt 0) { $full.FullChargedCapacity } else { $null }
+                    $healthPct = if ($designCap -and $fullCap) { [Math]::Round(($fullCap / $designCap) * 100, 1) } else { $null }
+                    $cycleCount = if ($cycle -and $cycle.CycleCount -gt 0) { $cycle.CycleCount } else { $null }
+                    $batteryInfo += [PSCustomObject]@{
+                        name       = if ($w32.Name) { $w32.Name } else { "Battery $($i+1)" }
+                        chemistry  = if ($chemNames.ContainsKey([int]$w32.Chemistry)) { $chemNames[[int]$w32.Chemistry] } else { $null }
+                        chargePct  = $w32.EstimatedChargeRemaining
+                        designCap  = $designCap
+                        fullCap    = $fullCap
+                        healthPct  = $healthPct
+                        cycleCount = $cycleCount
+                        status     = switch ($w32.BatteryStatus) { 1 {'Discharging'} 2 {'On AC, fully charged'} 3 {'Fully charged'} 4 {'Low'} 5 {'Critical'} 6 {'Charging'} 7 {'Charging, high'} 8 {'Charging, low'} 9 {'Charging, critical'} 10 {'Undefined'} 11 {'Partially charged'} default {$null} }
+                    }
+                }
+            } catch { }
+        }
+
         $hagsEnabled = $null
         try {
             $hw = (Get-ItemProperty 'HKLM:\SYSTEM\CurrentControlSet\Control\GraphicsDrivers' -Name 'HwSchMode' -ErrorAction Stop).HwSchMode
@@ -2591,6 +2670,18 @@ function reliabilityexport {
             try {
                 $avProducts = @(Get-CimInstance -Namespace root/SecurityCenter2 -ClassName AntiVirusProduct -ErrorAction Stop | ForEach-Object {
                     # productState is a bitmask; the middle byte's low nibble indicates enabled/disabled
+                    $stateHex = "{0:X6}" -f [int]$_.productState
+                    $enabled = $stateHex.Substring(2,2) -in @('10','11')
+                    [PSCustomObject]@{ name = "$($_.displayName)"; enabled = $enabled }
+                })
+            } catch { }
+
+            # Third-party firewall products, same Security Center namespace as the AV check above -
+            # mainly useful for spotting a leftover firewall product (uninstalled security suites
+            # sometimes leave their firewall driver registered and blocking traffic behind).
+            $firewallProducts = @()
+            try {
+                $firewallProducts = @(Get-CimInstance -Namespace root/SecurityCenter2 -ClassName FirewallProduct -ErrorAction Stop | ForEach-Object {
                     $stateHex = "{0:X6}" -f [int]$_.productState
                     $enabled = $stateHex.Substring(2,2) -in @('10','11')
                     [PSCustomObject]@{ name = "$($_.displayName)"; enabled = $enabled }
@@ -2867,13 +2958,20 @@ function reliabilityexport {
                 rdp              = $rdp
                 acctType         = $acctType
                 avProducts       = $avProducts
+                firewallProducts = $firewallProducts
             }
         } catch { }
 
         Write-Host "      - Network adapters, Memory and Running processes" -ForegroundColor DarkGray
-        # Network adapters (no IPs, MACs or SSIDs collected)
+        # Network adapters (no IPs, MACs or SSIDs collected - DNS server addresses are the one
+        # exception, since a stale/leftover DNS override, often left behind by a VPN client that's
+        # since been closed, is a common and otherwise invisible cause of "the internet is broken"
+        # reports; this is a static config read, not a live query out to anything)
         $net = $null
         try {
+            $dnsServers = @(Get-DnsClientServerAddress -AddressFamily IPv4 -ErrorAction SilentlyContinue |
+                Where-Object { $_.ServerAddresses.Count -gt 0 -and $_.InterfaceAlias -notmatch 'Loopback' } |
+                Select-Object -ExpandProperty ServerAddresses | Sort-Object -Unique)
             $adapters = @(Get-NetAdapter -Physical -ErrorAction Stop | ForEach-Object {
                 # Flag an Ethernet link that's connected well below what the hardware can do - a
                 # classic sign of a bad/damaged cable, a bad port, or a cheap Cat5 run. We check the
@@ -2900,12 +2998,14 @@ function reliabilityexport {
                     speed  = "$($_.LinkSpeed)"
                     media  = "$($_.PhysicalMediaType)"
                     gigabitBelowRated = $gigabitBelowRated
+                    driverVersion = "$($_.DriverVersion)"
+                    driverDate    = if ($_.DriverDate) { $_.DriverDate.ToString("dd'/'MM'/'yyyy") } else { "" }
                 }
             })
             $vpns = @(Get-NetAdapter -ErrorAction SilentlyContinue | Where-Object {
                 -not $_.Physical -and (
                     $_.Status -eq 'Up' -or
-                    "$($_.InterfaceDescription) $($_.Name)" -match 'TAP|Wintun|WireGuard|OpenVPN|Tailscale|Nord|ExpressVPN|Proton|Surfshark|Mullvad|ZeroTier|Hamachi|Radmin|Bright|VPN'
+                    "$($_.InterfaceDescription) $($_.Name)" -match 'TAP|Wintun|WireGuard|OpenVPN|Tailscale|Nord|ExpressVPN|Proton|Surfshark|Mullvad|ZeroTier|Hamachi|Radmin|Bright|VPN|AnyConnect|GlobalProtect|Forti|Cloudflare|WARP|Pulse|SonicWall|NetExtender|CheckPoint|SoftEther|PacketiX|Windscribe|IVPN|Psiphon|Betternet|Shadowsocks|Hotspot Shield'
                 ) -and "$($_.InterfaceDescription)" -notmatch 'WAN Miniport|Bluetooth|Loopback|Kernel Debug'
             } | ForEach-Object {
                 [PSCustomObject]@{
@@ -3028,14 +3128,16 @@ namespace PCHH {
                 }
             } catch { }
 
-            # Band/Channel have no clean locale-independent source (the WLAN API's connection
-            # attributes don't carry frequency), so these two remain best-effort via netsh and may
-            # come back empty on a non-English system.
+            # Band/Channel/Channel width have no clean locale-independent source (the WLAN API's
+            # connection attributes don't carry frequency info), so these remain best-effort via
+            # netsh and may come back empty on a non-English system. Channel width specifically
+            # isn't a standard netsh field on every driver/Windows build - some report it, many
+            # don't, so treat it as a bonus when present rather than something to rely on.
             $wl = netsh wlan show interfaces 2>$null
             $wf = @{}
             if ($wl) {
                 foreach ($line in $wl) {
-                    if ($line -match '^\s*(Band|Channel)\s*:\s*(.+)$') {
+                    if ($line -match '^\s*(Band|Channel|Channel width)\s*:\s*(.+)$') {
                         $wf[$Matches[1]] = $Matches[2].Trim()
                     }
                 }
@@ -3045,13 +3147,14 @@ namespace PCHH {
                     signal  = "$wifiSignalPct%"
                     band    = "$($wf['Band'])"
                     channel = "$($wf['Channel'])"
+                    width   = "$($wf['Channel width'])"
                     radio   = "$radioType"
                     auth    = "$authDisplay"
                     rx      = "$rxMbps"
                     tx      = "$txMbps"
                 }
             }
-            $net = [PSCustomObject]@{ adapters = $adapters; vpns = $vpns; wifi = $wifi }
+            $net = [PSCustomObject]@{ adapters = $adapters; vpns = $vpns; wifi = $wifi; dns = $dnsServers }
         } catch { }
 
         # Memory usage at time of capture (physical + commit charge)
@@ -3085,6 +3188,8 @@ namespace PCHH {
         $gpusJson = if ($gpus.Count -gt 0) { (ConvertTo-Json @($gpus) -Compress -Depth 3).Replace('</', '<\/') } else { '[]' }
         $hagsJson = if ($hagsEnabled) { "`"$hagsEnabled`"" } else { 'null' }
         $isLaptopJson = if ($isLaptop) { 'true' } else { 'false' }
+        $batteryJson = if ($batteryInfo.Count -gt 0) { $batteryInfo | ConvertTo-Json -Depth 5 -Compress } else { '[]' }
+        if ($batteryJson -notmatch '^\[') { $batteryJson = "[$batteryJson]" }
         $monsJson = if ($mons.Count -gt 0) { (ConvertTo-Json @($mons) -Compress -Depth 3).Replace('</', '<\/') } else { '[]' }
         $displaysJson = if ($displays.Count -gt 0) { (ConvertTo-Json @($displays) -Compress -Depth 3).Replace('</', '<\/') } else { '[]' }
         $procsJson = if ($procs.Count -gt 0) { (ConvertTo-Json @($procs) -Compress -Depth 3).Replace('</', '<\/') } else { '[]' }
@@ -3112,7 +3217,7 @@ namespace PCHH {
         $specsJson = (ConvertTo-Json "$specsRaw" -Compress).Replace('</', '<\/')
 
         $genStamp = (Get-Date).ToString("dd'/'MM'/'yyyy HH:mm")
-        $viewerHtml = $viewerTemplate.Replace('/*__VER__*/""', "`"$scriptVersion`"").Replace('/*__GEN__*/""', "`"$genStamp`"").Replace('/*__DATA__*/[]', $json).Replace('/*__SPECS__*/""', $specsJson).Replace('/*__DUMPS__*/[]', $dumpsJson).Replace('/*__SYSEVT__*/[]', $sysJson).Replace('/*__SMART__*/[]', $smartJson).Replace('/*__DIRTY__*/[]', $dirtyJson).Replace('/*__DISKLAYOUT__*/[]', $diskLayoutJson).Replace('/*__RAM__*/[]', $ramJson).Replace('/*__GPUS__*/[]', $gpusJson).Replace('/*__HAGS__*/null', $hagsJson).Replace('/*__ISLAPTOP__*/false', $isLaptopJson).Replace('/*__MONS__*/[]', $monsJson).Replace('/*__DISPLAYS__*/[]', $displaysJson).Replace('/*__PROCS__*/[]', $procsJson).Replace('/*__MEMUSE__*/null', $memuseJson).Replace('/*__NET__*/null', $netJson).Replace('/*__SECURITY__*/null', $securityJson).Replace('/*__HOTFIXES__*/[]', $hotfixesJson).Replace('/*__WINDOWSOLD__*/null', $windowsOldJson).Replace('/*__POWERPLAN__*/null', $powerPlanJson).Replace('/*__GENFLAGS__*/null', $generalFlagsJson).Replace('/*__CBS__*/null', $cbsJson).Replace('/*__WUHISTORY__*/[]', $wuHistoryJson).Replace('/*__WINUPDATE__*/null', $winUpdateJson).Replace('/*__DEVERR__*/[]', $devErrorsJson).Replace('/*__AUDIO__*/null', $audioJson).Replace('/*__USB__*/[]', $usbJson).Replace('/*__CAMERAS__*/[]', $camerasJson)
+        $viewerHtml = $viewerTemplate.Replace('/*__VER__*/""', "`"$scriptVersion`"").Replace('/*__GEN__*/""', "`"$genStamp`"").Replace('/*__DATA__*/[]', $json).Replace('/*__SPECS__*/""', $specsJson).Replace('/*__DUMPS__*/[]', $dumpsJson).Replace('/*__SYSEVT__*/[]', $sysJson).Replace('/*__SMART__*/[]', $smartJson).Replace('/*__DIRTY__*/[]', $dirtyJson).Replace('/*__DISKLAYOUT__*/[]', $diskLayoutJson).Replace('/*__RAM__*/[]', $ramJson).Replace('/*__GPUS__*/[]', $gpusJson).Replace('/*__HAGS__*/null', $hagsJson).Replace('/*__ISLAPTOP__*/false', $isLaptopJson).Replace('/*__MONS__*/[]', $monsJson).Replace('/*__DISPLAYS__*/[]', $displaysJson).Replace('/*__PROCS__*/[]', $procsJson).Replace('/*__MEMUSE__*/null', $memuseJson).Replace('/*__NET__*/null', $netJson).Replace('/*__SECURITY__*/null', $securityJson).Replace('/*__HOTFIXES__*/[]', $hotfixesJson).Replace('/*__WINDOWSOLD__*/null', $windowsOldJson).Replace('/*__POWERPLAN__*/null', $powerPlanJson).Replace('/*__GENFLAGS__*/null', $generalFlagsJson).Replace('/*__CBS__*/null', $cbsJson).Replace('/*__WUHISTORY__*/[]', $wuHistoryJson).Replace('/*__WINUPDATE__*/null', $winUpdateJson).Replace('/*__DEVERR__*/[]', $devErrorsJson).Replace('/*__AUDIO__*/null', $audioJson).Replace('/*__USB__*/[]', $usbJson).Replace('/*__CAMERAS__*/[]', $camerasJson).Replace('/*__BATTERY__*/[]', $batteryJson)
         try {
             Set-Content -Path $reliability_html_path -Value $viewerHtml -Encoding UTF8
         } catch {
