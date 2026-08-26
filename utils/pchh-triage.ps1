@@ -2164,7 +2164,7 @@ function dmpcheck {
     Clear-Host 
     Write-Host ""
     Write-Host "==================================================" -ForegroundColor DarkGreen
-    Write-Host "         PCHH Triage v1.1 - 18/08/2026            " -ForegroundColor Green
+    Write-Host "         PCHH Triage v$scriptVersion            " -ForegroundColor Green
     Write-Host "       Developed by Rory (ctrl.alt.repeat)		  " -ForegroundColor DarkGray
     Write-Host "==================================================" -ForegroundColor DarkGreen
     Write-Host ""
