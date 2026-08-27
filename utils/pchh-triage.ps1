@@ -612,6 +612,7 @@ function summary(e){
   return esc(e.s);
 }
 function esc(s){return String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+function fmtSize(gb){return gb>=1000?(gb/1000).toFixed(1)+' TB':Math.round(gb)+' GB';}
 // Hero tile icons - reused verbatim from the matching sidebar tab icon wherever one exists
 // (GPU, Storage, Memory), so a tile visually promises "click me to see more" honestly. CPU,
 // Motherboard and System have no dedicated tab of their own, so they get their own icon.
@@ -698,6 +699,26 @@ function splitOnce(text,re){
 function renderSpecs(){
   const sp=parseSpecs(SPECS);
   let dh='';
+  if(sp.drives&&sp.drives.length){
+    // A simple, at-a-glance used/free bar per drive letter - the same information the detailed
+    // Disk layout section below gives per-partition, but laid out the way Windows' own "This PC"
+    // view does, since scanning a used/free bar per drive is far faster than reading numbers out
+    // of a partition table.
+    dh+='<div class="spec-section"><h2>Storage overview</h2><div class="drive-grid">';
+    sp.drives.forEach(dr=>{
+      const totalGB=+dr['Total Size (GB)']||0;
+      const freeGB=+dr['Free Space (GB)']||0;
+      if(!totalGB)return;
+      const usedPct=Math.min(100,Math.round((totalGB-freeGB)/totalGB*100));
+      const freePct=dr['Percentage Free (%)']!=null?Math.round(+dr['Percentage Free (%)']):Math.round(freeGB/totalGB*100);
+      const low=freePct<10;
+      dh+='<div class="drive"><h3>'+esc(dr['Drive Label']||'?')+(dr['Drive Type']?' <span style="color:var(--dim);font-weight:400;font-size:14px">'+esc(dr['Drive Type'])+'</span>':'')+'</h3>'+
+        '<div class="meter'+(low?' low':'')+'" style="margin:10px 0 8px"><div style="width:'+usedPct+'%"></div></div>'+
+        '<div class="sub" style="margin-bottom:0">'+fmtSize(freeGB)+' free of '+fmtSize(totalGB)+' <span style="color:'+(low?'var(--warn)':'var(--faint)')+'">('+freePct+'%)</span></div>'+
+        '</div>';
+    });
+    dh+='</div></div>';
+  }
   if(DISKLAYOUT.length){
     const smartByDisk={};
     SMART.forEach(d=>{smartByDisk[String(d.disk)]=d;});
@@ -1476,7 +1497,6 @@ function renderSummary(){
     if(sp.drives&&sp.drives.length){
       const totalGB=DISKLAYOUT.length?DISKLAYOUT.reduce((a,d)=>a+(+d.sizeGB||0),0):sp.drives.reduce((a,d)=>a+(+d['Total Size (GB)']||0),0);
       const freeGB=sp.drives.reduce((a,d)=>a+(+d['Free Space (GB)']||0),0);
-      const fmtSize=gb=>gb>=1000?(gb/1000).toFixed(1)+' TB':Math.round(gb)+' GB';
       // Windows reports drive capacity in binary GiB (1024-based), but SSD/HDD manufacturers market
       // capacity in decimal GB/TB (1000-based) - a "2TB" drive shows as ~1863 in Windows. Correcting
       // by the binary-to-decimal ratio before rounding gets back to the marketed figure (e.g. 1863
