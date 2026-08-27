@@ -863,6 +863,7 @@ const FAQ_DATA=[
 {id:'software-shell',q:"Shell/Taskbar Tweak Tools",a:"Tools like TranslucentTB, ExplorerPatcher, StartAllBack, Start11, Open-Shell, or Windhawk modify Windows Explorer or the taskbar/Start menu's appearance and behaviour, often by hooking into or patching explorer.exe itself.<br><br>They're generally safe day-to-day, but because they hook into core shell processes, they're a common cause of taskbar/Start menu glitches, explorer.exe crashes, or freezes after a Windows feature update changes something they relied on. Worth ruling out first if that's the symptom.",tools:[]},
 {id:'software-cheat',q:"Game Exploit / Cheat Tool",a:"Tools like JJSploit, Synapse X, Krnl, Fluxus, and similar Roblox/game script executors, along with general memory-editors like Cheat Engine, are flagged here because they carry real risk beyond just breaking the rules of a game:<ul style='margin:8px 0 8px 20px;padding:0'><li>they're a very common way to end up with genuine malware, since many are distributed through cracked/pirated download sites with a trojan bundled in</li><li>most inject code into a running game process, which is exactly the pattern antivirus and anti-cheat software is built to catch - a wave of false-positive detections or a sudden anti-cheat ban often traces straight back to one of these</li><li>some game accounts can be permanently banned the moment one of these is detected running, even once</li></ul>This is a factual note that it's installed, not an accusation - but if unexplained AV detections, game bans, or crashes tied to a specific game are the symptom, this is worth checking first.",tools:[]},
 {id:'software-fancontrol',q:"Multiple Fan-Control Programs",a:"Programs like Lian Li L-Connect, FanControl, SpeedFan, Fan Xpert, and RGB/fan hubs such as Corsair iCUE, NZXT CAM, MSI Dragon Center, or ASUS Armoury Crate can all set fan curves directly through the motherboard or a fan controller.<br><br>Running more than one of these at the same time means they can end up fighting over the same fans - each one periodically re-applying its own curve over the other's - which shows up as fans that surge, stall, or cycle speed for no clear reason. The fix is usually to pick one and fully close (not just minimize) the others, since some keep running in the background even without a visible window.",tools:[]},
+{id:'software-wallpaperengine',q:"Wallpaper Engine",a:"Wallpaper Engine renders an animated or interactive desktop background, which means it's continuously using the GPU in the background rather than sitting idle like a static wallpaper would.<br><br>This is a common, easy-to-miss cause of a GPU that never drops to idle, higher-than-expected power draw or fan noise while 'doing nothing', and lower FPS or stutter in games if it isn't set to pause automatically on fullscreen apps (check its Playback settings if so). Nothing wrong with the software itself - just worth knowing it's running if one of those symptoms shows up.",tools:[]},
 {id:'windows-old',q:"Windows.old Folder",a:"Windows.old is a backup of the previous Windows installation, automatically created when Windows is upgraded in place or reset while keeping personal files. It lets Windows roll back to the previous version for about 10 days before it's automatically deleted to free up space, though it can stick around longer if that cleanup didn't run.<br><br>Its presence is a useful sign that this installation is newer than the hardware, which is handy context if a problem only started recently. It doesn't cover every case, though: a full wipe-and-reinstall or a reset that removes everything doesn't leave a Windows.old folder behind at all, so its absence doesn't rule out a recent reset.",tools:[]},
 {id:'secure-boot',q:"Secure Boot",a:"Secure Boot is a security feature that checks the software involved in starting Windows hasn't been tampered with, before the operating system even loads. It helps stop a specific but nasty category of malware (called bootkits or rootkits) that tries to run before Windows, and before any antivirus, gets a chance to load.<br><br>Microsoft requires it for Windows 11, and leaving it disabled removes a real layer of protection for no real-world upside on most PCs. It requires the system disk to use GPT partitioning. See the note about MBR partitioning in this report if that's relevant.",tools:[]},
 {id:'tpm',q:"TPM",a:"A TPM (Trusted Platform Module) is a small, dedicated security chip, or a feature built into the CPU (fTPM) on newer systems, that securely stores encryption keys and other sensitive data separately from the rest of the PC. It's what Windows 11 relies on for BitLocker drive encryption and for meeting its own minimum security requirements.<br><br>If it's disabled, Windows Hello, BitLocker, and some newer Windows security features either can't be used or fall back to a weaker mode. It can usually be turned on in the BIOS/UEFI settings (often listed as 'TPM', 'fTPM', 'PTT', or 'Security Device').",tools:[]},
@@ -1228,6 +1229,7 @@ function renderSummary(){
     {re:/streamlabs/i,           label:'Streamlabs OBS',             grp:'audio'},
     {re:/hola vpn/i,             label:'Hola VPN',                   grp:'net'},
     {re:/killer network|killer control center/i, label:'Killer Network Manager', grp:'net'},
+    {re:/wallpaper engine/i,     label:'Wallpaper Engine',            grp:'wallpaper'},
     {re:/translucenttb/i,        label:'TranslucentTB',              grp:'shell'},
     {re:/explorerpatcher/i,      label:'ExplorerPatcher',            grp:'shell'},
     {re:/startallback/i,         label:'StartAllBack',               grp:'shell'},
@@ -1299,7 +1301,7 @@ function renderSummary(){
   }
   Object.keys(foundSoft).forEach(grp=>{
     const items=[...foundSoft[grp]].sort().join(', ');
-    const SOFT_FAQ={ac:'software-anticheat',oc:'software-overclock',periph:'software-rgb',audio:'software-audio',net:'software-network',bloat:'software-bloatware',shell:'software-shell',cheat:'software-cheat',fan:'software-fancontrol'};
+    const SOFT_FAQ={ac:'software-anticheat',oc:'software-overclock',periph:'software-rgb',audio:'software-audio',net:'software-network',bloat:'software-bloatware',shell:'software-shell',cheat:'software-cheat',fan:'software-fancontrol',wallpaper:'software-wallpaperengine'};
     const GRP_COLOR={cheat:'r'};
     softNotes.push(dataLink('apps',SOFT_FAQ[grp]||'','<span class="'+(GRP_COLOR[grp]||'')+'">'+esc(items)+'</span>'));
   });
@@ -1407,7 +1409,9 @@ function renderSummary(){
       // kit (or one with no resolved brand) just falls back to plain capacity.
       const ramMfrs=[...new Set(RAM.map(m=>m.mfr).filter(Boolean))];
       const ramMfrLabel=ramMfrs.length===1?ramMfrs[0]:'';
-      tiles.push({cls:'ram',icon:ICON_RAM,label:'Memory',tab:'memory',value:heroRamGB+' GB'+(ramMfrLabel?' '+ramMfrLabel:''),lines:[
+      const ramTypes=[...new Set(RAM.map(m=>m.ddrType).filter(Boolean))];
+      const ramTypeLabel=ramTypes.length===1?ramTypes[0]:'';
+      tiles.push({cls:'ram',icon:ICON_RAM,label:'Memory',tab:'memory',value:heroRamGB+' GB'+(ramMfrLabel?' '+ramMfrLabel:'')+(ramTypeLabel?' '+ramTypeLabel:''),lines:[
         heroRamRated?'Rated speed: '+heroRamRated+' MT/s':'',
         heroRamConf?'Configured speed: '+heroRamConf+' MT/s':'',
         'Modules: '+RAM.length
@@ -1419,10 +1423,11 @@ function renderSummary(){
       const fmtSize=gb=>gb>=1000?(gb/1000).toFixed(1)+' TB':Math.round(gb)+' GB';
       const freePct=totalGB?Math.round(freeGB/totalGB*100):null;
       const diskCount=DISKLAYOUT.length||sp.drives.length;
-      const winDir=specVal(sp.info,'Windows Directory');
+      const sysDiskSmart=sysDisk?SMART.find(d=>String(d.disk)===String(sysDisk.disk)):null;
+      const sysDiskInfo=sysDiskSmart?[sysDiskSmart.name,sysDiskSmart.bus].filter(Boolean).join(' \u00b7 '):'';
       tiles.push({cls:'storage',icon:ICON_STORAGE,label:diskCount>1?'Storage ('+diskCount+' disks)':'Storage',tab:'drives',value:fmtSize(totalGB)+' total',lines:[
         'Free space: '+fmtSize(freeGB)+(freePct!=null?' ('+freePct+'%)':''),
-        winDir?'Windows directory: '+winDir:''
+        sysDiskInfo?'System drive: '+sysDiskInfo:''
       ].filter(Boolean)});
     }
     if(mb){
@@ -1772,7 +1777,7 @@ function renderGPU(){
     const statusLabel=isWarnNode?'Wrong port':(active?'Active':'Idle');
     const statusColor=isWarnNode?'var(--warn)':(active?'var(--ok)':'var(--faint)');
     const friendly=g.drv?friendlyDriver(g.name,g.drv,g.radeon||'').replace(/\s*<span[^>]*>.*<\/span>/,''):'';
-    const driverStr=(friendly||g.drv||'Driver unknown')+driverAgeLabel(g.driverDate);
+    const driverStr='Driver: '+(friendly||g.drv||'unknown')+driverAgeLabel(g.driverDate)+(g.vram?' \u00b7 '+g.vram+' GB VRAM':'');
     const barW=gpuBoxW-44-60;
     const titleTspans=info.titleLines.map((line,li)=>'<tspan x="'+(x+44)+'" dy="'+(li===0?0:16)+'">'+line+'</tspan>').join('');
 
@@ -1901,6 +1906,7 @@ function renderMemory(){
         '<div class="sub">'+esc(m.mfr||'')+'</div>'+
         '<dl class="kv smart-kv">'+
         '<dt>Part number</dt><dd>'+esc(m.pn||'?')+'</dd>'+
+        (m.ddrType?'<dt>Type</dt><dd>'+esc(m.ddrType)+'</dd>':'')+
         '<dt>Capacity</dt><dd>'+esc(m.cap)+' GB</dd>'+
         (m.rated?'<dt>Rated speed</dt><dd>'+esc(m.rated)+' MT/s</dd>':'')+
         (m.pnSpeed?'<dt>Speed (from part number)</dt><dd>'+esc(m.pnSpeed)+' MT/s'+(m.rated&&+m.pnSpeed>+m.rated?' <span style="color:var(--faint)">(higher than reported rated speed)</span>':'')+'</dd>':'')+
@@ -2288,7 +2294,6 @@ function fileadd {
     specs "BIOS Date: $([System.Management.ManagementDateTimeConverter]::ToDateTime($biosDate))"
     specs "`nOS: $osName"
     specs "OS Version: $osVersion"
-    specs "Windows Directory: $env:SystemRoot"
     specs "System Uptime: $($uptime.Days) days, $($uptime.Hours) hours, $($uptime.Minutes) minutes"
     specs "Build: $build"
     specs "`nTPM Status: $tpmEnabled"
@@ -2676,6 +2681,7 @@ function reliabilityexport {
                     cap   = "$([math]::Round($_.Capacity / 1GB))"
                     rated = if ($_.Speed) { "$($_.Speed)" } else { "" }
                     conf  = if ($_.ConfiguredClockSpeed) { "$($_.ConfiguredClockSpeed)" } else { "" }
+                    memType = if ($_.SMBIOSMemoryType) { $_.SMBIOSMemoryType } elseif ($_.MemoryType) { $_.MemoryType } else { 0 }
                 }
             })
             # Some boards report an identical, non-unique DeviceLocator for every slot - append a
@@ -2686,6 +2692,15 @@ function reliabilityexport {
             $ram = @($rawRam | ForEach-Object {
                 $mfrResolved = Resolve-RamBrand $_.mfr $_.pn
                 $pnSpeed = Resolve-RamSpeedFromPartNumber $_.pn
+                $ddrType = switch ([int]$_.memType) {
+                    20 { 'DDR' }
+                    21 { 'DDR2' }
+                    22 { 'DDR2 FB-DIMM' }
+                    24 { 'DDR3' }
+                    26 { 'DDR4' }
+                    34 { 'DDR5' }
+                    default { '' }
+                }
                 $displaySlot = $_.slot
                 if ($slotSeen[$_.slot] -gt 1) {
                     $slotIndex[$_.slot] = ($slotIndex[$_.slot] + 1)
@@ -2699,6 +2714,7 @@ function reliabilityexport {
                     rated    = $_.rated
                     conf     = $_.conf
                     pnSpeed  = $pnSpeed
+                    ddrType  = $ddrType
                 }
             })
         } catch { }
