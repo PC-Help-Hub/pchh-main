@@ -318,7 +318,7 @@ body.dragging #drop{color:var(--info);border-color:var(--info)}
       <div class="nav-group-title"><span>Hardware</span><span class="chev">&#9660;</span></div>
       <div class="nav-group-items">
         <button class="tab" data-tab="cpu"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2" ry="2"/><rect x="9" y="9" width="6" height="6"/><line x1="9" y1="1" x2="9" y2="4"/><line x1="15" y1="1" x2="15" y2="4"/><line x1="9" y1="20" x2="9" y2="23"/><line x1="15" y1="20" x2="15" y2="23"/><line x1="20" y1="9" x2="23" y2="9"/><line x1="20" y1="14" x2="23" y2="14"/><line x1="1" y1="9" x2="4" y2="9"/><line x1="1" y1="14" x2="4" y2="14"/></svg>Processor</button>
-        <button class="tab" data-tab="gpu"><svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>Graphics</button>
+        <button class="tab" data-tab="gpu"><svg viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="11" rx="2"/><circle cx="8" cy="11.5" r="2"/><circle cx="15" cy="11.5" r="2"/><line x1="5" y1="17" x2="5" y2="20"/><line x1="9" y1="17" x2="9" y2="20"/><line x1="21" y1="9" x2="23" y2="9"/><line x1="21" y1="13" x2="23" y2="13"/></svg>Graphics</button>
         <button class="tab" data-tab="memory"><svg viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"/><rect x="2" y="14" width="20" height="8" rx="2" ry="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg>Memory</button>
         <button class="tab" data-tab="drives"><svg viewBox="0 0 24 24"><line x1="22" y1="12" x2="2" y2="12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/><line x1="6" y1="16" x2="6.01" y2="16"/><line x1="10" y1="16" x2="10.01" y2="16"/></svg>Storage</button>
         <button class="tab" data-tab="mobo"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>Motherboard</button>
@@ -613,12 +613,11 @@ function esc(s){return String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt
 // (GPU, Storage, Memory), so a tile visually promises "click me to see more" honestly. CPU,
 // Motherboard and System have no dedicated tab of their own, so they get their own icon.
 const ICON_CPU='<svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2" ry="2"/><rect x="9" y="9" width="6" height="6"/><line x1="9" y1="1" x2="9" y2="4"/><line x1="15" y1="1" x2="15" y2="4"/><line x1="9" y1="20" x2="9" y2="23"/><line x1="15" y1="20" x2="15" y2="23"/><line x1="20" y1="9" x2="23" y2="9"/><line x1="20" y1="14" x2="23" y2="14"/><line x1="1" y1="9" x2="4" y2="9"/><line x1="1" y1="14" x2="4" y2="14"/></svg>';
-const ICON_GPU='<svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>';
+const ICON_GPU='<svg viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="11" rx="2"/><circle cx="8" cy="11.5" r="2"/><circle cx="15" cy="11.5" r="2"/><line x1="5" y1="17" x2="5" y2="20"/><line x1="9" y1="17" x2="9" y2="20"/><line x1="21" y1="9" x2="23" y2="9"/><line x1="21" y1="13" x2="23" y2="13"/></svg>';
 const ICON_RAM='<svg viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"/><rect x="2" y="14" width="20" height="8" rx="2" ry="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg>';
 const ICON_STORAGE='<svg viewBox="0 0 24 24"><line x1="22" y1="12" x2="2" y2="12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/><line x1="6" y1="16" x2="6.01" y2="16"/><line x1="10" y1="16" x2="10.01" y2="16"/></svg>';
 const ICON_MOBO='<svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>';
 const ICON_OS='<svg viewBox="0 0 24 24"><rect x="3" y="3" width="8" height="8" rx="1"/><rect x="13" y="3" width="8" height="8" rx="1"/><rect x="3" y="13" width="8" height="8" rx="1"/><rect x="13" y="13" width="8" height="8" rx="1"/></svg>';
-const ICON_PC='<svg viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="5" y1="7" x2="19" y2="7"/><line x1="9" y1="15" x2="9.01" y2="15"/><line x1="13" y1="15" x2="17" y2="15"/></svg>';
 const ICON_INFO='<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>';
 // Guards accordion-row toggles against text selection. Checking only whether the click
 // *landed* inside .msg isn't enough - drag-selecting a long/wrapped message often ends with
@@ -835,6 +834,7 @@ const FAQ_DATA=[
 {id:'dirty-bit',q:"Dirty Bit",a:"This means Windows flagged a drive as not having been cleanly unmounted, usually caused by the same unexpected shutdown or crash reported elsewhere in this report. It's a marker for Windows to check that drive's filesystem for errors next time it gets the chance.<br><br>On its own it isn't necessarily a sign of a failing drive, and is used as an indication that something might be wrong.",tools:[]},
 {id:'device-manager-errors',q:"Device Manager Errors",a:"Windows found a piece of hardware but couldn't properly load a driver for it, or the device itself reported a problem. This usually means a missing, outdated, or corrupted driver. Occasionally it's a genuine hardware fault.",tools:["AMD Drivers & Support","NVIDIA Drivers & Support","Intel Drivers & Support"]},
 {id:'mbr-secureboot',q:"MBR Partitioning",a:"Windows drives use one of two partitioning styles: MBR or the newer GPT. Secure Boot, a feature that helps stop malware loading before Windows starts, requires GPT.<br><br>If the main drive (the one with Windows installed on it) is MBR, Secure Boot can't be turned on without converting the drive or doing a clean reinstall of Windows, which is a bigger job and best not attempted without guidance.",tools:[]},
+{id:'windows-on-slower-drive',q:"Windows Installed on a Slower Drive",a:"This PC has an NVMe drive - the fastest common type of storage, connecting directly over the motherboard's high-speed PCIe lanes - but Windows itself is installed on a different, slower drive (SATA SSD or hard drive) instead.<br><br>SATA SSDs are still fast for everyday use, but NVMe is typically several times quicker for boot times, app loading, and anything that reads/writes a lot of small files. If the NVMe drive has enough free space, migrating Windows over to it (via cloning software or a fresh install) would give a noticeable speed improvement, particularly for boot time and load screens.",tools:[]},
 {id:'pending-reboot',q:"Pending Reboot",a:"Windows or an update has made changes that only take full effect after a restart, and it's currently waiting on one. Until then the system can behave oddly and further updates may queue up behind it.<br><br>A normal restart resolves this.",tools:[]},
 {id:'wu-service',q:"Windows Update Service",a:"The background service that lets Windows check for and install updates is disabled. Normally it's set to start on demand (so it's often shown as 'Stopped' when idle - that's expected and not a problem), but 'Disabled' means it can't start at all, so Windows won't be able to update until it's turned back on.",tools:[]},
 {id:'wu-failed',q:"Failed Windows Updates",a:"One or more recent update attempts failed partway through rather than installing cleanly. This can happen for lots of reasons: a bad download, low disk space, corrupted update files, or a conflict with other software.<br><br>It can sometimes leave a PC feeling unstable or repeatedly nagging about the same update.",tools:["Windows 11 Download"]},
@@ -864,6 +864,7 @@ const FAQ_DATA=[
 {id:'software-cheat',q:"Game Exploit / Cheat Tool",a:"Tools like JJSploit, Synapse X, Krnl, Fluxus, and similar Roblox/game script executors, along with general memory-editors like Cheat Engine, are flagged here because they carry real risk beyond just breaking the rules of a game:<ul style='margin:8px 0 8px 20px;padding:0'><li>they're a very common way to end up with genuine malware, since many are distributed through cracked/pirated download sites with a trojan bundled in</li><li>most inject code into a running game process, which is exactly the pattern antivirus and anti-cheat software is built to catch - a wave of false-positive detections or a sudden anti-cheat ban often traces straight back to one of these</li><li>some game accounts can be permanently banned the moment one of these is detected running, even once</li></ul>This is a factual note that it's installed, not an accusation - but if unexplained AV detections, game bans, or crashes tied to a specific game are the symptom, this is worth checking first.",tools:[]},
 {id:'software-fancontrol',q:"Multiple Fan-Control Programs",a:"Programs like Lian Li L-Connect, FanControl, SpeedFan, Fan Xpert, and RGB/fan hubs such as Corsair iCUE, NZXT CAM, MSI Dragon Center, or ASUS Armoury Crate can all set fan curves directly through the motherboard or a fan controller.<br><br>Running more than one of these at the same time means they can end up fighting over the same fans - each one periodically re-applying its own curve over the other's - which shows up as fans that surge, stall, or cycle speed for no clear reason. The fix is usually to pick one and fully close (not just minimize) the others, since some keep running in the background even without a visible window.",tools:[]},
 {id:'software-wallpaperengine',q:"Wallpaper Engine",a:"Wallpaper Engine renders an animated or interactive desktop background, which means it's continuously using the GPU in the background rather than sitting idle like a static wallpaper would.<br><br>This is a common, easy-to-miss cause of a GPU that never drops to idle, higher-than-expected power draw or fan noise while 'doing nothing', and lower FPS or stutter in games if it isn't set to pause automatically on fullscreen apps (check its Playback settings if so). Nothing wrong with the software itself - just worth knowing it's running if one of those symptoms shows up.",tools:[]},
+{id:'software-remote',q:"Remote Access Software",a:"Tools like TeamViewer, AnyDesk, ScreenConnect, Splashtop, LogMeIn, and similar let someone log into or control this PC from another device over the internet or local network.<br><br>This is completely normal and often intentional (remote work, IT support, accessing a home PC while away), but it's also exactly what a remote-access scam relies on if someone was talked into installing one of these by an unsolicited caller. Worth confirming the person recognises installing it and knows it's still there, especially if it was set up a long time ago and forgotten about.",tools:[]},
 {id:'windows-old',q:"Windows.old Folder",a:"Windows.old is a backup of the previous Windows installation, automatically created when Windows is upgraded in place or reset while keeping personal files. It lets Windows roll back to the previous version for about 10 days before it's automatically deleted to free up space, though it can stick around longer if that cleanup didn't run.<br><br>Its presence is a useful sign that this installation is newer than the hardware, which is handy context if a problem only started recently. It doesn't cover every case, though: a full wipe-and-reinstall or a reset that removes everything doesn't leave a Windows.old folder behind at all, so its absence doesn't rule out a recent reset.",tools:[]},
 {id:'secure-boot',q:"Secure Boot",a:"Secure Boot is a security feature that checks the software involved in starting Windows hasn't been tampered with, before the operating system even loads. It helps stop a specific but nasty category of malware (called bootkits or rootkits) that tries to run before Windows, and before any antivirus, gets a chance to load.<br><br>Microsoft requires it for Windows 11, and leaving it disabled removes a real layer of protection for no real-world upside on most PCs. It requires the system disk to use GPT partitioning. See the note about MBR partitioning in this report if that's relevant.",tools:[]},
 {id:'tpm',q:"TPM",a:"A TPM (Trusted Platform Module) is a small, dedicated security chip, or a feature built into the CPU (fTPM) on newer systems, that securely stores encryption keys and other sensitive data separately from the rest of the PC. It's what Windows 11 relies on for BitLocker drive encryption and for meeting its own minimum security requirements.<br><br>If it's disabled, Windows Hello, BitLocker, and some newer Windows security features either can't be used or fall back to a weaker mode. It can usually be turned on in the BIOS/UEFI settings (often listed as 'TPM', 'fTPM', 'PTT', or 'Security Device').",tools:[]},
@@ -1072,14 +1073,6 @@ function friendlyDriver(gpuName,ver,radeon){
   return ver;
 }
 function specVal(info,key){const f=info.find(([k])=>k===key);return f?f[1]:null;}
-function driverAgeLabel(dateStr){
-  if(!dateStr)return '';
-  const then=new Date(dateStr),now=new Date();
-  const months=(now.getFullYear()-then.getFullYear())*12+(now.getMonth()-then.getMonth());
-  if(months<12)return '';
-  const years=Math.floor(months/12);
-  return years>=1?' ('+years+'y old)':'';
-}
 // Rough average glyph width for Albert Sans / IBM Plex Mono at a given size, used to keep
 // GPU/monitor node text inside its box instead of overflowing.
 function fitText(text,maxWidth,fontSize,opts){
@@ -1147,6 +1140,10 @@ function renderSummary(){
   // means this stays accurate on non-English Windows installs instead of silently reading 0.
   const crashes=events.filter(e=>e.cat==='err'&&e.s==='Application Error').length;
   const shutdowns=events.filter(e=>e.s==='EventLog').length;
+  // Prefer the speed embedded in the part number over Win32_PhysicalMemory.Speed when it's
+  // higher - Speed often just reflects the JEDEC default the stick is currently running at,
+  // not what it's actually rated for, which silently hides an XMP/EXPO-off situation.
+  const effRated=m=>Math.max(+m.rated||0,+m.pnSpeed||0)||'';
   const notes=[];
   notes.push(crashes?dataLink('rel','app-crashes','<span class="r"><b>'+crashes+'</b> Application crash'+(crashes>1?'es':'')+'</span>'):'<span class="g">No application crashes</span>');
   // Unexpected shutdowns: reliability history (6008-derived) and Kernel-Power 41 record the
@@ -1173,15 +1170,15 @@ function renderSummary(){
   }
   const sysDisk=DISKLAYOUT.find(dk=>dk.partitions.some(p=>p.letter==='C:'));
   if(sysDisk&&sysDisk.style&&sysDisk.style.toUpperCase()==='MBR')notes.push(dataLink('drives','mbr-secureboot','<span class="y">System disk uses MBR partitioning (Secure Boot requires GPT)</span>'));
+  const sysDiskBus=sysDisk?(SMART.find(d=>String(d.disk)===String(sysDisk.disk))||{}).bus:null;
+  if(sysDiskBus&&!/nvme/i.test(sysDiskBus)&&SMART.some(d=>/nvme/i.test(d.bus||''))){
+    notes.push(dataLink('drives','windows-on-slower-drive','<span class="y">Windows is on '+esc(sysDiskBus)+', not the faster NVMe drive also in this PC</span>'));
+  }
   if(WINUPDATE&&WINUPDATE.pendingReboot)notes.push(dataLink('updates','pending-reboot','<span class="y">System has a pending reboot (Windows Update or servicing)</span>'));
   if(WINUPDATE&&WINUPDATE.serviceStartType==='Disabled')notes.push(dataLink('updates','wu-service','<span class="y">Windows Update service is disabled</span>'));
   const wuFails=WUHISTORY.filter(u=>u.result==='Failed'||u.result==='Cancelled').length;
   if(wuFails)notes.push(dataLink('updates','wu-failed','<span class="y"><b>'+wuFails+'</b> Windows Update'+(wuFails>1?'s':'')+' did not complete successfully</span>'));
   if(RAM.length){
-    // Prefer the speed embedded in the part number over Win32_PhysicalMemory.Speed when it's
-    // higher - Speed often just reflects the JEDEC default the stick is currently running at,
-    // not what it's actually rated for, which silently hides an XMP/EXPO-off situation.
-    const effRated=m=>Math.max(+m.rated||0,+m.pnSpeed||0)||'';
     const slow=RAM.filter(m=>effRated(m)&&m.conf&&+m.conf<+effRated(m));
     if(slow.length)notes.push(dataLink('memory','ram-speed','<span class="y">RAM configured at '+esc(slow[0].conf)+' MT/s, rated '+esc(effRated(slow[0]))+' MT/s</span>'));
   }
@@ -1301,7 +1298,7 @@ function renderSummary(){
   }
   Object.keys(foundSoft).forEach(grp=>{
     const items=[...foundSoft[grp]].sort().join(', ');
-    const SOFT_FAQ={ac:'software-anticheat',oc:'software-overclock',periph:'software-rgb',audio:'software-audio',net:'software-network',bloat:'software-bloatware',shell:'software-shell',cheat:'software-cheat',fan:'software-fancontrol',wallpaper:'software-wallpaperengine'};
+    const SOFT_FAQ={ac:'software-anticheat',oc:'software-overclock',periph:'software-rgb',audio:'software-audio',net:'software-network',bloat:'software-bloatware',shell:'software-shell',cheat:'software-cheat',fan:'software-fancontrol',wallpaper:'software-wallpaperengine',remote:'software-remote'};
     const GRP_COLOR={cheat:'r'};
     softNotes.push(dataLink('apps',SOFT_FAQ[grp]||'','<span class="'+(GRP_COLOR[grp]||'')+'">'+esc(items)+'</span>'));
   });
@@ -1404,7 +1401,7 @@ function renderSummary(){
     if(RAM.length){
       const heroRamGB=RAM.reduce((a,x)=>a+(+x.cap||0),0);
       const heroRamConf=[...new Set(RAM.map(m=>m.conf).filter(Boolean))].join('/');
-      const heroRamRated=[...new Set(RAM.map(m=>Math.max(+m.rated||0,+m.pnSpeed||0)||'').filter(Boolean))].join('/');
+      const heroRamRated=[...new Set(RAM.map(m=>effRated(m)).filter(Boolean))].join('/');
       // Only show a brand in the headline value when every stick agrees on one - a mixed-brand
       // kit (or one with no resolved brand) just falls back to plain capacity.
       const ramMfrs=[...new Set(RAM.map(m=>m.mfr).filter(Boolean))];
@@ -1421,13 +1418,37 @@ function renderSummary(){
       const totalGB=DISKLAYOUT.length?DISKLAYOUT.reduce((a,d)=>a+(+d.sizeGB||0),0):sp.drives.reduce((a,d)=>a+(+d['Total Size (GB)']||0),0);
       const freeGB=sp.drives.reduce((a,d)=>a+(+d['Free Space (GB)']||0),0);
       const fmtSize=gb=>gb>=1000?(gb/1000).toFixed(1)+' TB':Math.round(gb)+' GB';
+      // Windows reports drive capacity in binary GiB (1024-based), but SSD/HDD manufacturers market
+      // capacity in decimal GB/TB (1000-based) - a "2TB" drive shows as ~1863 in Windows. Correcting
+      // by the binary-to-decimal ratio before rounding gets back to the marketed figure (e.g. 1863
+      // GiB -> ~2000 decimal GB -> "2TB") instead of under-reporting it as ~1.8TB.
+      // Smaller drives (128/256/512GB class) are the exception - those are usually marketed using
+      // binary GB instead, so the decimal correction overshoots them slightly; snapping to the
+      // nearest common capacity when close catches that case.
+      const COMMON_GB=[60,64,120,128,160,180,200,240,250,256,320,400,480,500,512,640,750,800,900,1000,1500,2000,3000,4000,5000,6000,8000,10000,12000,16000,20000];
+      const marketingSize=gib=>{
+        if(!gib)return '';
+        const decGB=gib*1.073741824;
+        const nearest=COMMON_GB.reduce((best,c)=>Math.abs(c-decGB)<Math.abs(best-decGB)?c:best,COMMON_GB[0]);
+        const snapped=Math.abs(nearest-decGB)/decGB<0.03?nearest:Math.round(decGB/10)*10;
+        if(snapped>=1000){
+          const tb=snapped/1000;
+          return (Math.abs(tb-Math.round(tb))<0.05?Math.round(tb):tb.toFixed(1))+'TB';
+        }
+        return snapped+'GB';
+      };
       const freePct=totalGB?Math.round(freeGB/totalGB*100):null;
       const diskCount=DISKLAYOUT.length||sp.drives.length;
       const sysDiskSmart=sysDisk?SMART.find(d=>String(d.disk)===String(sysDisk.disk)):null;
-      const sysDiskInfo=sysDiskSmart?[sysDiskSmart.name,sysDiskSmart.bus].filter(Boolean).join(' \u00b7 '):'';
-      tiles.push({cls:'storage',icon:ICON_STORAGE,label:diskCount>1?'Storage ('+diskCount+' disks)':'Storage',tab:'drives',value:fmtSize(totalGB)+' total',lines:[
-        'Free space: '+fmtSize(freeGB)+(freePct!=null?' ('+freePct+'%)':''),
-        sysDiskInfo?'System drive: '+sysDiskInfo:''
+      const sysDiskSize=sysDisk?marketingSize(+sysDisk.sizeGB||0):'';
+      const sysDiskLabel=[sysDiskSize,sysDiskSmart&&sysDiskSmart.name].filter(Boolean).join(' ');
+      const sysLogicalDrive=sp.drives.find(d=>d['Windows Drive']==='True');
+      const sysFreeGB=sysLogicalDrive?+sysLogicalDrive['Free Space (GB)']||0:null;
+      const sysTotalGB=sysLogicalDrive?+sysLogicalDrive['Total Size (GB)']||0:null;
+      const sysFreePct=(sysTotalGB&&sysFreeGB!=null)?Math.round(sysFreeGB/sysTotalGB*100):null;
+      tiles.push({cls:'storage',icon:ICON_STORAGE,label:diskCount>1?'Storage ('+diskCount+' disks)':'Storage',tab:'drives',value:sysDiskLabel||fmtSize(totalGB)+' total',lines:[
+        sysFreeGB!=null?'Free space: '+fmtSize(sysFreeGB)+(sysFreePct!=null?' ('+sysFreePct+'%)':''):'Free space: '+fmtSize(freeGB)+(freePct!=null?' ('+freePct+'%)':''),
+        sysDiskSmart&&sysDiskSmart.bus?sysDiskSmart.bus:''
       ].filter(Boolean)});
     }
     if(mb){
@@ -1724,12 +1745,12 @@ function renderGPU(){
   const gpuBoxW=gpuLayout.boxW;
   const titleMaxW=gpuBoxW-44-14;
   const gpuInfo=GPUS.map(g=>{
-    const titleLines=wrapText(g.name,titleMaxW,14,{bold:true},2);
-    const titleBlockEnd=22+(titleLines.length-1)*16;
-    const statusY=titleBlockEnd+16;
-    const driverY=statusY+20;
-    const barY=driverY+10;
-    const height=barY+18;
+    const titleLines=wrapText(g.name,titleMaxW,15,{bold:true},2);
+    const titleBlockEnd=23+(titleLines.length-1)*17;
+    const statusY=titleBlockEnd+17;
+    const driverY=statusY+21;
+    const barY=driverY+11;
+    const height=barY+19;
     return {titleLines,statusY,driverY,barY,height};
   });
   const gpuRowY=24;
@@ -1777,19 +1798,19 @@ function renderGPU(){
     const statusLabel=isWarnNode?'Wrong port':(active?'Active':'Idle');
     const statusColor=isWarnNode?'var(--warn)':(active?'var(--ok)':'var(--faint)');
     const friendly=g.drv?friendlyDriver(g.name,g.drv,g.radeon||'').replace(/\s*<span[^>]*>.*<\/span>/,''):'';
-    const driverStr='Driver: '+(friendly||g.drv||'unknown')+driverAgeLabel(g.driverDate)+(g.vram?' \u00b7 '+g.vram+' GB VRAM':'');
+    const driverStr='Driver: '+(friendly||g.drv||'unknown')+(g.driverDate?' ('+fmtDay(g.driverDate)+')':'')+(g.vram?' \u00b7 '+g.vram+' GB VRAM':'');
     const barW=gpuBoxW-44-60;
-    const titleTspans=info.titleLines.map((line,li)=>'<tspan x="'+(x+44)+'" dy="'+(li===0?0:16)+'">'+line+'</tspan>').join('');
+    const titleTspans=info.titleLines.map((line,li)=>'<tspan x="'+(x+44)+'" dy="'+(li===0?0:17)+'">'+line+'</tspan>').join('');
 
     svg+='<g class="gfx-node">'+
       '<rect x="'+x+'" y="'+y+'" width="'+gpuBoxW+'" height="'+info.height+'" rx="12" fill="var(--panel2)" stroke="'+stroke+'" stroke-width="1.25"/>'+
-      '<svg x="'+(x+14)+'" y="'+(y+14)+'" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="'+iconColor+'" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="11" rx="2"/><circle cx="8" cy="12.5" r="2"/><circle cx="15" cy="12.5" r="2"/><line x1="2" y1="10.5" x2="4" y2="10.5"/></svg>'+
-      '<text font-size="14" font-weight="600" fill="var(--text)" y="'+(y+22)+'">'+titleTspans+'</text>'+
-      '<text x="'+(x+44)+'" y="'+(y+info.statusY)+'" font-size="11.5" font-weight="600" fill="'+statusColor+'">'+statusLabel+'</text>'+
-      '<text class="mono" x="'+(x+44)+'" y="'+(y+info.driverY)+'" font-size="11.5" fill="var(--dim)">'+fitText(driverStr,titleMaxW,11.5,{mono:true})+'</text>'+
+      '<svg x="'+(x+14)+'" y="'+(y+14)+'" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="'+iconColor+'" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="11" rx="2"/><circle cx="8" cy="11.5" r="2"/><circle cx="15" cy="11.5" r="2"/><line x1="5" y1="17" x2="5" y2="20"/><line x1="9" y1="17" x2="9" y2="20"/><line x1="21" y1="9" x2="23" y2="9"/><line x1="21" y1="13" x2="23" y2="13"/></svg>'+
+      '<text font-size="15" font-weight="600" fill="var(--text)" y="'+(y+23)+'">'+titleTspans+'</text>'+
+      '<text x="'+(x+44)+'" y="'+(y+info.statusY)+'" font-size="12.5" font-weight="600" fill="'+statusColor+'">'+statusLabel+'</text>'+
+      '<text class="mono" x="'+(x+44)+'" y="'+(y+info.driverY)+'" font-size="12.5" fill="var(--dim)">'+fitText(driverStr,titleMaxW,12.5,{mono:true})+'</text>'+
       '<rect x="'+(x+44)+'" y="'+(y+info.barY)+'" width="'+barW+'" height="6" rx="3" fill="var(--panel)"/>'+
       '<rect x="'+(x+44)+'" y="'+(y+info.barY)+'" width="'+(barW*vramPct/100).toFixed(1)+'" height="6" rx="3" fill="'+iconColor+'" opacity="0.85"/>'+
-      '<text class="mono" x="'+(x+gpuBoxW-14)+'" y="'+(y+info.barY+6)+'" font-size="10.5" fill="var(--faint)" text-anchor="end">'+(g.vram?g.vram+'GB':'?')+'</text>'+
+      '<text class="mono" x="'+(x+gpuBoxW-14)+'" y="'+(y+info.barY+6)+'" font-size="11.5" fill="var(--faint)" text-anchor="end">'+(g.vram?g.vram+'GB':'?')+'</text>'+
       '</g>';
   });
 
@@ -1798,9 +1819,9 @@ function renderGPU(){
     svg+='<g class="gfx-node">'+
       '<rect x="'+x+'" y="'+y+'" width="'+monBoxW+'" height="'+MON_H+'" rx="12" fill="var(--panel2)" stroke="var(--line)" stroke-width="1.25"/>'+
       '<svg x="'+(x+14)+'" y="'+(y+12)+'" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--info)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>'+
-      '<text x="'+(x+42)+'" y="'+(y+22)+'" font-size="13.5" font-weight="600" fill="var(--text)">'+fitText(d.mon||'Display',monTitleMaxW,13.5,{bold:true})+'</text>'+
-      '<text class="mono" x="'+(x+42)+'" y="'+(y+42)+'" font-size="11" fill="var(--dim)">'+fitText(d.res||'',monTitleMaxW,11,{mono:true})+'</text>'+
-      '<text class="mono" x="'+(x+42)+'" y="'+(y+58)+'" font-size="11" fill="var(--dim)">'+fitText(d.hz||'',monTitleMaxW,11,{mono:true})+'</text>'+
+      '<text x="'+(x+42)+'" y="'+(y+23)+'" font-size="15" font-weight="600" fill="var(--text)">'+fitText(d.mon||'Display',monTitleMaxW,15,{bold:true})+'</text>'+
+      '<text class="mono" x="'+(x+42)+'" y="'+(y+43)+'" font-size="12" fill="var(--dim)">'+fitText(d.res||'',monTitleMaxW,12,{mono:true})+'</text>'+
+      '<text class="mono" x="'+(x+42)+'" y="'+(y+60)+'" font-size="12" fill="var(--dim)">'+fitText(d.hz||'',monTitleMaxW,12,{mono:true})+'</text>'+
       '</g>';
   });
 
@@ -1809,8 +1830,8 @@ function renderGPU(){
     svg+='<g class="gfx-node">'+
       '<rect x="'+x+'" y="'+y+'" width="'+monBoxW+'" height="'+MON_H+'" rx="12" fill="var(--panel2)" stroke="var(--line)" stroke-width="1" stroke-dasharray="4 4" opacity="0.75"/>'+
       '<svg x="'+(x+14)+'" y="'+(y+12)+'" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--faint)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>'+
-      '<text x="'+(x+42)+'" y="'+(y+22)+'" font-size="13" font-weight="600" fill="var(--dim)">'+fitText(name,monTitleMaxW,13,{bold:true})+'</text>'+
-      '<text class="mono" x="'+(x+42)+'" y="'+(y+42)+'" font-size="11" fill="var(--faint)">Detected via EDID, GPU unknown</text>'+
+      '<text x="'+(x+42)+'" y="'+(y+23)+'" font-size="14.5" font-weight="600" fill="var(--dim)">'+fitText(name,monTitleMaxW,14.5,{bold:true})+'</text>'+
+      '<text class="mono" x="'+(x+42)+'" y="'+(y+43)+'" font-size="12" fill="var(--faint)">Detected via EDID, GPU unknown</text>'+
       '</g>';
   });
 
