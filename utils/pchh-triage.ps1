@@ -711,9 +711,16 @@ function renderSpecs(){
     SMART.forEach(d=>{smartByDisk[String(d.disk)]=d;});
     const disksSorted=[...DISKLAYOUT].sort((a,b)=>(+a.disk)-(+b.disk));
     dh+='<div class="spec-section"><h2>Disk layout</h2>';
-    const TYPE_COLOR={'EFI System Partition':'var(--info)','Recovery':'var(--warn)','Recovery (MBR)':'var(--warn)','Microsoft Reserved':'var(--faint)','Data':'var(--ok)','System':'var(--dim)'};
+    const TYPE_COLOR={'EFI System Partition':'var(--info)','Recovery':'var(--warn)','Recovery (MBR)':'var(--warn)','Microsoft Reserved':'var(--faint)','Data':'var(--ok)','System':'var(--dim)','Unallocated':'var(--panel)'};
     disksSorted.forEach(dk=>{
-      const total=dk.partitions.reduce((a,p)=>a+p.sizeGB,0)||dk.sizeGB||1;
+      // Scale against the disk's actual capacity, not the sum of its partitions - otherwise a disk
+      // that's mostly unallocated (e.g. an old drive's small partition carried over onto a much
+      // bigger replacement without ever being extended) renders as a "full" bar with no visual sign
+      // that most of the physical drive isn't even partitioned yet.
+      const partSum=dk.partitions.reduce((a,p)=>a+p.sizeGB,0);
+      const total=dk.sizeGB||partSum||1;
+      const unallocGB=Math.max(0,total-partSum);
+      const parts=unallocGB>0.5?[...dk.partitions,{type:'Unallocated',sizeGB:unallocGB,letter:''}]:dk.partitions;
       const sm=smartByDisk[String(dk.disk)];
       const probs=sm?smartProbs(sm):[];
       const bad=probs.length>0;
@@ -724,14 +731,16 @@ function renderSpecs(){
         (healthLabel?' \u00b7 <span style="color:'+(bad?'var(--err)':'var(--ok)')+'">'+esc(healthLabel)+'</span>':'')+'</div>'+
         (bad?'<div style="color:var(--err);font-size:13.5px;margin-bottom:6px">\u26a0 SMART warning &mdash; click for details</div>':'');
       dh+='<div style="display:flex;height:22px;border-radius:6px;overflow:hidden;margin:10px 0;background:var(--panel2)">';
-      dk.partitions.forEach(p=>{
+      parts.forEach(p=>{
         const pct=Math.max(1.5,(p.sizeGB/total*100));
         const col=TYPE_COLOR[p.type]||'var(--dim)';
-        dh+='<div title="'+esc(p.type)+(p.letter?' ('+esc(p.letter)+')':'')+' \u00b7 '+p.sizeGB+' GB" style="width:'+pct+'%;background:'+col+';border-right:1px solid var(--panel)"></div>';
+        const style=p.type==='Unallocated'?'width:'+pct+'%;background:repeating-linear-gradient(135deg,var(--panel2),var(--panel2) 4px,var(--line) 4px,var(--line) 8px);border-right:1px solid var(--panel)':'width:'+pct+'%;background:'+col+';border-right:1px solid var(--panel)';
+        dh+='<div title="'+esc(p.type)+(p.letter?' ('+esc(p.letter)+')':'')+' \u00b7 '+p.sizeGB.toFixed(1)+' GB" style="'+style+'"></div>';
       });
       dh+='</div><dl class="kv smart-kv">';
-      dk.partitions.forEach(p=>{
-        dh+='<dt><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:'+(TYPE_COLOR[p.type]||'var(--dim)')+';margin-right:6px"></span>'+esc(p.type)+(p.letter?' ('+esc(p.letter)+')':'')+'</dt><dd>'+p.sizeGB+' GB</dd>';
+      parts.forEach(p=>{
+        const swatch=p.type==='Unallocated'?'background:repeating-linear-gradient(135deg,var(--panel2),var(--panel2) 2px,var(--line) 2px,var(--line) 4px)':'background:'+(TYPE_COLOR[p.type]||'var(--dim)');
+        dh+='<dt><span style="display:inline-block;width:9px;height:9px;border-radius:2px;'+swatch+';margin-right:6px"></span>'+esc(p.type)+(p.letter?' ('+esc(p.letter)+')':'')+'</dt><dd>'+p.sizeGB.toFixed(1)+' GB</dd>';
       });
       dh+='</dl></div>';
     });
@@ -835,6 +844,9 @@ const FAQ_DATA=[
 {id:'device-manager-errors',q:"Device Manager Errors",a:"Windows found a piece of hardware but couldn't properly load a driver for it, or the device itself reported a problem. This usually means a missing, outdated, or corrupted driver. Occasionally it's a genuine hardware fault.",tools:["AMD Drivers & Support","NVIDIA Drivers & Support","Intel Drivers & Support"]},
 {id:'mbr-secureboot',q:"MBR Partitioning",a:"Windows drives use one of two partitioning styles: MBR or the newer GPT. Secure Boot, a feature that helps stop malware loading before Windows starts, requires GPT.<br><br>If the main drive (the one with Windows installed on it) is MBR, Secure Boot can't be turned on without converting the drive or doing a clean reinstall of Windows, which is a bigger job and best not attempted without guidance.",tools:[]},
 {id:'windows-on-slower-drive',q:"Windows Installed on a Slower Drive",a:"This PC has an NVMe drive - the fastest common type of storage, connecting directly over the motherboard's high-speed PCIe lanes - but Windows itself is installed on a different, slower drive (SATA SSD or hard drive) instead.<br><br>SATA SSDs are still fast for everyday use, but NVMe is typically several times quicker for boot times, app loading, and anything that reads/writes a lot of small files. If the NVMe drive has enough free space, migrating Windows over to it (via cloning software or a fresh install) would give a noticeable speed improvement, particularly for boot time and load screens.",tools:[]},
+{id:'unallocated-space',q:"Unallocated Disk Space",a:"Part of this drive's physical capacity isn't assigned to any partition at all - it's not free space inside a drive letter that Windows can use, it's simply invisible and unusable until a partition is created or extended into it."
+  +"<br><br>This most commonly happens after replacing a drive with a bigger one: cloning software or an in-place Windows install (choosing 'Keep personal files and apps' during setup) carries the old, smaller partition layout across onto the new drive without automatically resizing anything to fill it. The result is a drive that reports its full new capacity, but where Windows itself only ever sees the old, smaller amount."
+  +"<br><br>The fix is to open Disk Management (right-click Start, or search for 'Create and format hard disk partitions'), right-click the main partition (usually C:), and choose 'Extend Volume' - this grows the partition into the unallocated space, right up alongside it. Extend Volume only works on unallocated space directly next to the partition, so if it's greyed out, the unallocated space likely sits after another partition (such as the Recovery partition) blocking it; a partition management tool that can move partitions, or a temporary Recovery partition deletion/recreation, may be needed in that case.",tools:[]},
 {id:'pending-reboot',q:"Pending Reboot",a:"Windows or an update has made changes that only take full effect after a restart, and it's currently waiting on one. Until then the system can behave oddly and further updates may queue up behind it.<br><br>A normal restart resolves this.",tools:[]},
 {id:'wu-service',q:"Windows Update Service",a:"The background service that lets Windows check for and install updates is disabled. Normally it's set to start on demand (so it's often shown as 'Stopped' when idle - that's expected and not a problem), but 'Disabled' means it can't start at all, so Windows won't be able to update until it's turned back on.",tools:[]},
 {id:'wu-failed',q:"Failed Windows Updates",a:"One or more recent update attempts failed partway through rather than installing cleanly. This can happen for lots of reasons: a bad download, low disk space, corrupted update files, or a conflict with other software.<br><br>It can sometimes leave a PC feeling unstable or repeatedly nagging about the same update.",tools:["Windows 11 Download"]},
@@ -1184,6 +1196,17 @@ function renderSummary(){
   if(sysDiskBus&&!/nvme/i.test(sysDiskBus)&&SMART.some(d=>/nvme/i.test(d.bus||''))){
     notes.push(dataLink('drives','windows-on-slower-drive','<span class="y">Windows is on '+esc(sysDiskBus)+', not the faster NVMe drive also in this PC</span>'));
   }
+  // Large unallocated space usually means a partition never got extended after moving to a bigger
+  // drive - very common after an in-place "keep files" install carries an old, smaller partition
+  // layout onto a new, larger replacement drive without resizing anything.
+  DISKLAYOUT.forEach(dk=>{
+    const partSum=dk.partitions.reduce((a,p)=>a+p.sizeGB,0);
+    const unallocGB=Math.max(0,(dk.sizeGB||0)-partSum);
+    if(unallocGB>20&&dk.sizeGB&&unallocGB/dk.sizeGB>0.1){
+      const pct=Math.round(unallocGB/dk.sizeGB*100);
+      notes.push(dataLink('drives','unallocated-space','<span class="y">Disk '+esc(dk.disk)+' has '+Math.round(unallocGB)+' GB ('+pct+'%) of unallocated space not assigned to any partition</span>'));
+    }
+  });
   if(WINUPDATE&&WINUPDATE.pendingReboot)notes.push(dataLink('updates','pending-reboot','<span class="y">System has a pending reboot (Windows Update or servicing)</span>'));
   if(WINUPDATE&&WINUPDATE.serviceStartType==='Disabled')notes.push(dataLink('updates','wu-service','<span class="y">Windows Update service is disabled</span>'));
   const wuFails=WUHISTORY.filter(u=>u.result==='Failed'||u.result==='Cancelled').length;
