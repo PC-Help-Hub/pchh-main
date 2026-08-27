@@ -1131,6 +1131,13 @@ function renderSummary(){
   // Only treat it as adding something when it doesn't just repeat that.
   const mbForDedupe=specVal(sp.info,'Motherboard')||'';
   const sysModelIsDupe=sysModel && mbForDedupe.toLowerCase().includes(sysModel.toLowerCase());
+  // Same DIY signature on the manufacturer side: with no real system OEM, Windows reports the
+  // motherboard vendor's own legal name here (e.g. "Micro-Star International Co., Ltd.") instead
+  // of an actual system brand. Comparing directly against Motherboard Manufacturer catches this
+  // without needing a hardcoded list of vendor names - a genuine OEM (Dell, HP, Lenovo) never
+  // matches its own motherboard supplier's name here, so this stays specific to DIY builds.
+  const mbMfrForDedupe=specVal(sp.info,'Motherboard Manufacturer')||'';
+  const sysMfrIsMobo=sysMfr&&mbMfrForDedupe&&sysMfr.trim().toLowerCase()===mbMfrForDedupe.trim().toLowerCase();
   const os=specVal(sp.info,'OS'), build=specVal(sp.info,'Build'), up=specVal(sp.info,'System Uptime');
   const WINVER={ '26200':'25H2','26100':'24H2','22631':'23H2','22621':'22H2','22000':'21H2','19045':'22H2','19044':'21H2' };
   const cpu=specVal(sp.info,'CPU Name');
@@ -1497,9 +1504,12 @@ function renderSummary(){
     // Never fall back to the hostname (System Name) here - people commonly name their PC after
     // themselves (e.g. a literal "Rory-PC"), so showing it risks leaking a real name into a
     // report meant to be safely shareable. When manufacturer/model are the generic BIOS
-    // placeholder strings (common on DIY boards), fall back to a plainly generic label instead.
-    const titleParts=[sysMfr,(sysModel&&!sysModelIsDupe)?sysModel:''].filter(Boolean);
-    const title=titleParts.length?titleParts.join(' '):'System Manufacturer, System Product Name';
+    // placeholder strings (common on DIY boards), or the manufacturer is just the motherboard
+    // vendor's own name restated with no real system model, fall back to a plainly generic
+    // label instead - "Custom-built PC" is honest and reads far better than a stray legal
+    // entity name (e.g. "Micro-Star International Co., Ltd.") sitting alone as the PC's title.
+    const titleParts=(sysMfrIsMobo&&sysModelIsDupe)?[]:[sysMfr,(sysModel&&!sysModelIsDupe)?sysModel:''].filter(Boolean);
+    const title=titleParts.length?titleParts.join(' '):(sysMfrIsMobo?'Custom-built PC':'System Manufacturer, System Product Name');
 
     let h='<div class="identity"><div class="identity-left">'+
       '<div class="identity-icon">'+ICON_INFO+'</div>'+
