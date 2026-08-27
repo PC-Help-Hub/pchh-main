@@ -125,7 +125,7 @@ body{background:var(--bg);color:var(--text);font-family:'Albert Sans',sans-serif
 body.tab-summary #summaryView,body.tab-rel #relView,body.tab-sys #sysView,body.tab-shutdowns #shutdownsView,body.tab-mobo #moboView,body.tab-cpu #cpuView,body.tab-drives #drivesView,body.tab-gpu #gpuView,body.tab-memory #memoryView,body.tab-battery #batteryView,body.tab-net #netView,body.tab-devices #devicesView,body.tab-security #securityView,body.tab-processes #processesView,body.tab-apps #appsView,body.tab-updates #updatesView,body.tab-extensions #extensionsView,body.tab-faq #faqView,body.tab-tools #toolsView,body.tab-dumps #dumpsView{display:block;animation:viewFadeIn .28s cubic-bezier(.16,1,.3,1)}
 #pageTitle{padding:36px 36px 0;font-size:40px;font-weight:700;letter-spacing:-.01em;color:var(--text);max-width:1160px}
 #pageTitleSub{color:var(--info);font-weight:600}
-#summaryView,#sysView,#shutdownsView,#moboView,#cpuView,#drivesView,#netView,#securityView,#appsView,#dumpsView,#memoryView,#gpuView,#processesView,#extensionsView,#updatesView,#toolsView,#faqView{padding:20px 36px 64px;max-width:1160px}
+#summaryView,#relView,#sysView,#shutdownsView,#moboView,#cpuView,#drivesView,#netView,#securityView,#appsView,#dumpsView,#memoryView,#gpuView,#batteryView,#devicesView,#processesView,#extensionsView,#updatesView,#toolsView,#faqView{padding:20px 36px 64px;max-width:1160px}
 .sys-ok{color:var(--ok);padding:24px 0;font-size:16px}
 .sys-note{color:var(--faint);font-size:13px;margin-bottom:14px}
 .spec-section{margin-bottom:40px}
@@ -291,7 +291,7 @@ body.dragging #drop{color:var(--info);border-color:var(--info)}
   #timeline,#controls,#list{padding-left:14px;padding-right:14px}
   #search{width:100%;margin-left:0}
   .row{grid-template-columns:44px 10px 1fr}
-  #summaryView,#sysView,#shutdownsView,#moboView,#cpuView,#drivesView,#netView,#securityView,#appsView,#dumpsView,#memoryView,#gpuView,#processesView,#extensionsView,#updatesView,#toolsView,#faqView{padding:24px 16px 48px}
+  #summaryView,#relView,#sysView,#shutdownsView,#moboView,#cpuView,#drivesView,#netView,#securityView,#appsView,#dumpsView,#memoryView,#gpuView,#batteryView,#devicesView,#processesView,#extensionsView,#updatesView,#toolsView,#faqView{padding:24px 16px 48px}
   #pageTitle{font-size:28px;padding:24px 16px 0}
 }
 </style>
@@ -327,7 +327,7 @@ body.dragging #drop{color:var(--info);border-color:var(--info)}
         <button class="tab" data-tab="mobo"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>Motherboard</button>
         <button class="tab" data-tab="battery" id="batteryTab" style="display:none"><svg viewBox="0 0 24 24"><rect x="1" y="6" width="18" height="12" rx="2" ry="2"/><line x1="23" y1="13" x2="23" y2="11"/></svg>Battery</button>
         <button class="tab" data-tab="net"><svg viewBox="0 0 24 24"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>Network</button>
-        <button class="tab" data-tab="devices"><svg viewBox="0 0 24 24"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"/><line x1="8" y1="12" x2="16" y2="12"/></svg>Connected Devices</button>
+        <button class="tab" data-tab="devices"><svg viewBox="0 0 24 24"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"/><line x1="8" y1="12" x2="16" y2="12"/></svg>Devices</button>
       </div>
     </div>
     <div class="nav-group">
@@ -704,7 +704,7 @@ function renderSpecs(){
     // Disk layout section below gives per-partition, but laid out the way Windows' own "This PC"
     // view does, since scanning a used/free bar per drive is far faster than reading numbers out
     // of a partition table.
-    dh+='<div class="spec-section"><h2>Storage overview</h2><div class="drive-grid">';
+    dh+='<div class="spec-section"><h2>Overview</h2><div class="drive-grid">';
     sp.drives.forEach(dr=>{
       const totalGB=+dr['Total Size (GB)']||0;
       const freeGB=+dr['Free Space (GB)']||0;
@@ -773,9 +773,9 @@ function renderSpecs(){
       if(probs.length)alerts.push('<li><span class="r" style="color:var(--err)">Disk '+esc(d.disk)+' ('+esc(d.name)+'): '+esc(probs.join(', '))+'</span></li>');
     });
     DIRTY.forEach(v=>alerts.push('<li><span style="color:var(--warn)">Volume '+esc(v)+' has its dirty bit set</span></li>'));
-    dh+='<div class="spec-section" style="margin-top:26px"><h2>SMART alerts</h2>'+
+    dh+='<div class="spec-section" style="margin-top:26px"><h2>SMART data</h2>'+
       (alerts.length?'<ul class="notes">'+alerts.join('')+'</ul>'
-       :'<div style="color:var(--ok)">\u2713 No SMART alerts. All disks report Healthy with no uncorrected errors.</div>')+'</div>';
+       :'<div style="color:var(--ok)">\u2713 No SMART issues found. All disks report Healthy with no uncorrected errors.</div>')+'</div>';
   }
   document.getElementById('drivesView').innerHTML=dh||'<div class="spec-section"><h2>Storage</h2><div style="color:var(--faint)">No storage data embedded.</div></div>';
 }
@@ -2100,7 +2100,7 @@ function renderNet(){
     h+='</div></div>';
   }
   if(NET.vpns&&NET.vpns.length){
-    h+='<div class="spec-section"><h2>VPN / virtual adapters ('+NET.vpns.length+')</h2><div class="drive-grid">';
+    h+='<div class="spec-section"><h2>Virtual / tunnel adapters ('+NET.vpns.length+')</h2><div class="drive-grid">';
     NET.vpns.forEach(a=>{
       const up=/^up$/i.test(a.status);
       h+='<div class="drive"><h3>'+esc(a.name)+'</h3>'+
@@ -2198,7 +2198,7 @@ function renderDevices(){
     });
     h+='</dl></div>';
   }
-  if(!h)h='<div class="spec-section"><h2>Connected Devices</h2><div style="color:var(--faint)">No audio, webcam, or USB peripheral data was collected.</div></div>';
+  if(!h)h='<div class="spec-section"><h2>Devices</h2><div style="color:var(--faint)">No audio, webcam, or USB peripheral data was collected.</div></div>';
   v.innerHTML=h;
 }
 function renderDumps(){
