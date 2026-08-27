@@ -160,7 +160,7 @@ body.tab-summary #summaryView,body.tab-rel #relView,body.tab-sys #sysView,body.t
 .c-ram .tile-icon{background:color-mix(in srgb,var(--warn) 16%,transparent)}.c-ram .tile-icon svg{stroke:var(--warn)}
 .c-storage .tile-icon{background:color-mix(in srgb,#c398ff 16%,transparent)}.c-storage .tile-icon svg{stroke:#c398ff}
 .c-mobo .tile-icon{background:color-mix(in srgb,var(--dim) 16%,transparent)}.c-mobo .tile-icon svg{stroke:var(--dim)}
-.c-os .tile-icon{background:color-mix(in srgb,var(--info) 16%,transparent)}.c-os .tile-icon svg{stroke:var(--info)}
+.c-os .tile-icon{background:color-mix(in srgb,var(--info) 16%,transparent)}.c-os .tile-icon svg{stroke:none;fill:var(--info)}
 
 .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:100;align-items:center;justify-content:center;padding:24px}
 .modal-overlay.open{display:flex}
@@ -619,6 +619,7 @@ const ICON_STORAGE='<svg viewBox="0 0 24 24"><line x1="22" y1="12" x2="2" y2="12
 const ICON_MOBO='<svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>';
 const ICON_OS='<svg viewBox="0 0 24 24"><rect x="3" y="3" width="8" height="8" rx="1"/><rect x="13" y="3" width="8" height="8" rx="1"/><rect x="3" y="13" width="8" height="8" rx="1"/><rect x="13" y="13" width="8" height="8" rx="1"/></svg>';
 const ICON_PC='<svg viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="5" y1="7" x2="19" y2="7"/><line x1="9" y1="15" x2="9.01" y2="15"/><line x1="13" y1="15" x2="17" y2="15"/></svg>';
+const ICON_INFO='<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>';
 // Guards accordion-row toggles against text selection. Checking only whether the click
 // *landed* inside .msg isn't enough - drag-selecting a long/wrapped message often ends with
 // the mouse released just outside its box, which used to collapse the row mid-selection and
@@ -1401,12 +1402,14 @@ function renderSummary(){
     if(RAM.length){
       const heroRamGB=RAM.reduce((a,x)=>a+(+x.cap||0),0);
       const heroRamConf=[...new Set(RAM.map(m=>m.conf).filter(Boolean))].join('/');
+      const heroRamRated=[...new Set(RAM.map(m=>Math.max(+m.rated||0,+m.pnSpeed||0)||'').filter(Boolean))].join('/');
       // Only show a brand in the headline value when every stick agrees on one - a mixed-brand
       // kit (or one with no resolved brand) just falls back to plain capacity.
       const ramMfrs=[...new Set(RAM.map(m=>m.mfr).filter(Boolean))];
       const ramMfrLabel=ramMfrs.length===1?ramMfrs[0]:'';
       tiles.push({cls:'ram',icon:ICON_RAM,label:'Memory',tab:'memory',value:heroRamGB+' GB'+(ramMfrLabel?' '+ramMfrLabel:''),lines:[
-        heroRamConf?'Speed: '+heroRamConf+' MT/s':'',
+        heroRamRated?'Rated speed: '+heroRamRated+' MT/s':'',
+        heroRamConf?'Configured speed: '+heroRamConf+' MT/s':'',
         'Modules: '+RAM.length
       ].filter(Boolean)});
     }
@@ -1416,10 +1419,11 @@ function renderSummary(){
       const fmtSize=gb=>gb>=1000?(gb/1000).toFixed(1)+' TB':Math.round(gb)+' GB';
       const freePct=totalGB?Math.round(freeGB/totalGB*100):null;
       const diskCount=DISKLAYOUT.length||sp.drives.length;
+      const winDir=specVal(sp.info,'Windows Directory');
       tiles.push({cls:'storage',icon:ICON_STORAGE,label:diskCount>1?'Storage ('+diskCount+' disks)':'Storage',tab:'drives',value:fmtSize(totalGB)+' total',lines:[
         'Free space: '+fmtSize(freeGB)+(freePct!=null?' ('+freePct+'%)':''),
-        'Disks: '+diskCount
-      ]});
+        winDir?'Windows directory: '+winDir:''
+      ].filter(Boolean)});
     }
     if(mb){
       const mbClean=((mbMfr||'').replace(/ASUSTeK COMPUTER INC\./i,'ASUS').replace(/Micro-Star International.*/i,'MSI').replace(/Gigabyte Technology.*/i,'Gigabyte')+' '+mb).trim();
@@ -1433,9 +1437,10 @@ function renderSummary(){
       const fv=WINVER[bMajor];
       const installDate=specVal(sp.info,'Windows Install Date');
       tiles.push({cls:'os',icon:ICON_OS,label:'Windows',tab:'summary',value:os.replace('Microsoft ',''),lines:[
-        fv?'Version: '+fv:(build?'Build: '+build:''),
+        fv?'Version: '+fv:'',
+        build?'Build: '+build:'',
         up?'System uptime: '+up.replace(/ days?/,'d').replace(/ hours?/,'h').replace(/ minutes?/,'m').replace(/,/g,''):'',
-        installDate?'Install date: '+installDate:''
+        installDate?'Installed on: '+installDate:''
       ].filter(Boolean)});
     }
     if(!tiles.length){heroEl.innerHTML='';return;}
@@ -1457,7 +1462,7 @@ function renderSummary(){
     const title=titleParts.length?titleParts.join(' '):'System Manufacturer, System Product Name';
 
     let h='<div class="identity"><div class="identity-left">'+
-      '<div class="identity-icon">'+ICON_PC+'</div>'+
+      '<div class="identity-icon">'+ICON_INFO+'</div>'+
       '<div class="identity-text"><div class="identity-title">'+esc(title)+'</div>'+
       '</div></div>'+
       '<div class="status-pill '+pillCls+'"><span class="status-dot"></span>'+esc(pillText)+'</div></div>';
@@ -2283,6 +2288,7 @@ function fileadd {
     specs "BIOS Date: $([System.Management.ManagementDateTimeConverter]::ToDateTime($biosDate))"
     specs "`nOS: $osName"
     specs "OS Version: $osVersion"
+    specs "Windows Directory: $env:SystemRoot"
     specs "System Uptime: $($uptime.Days) days, $($uptime.Hours) hours, $($uptime.Minutes) minutes"
     specs "Build: $build"
     specs "`nTPM Status: $tpmEnabled"
