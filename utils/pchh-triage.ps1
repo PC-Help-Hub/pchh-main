@@ -221,7 +221,10 @@ body.tab-summary #summaryView,body.tab-rel #relView,body.tab-sys #sysView,body.t
 #hfSearch{background:var(--panel);border:1px solid var(--line);border-radius:6px;color:var(--text);padding:8px 12px;font-size:14px;font-family:inherit;width:260px;margin-bottom:10px}
 #hfSearch:focus{outline:none;border-color:var(--dim)}
 #progSearch:focus{outline:none;border-color:var(--dim)}
-.prog-row{padding:5px 4px;border-bottom:1px solid color-mix(in srgb,var(--line) 40%,transparent);font-size:14.5px;font-family:'Albert Sans',sans-serif;color:var(--text)}
+.prog-row{display:grid;grid-template-columns:1fr 110px;padding:5px 4px;border-bottom:1px solid color-mix(in srgb,var(--line) 40%,transparent);font-size:14.5px;font-family:'Albert Sans',sans-serif;color:var(--text)}
+.prog-row span:nth-child(2){text-align:right;color:var(--dim);font-family:'IBM Plex Mono',monospace;font-size:13px}
+.prog-head{display:grid;grid-template-columns:1fr 110px;color:var(--faint);font-size:13px;text-transform:uppercase;letter-spacing:.06em;padding:6px 4px;border-bottom:1px solid var(--line);margin-top:8px}
+.prog-head span:nth-child(2){text-align:right}
 @media (max-width:600px){.kv{grid-template-columns:1fr;gap:0}.kv dt{margin-top:8px}}
 h1{font-size:24px;font-weight:600;letter-spacing:.01em}
 #range{color:var(--dim);font-size:14px}
@@ -403,7 +406,6 @@ body.dragging #drop{color:var(--info);border-color:var(--info)}
 
 <script>
 const RAW = /*__DATA__*/[];
-let SPECS_PROGRAMS=[];
 const SPECS = /*__SPECS__*/"";
 const DUMPS = /*__DUMPS__*/[];
 const SYSEVT = /*__SYSEVT__*/[];
@@ -411,6 +413,7 @@ const SMART = /*__SMART__*/[];
 const DIRTY = /*__DIRTY__*/[];
 const DISKLAYOUT = /*__DISKLAYOUT__*/[];
 const RAM = /*__RAM__*/[];
+const PROGRAMS = /*__PROGRAMS__*/[];
 const GPUS = /*__GPUS__*/[];
 const HAGS = /*__HAGS__*/null;
 const ISLAPTOP = /*__ISLAPTOP__*/false;
@@ -669,33 +672,22 @@ document.addEventListener('drop',e=>{const f=e.dataTransfer.files[0];if(f)handle
 
 // --- specs parsing & rendering ---
 function parseSpecs(text){
-  const out={info:[],drives:[],programs:[]};
+  const out={info:[],drives:[]};
   if(!text||!text.trim())return out;
   const norm=text.replace(/\r/g,'');
   const [head, rest] = splitOnce(norm, /^Drive Information:\s*$/m);
-  const [driveTxt, progTxt] = splitOnce(rest||'', /^Programs Installed:\s*$/m);
   head.split('\n').forEach(l=>{
     const m=l.match(/^([^:]+):\s?(.*)$/);
     if(m&&m[2]!=='')out.info.push([m[1].trim(),m[2].trim()]);
   });
   let cur=null;
-  (driveTxt||'').split('\n').forEach(l=>{
+  (rest||'').split('\n').forEach(l=>{
     const m=l.match(/^([^:]+):\s?(.*)$/);
     if(!m)return;
     const k=m[1].trim(),v=m[2].trim();
     if(k==='Drive Label'){cur={};out.drives.push(cur);}
     if(cur)cur[k]=v;
   });
-  (progTxt||'').split('\n').forEach(l=>{
-    const t=l.trim();
-    if(!t||t==='DisplayName'||/^-+$/.test(t))return;
-    out.programs.push(t);
-  });
-  // The registry scan reads both the 32-bit and 64-bit Uninstall keys, so the same shared
-  // redistributable (e.g. a .NET or Visual C++ runtime) commonly appears in both and shows up
-  // twice with an identical name - dedupe before sorting so the count reflects reality.
-  out.programs=[...new Set(out.programs)];
-  out.programs.sort((a,b)=>a.localeCompare(b,undefined,{sensitivity:'base'}));
   return out;
 }
 function splitOnce(text,re){
@@ -724,12 +716,14 @@ function renderSpecs(){
       const sm=smartByDisk[String(dk.disk)];
       const probs=sm?smartProbs(sm):[];
       const bad=probs.length>0;
+      const clickable=!!sm;
       const healthLabel=(sm&&sm.health&&!(bad&&/^healthy$/i.test(sm.health)))?sm.health+(sm.op&&sm.op!=='OK'&&sm.op!==sm.health?' ('+sm.op+')':''):'';
-      dh+='<div class="drive'+(bad?' smart-bad':'')+'" style="margin-bottom:14px'+(bad?';cursor:pointer':'')+'"'+(bad?' onclick="openSmartModal(\''+esc(dk.disk)+'\')"':'')+'>';
+      dh+='<div class="drive'+(bad?' smart-bad':'')+'" style="margin-bottom:14px'+(clickable?';cursor:pointer':'')+'"'+(clickable?' onclick="openSmartModal(\''+esc(dk.disk)+'\')"':'')+'>';
       dh+='<h3>Disk '+esc(dk.disk)+(sm&&sm.name?' <span style="color:var(--dim);font-weight:400">'+esc(sm.name)+'</span>':'')+'</h3>';
       dh+='<div class="sub">'+esc(dk.style||'Unknown')+' \u00b7 '+dk.sizeGB+' GB'+(sm&&sm.bus?' \u00b7 '+esc(sm.bus):'')+
         (healthLabel?' \u00b7 <span style="color:'+(bad?'var(--err)':'var(--ok)')+'">'+esc(healthLabel)+'</span>':'')+'</div>'+
-        (bad?'<div style="color:var(--err);font-size:13.5px;margin-bottom:6px">\u26a0 SMART warning &mdash; click for details</div>':'');
+        (bad?'<div style="color:var(--err);font-size:13.5px;margin-bottom:6px">\u26a0 SMART warning &mdash; click for details</div>'
+          :(clickable?'<div style="color:var(--faint);font-size:13px;margin-bottom:6px">Click for drive health details</div>':''));
       dh+='<div style="display:flex;height:22px;border-radius:6px;overflow:hidden;margin:10px 0;background:var(--panel2)">';
       parts.forEach(p=>{
         const pct=Math.max(1.5,(p.sizeGB/total*100));
@@ -740,7 +734,14 @@ function renderSpecs(){
       dh+='</div><dl class="kv smart-kv">';
       parts.forEach(p=>{
         const swatch=p.type==='Unallocated'?'background:repeating-linear-gradient(135deg,var(--panel2),var(--panel2) 2px,var(--line) 2px,var(--line) 4px)':'background:'+(TYPE_COLOR[p.type]||'var(--dim)');
-        dh+='<dt><span style="display:inline-block;width:9px;height:9px;border-radius:2px;'+swatch+';margin-right:6px"></span>'+esc(p.type)+(p.letter?' ('+esc(p.letter)+')':'')+'</dt><dd>'+p.sizeGB.toFixed(1)+' GB</dd>';
+        // Show free space directly against any partition with a drive letter, sourced from the
+        // same logical-drive data the storage tile uses - free space otherwise only exists as a
+        // percentage buried in the raw specs text, with no visible home in this view at all.
+        const vol=p.letter?sp.drives.find(dr=>dr['Drive Label']===p.letter):null;
+        const freeGB=vol?+vol['Free Space (GB)']:null;
+        const freePct=vol?+vol['Percentage Free (%)']:null;
+        const freeNote=freeGB!=null?' <span style="color:var(--dim);font-weight:400">('+freeGB.toFixed(1)+' GB free'+(freePct!=null?', '+Math.round(freePct)+'%':'')+')</span>':'';
+        dh+='<dt><span style="display:inline-block;width:9px;height:9px;border-radius:2px;'+swatch+';margin-right:6px"></span>'+esc(p.type)+(p.letter?' ('+esc(p.letter)+')':'')+'</dt><dd>'+p.sizeGB.toFixed(1)+' GB'+freeNote+'</dd>';
       });
       dh+='</dl></div>';
     });
@@ -756,7 +757,6 @@ function renderSpecs(){
        :'<div style="color:var(--ok)">\u2713 No SMART alerts. All disks report Healthy with no uncorrected errors.</div>')+'</div>';
   }
   document.getElementById('drivesView').innerHTML=dh||'<div class="spec-section"><h2>Storage</h2><div style="color:var(--faint)">No storage data embedded.</div></div>';
-  return sp.programs;
 }
 const PS_={q:'',page:1,key:'mem',dir:-1}, PG_={q:'',page:1};
 let PROGS_ALL=[];
@@ -788,7 +788,7 @@ function renderAppsList(programs){
   v.innerHTML=PROGS_ALL.length?
     '<div class="spec-section"><h2>Installed programs ('+PROGS_ALL.length+')</h2>'+
     '<input id="progSearch" type="text" placeholder="Filter programs\u2026">'+
-    '<div class="proc-head"><span>Program<span class="arrow"></span></span></div>'+
+    '<div class="prog-head"><span>Program</span><span>Installed</span></div>'+
     '<div id="progList"></div><div class="pager" id="progPager"></div></div>'
     :'<div class="spec-section"><h2>Installed Apps</h2><div style="color:var(--faint)">No data embedded.</div></div>';
   const ps=document.getElementById('progSearch');
@@ -847,6 +847,9 @@ const FAQ_DATA=[
 {id:'unallocated-space',q:"Unallocated Disk Space",a:"Part of this drive's physical capacity isn't assigned to any partition at all - it's not free space inside a drive letter that Windows can use, it's simply invisible and unusable until a partition is created or extended into it."
   +"<br><br>This most commonly happens after replacing a drive with a bigger one: cloning software or an in-place Windows install (choosing 'Keep personal files and apps' during setup) carries the old, smaller partition layout across onto the new drive without automatically resizing anything to fill it. The result is a drive that reports its full new capacity, but where Windows itself only ever sees the old, smaller amount."
   +"<br><br>The fix is to open Disk Management (right-click Start, or search for 'Create and format hard disk partitions'), right-click the main partition (usually C:), and choose 'Extend Volume' - this grows the partition into the unallocated space, right up alongside it. Extend Volume only works on unallocated space directly next to the partition, so if it's greyed out, the unallocated space likely sits after another partition (such as the Recovery partition) blocking it; a partition management tool that can move partitions, or a temporary Recovery partition deletion/recreation, may be needed in that case.",tools:[]},
+{id:'low-disk-space',q:"Low Disk Space",a:"This drive is down to less than 10% free space. Windows and most apps rely on having some working room on every drive - for temp files, virtual memory paging, browser caches, and background maintenance tasks like Defender scans or Windows Update staging - so a drive running this low can slow the whole system down, not just that one drive."
+  +"<br><br>On the system drive (usually C:) specifically, this can also directly affect Windows' own responsiveness, since the page file and various system caches live there. On a secondary data or games drive, the more common symptom is failed installs, corrupted saves, or apps refusing to update."
+  +"<br><br>Freeing up space (uninstalling unused programs, clearing Downloads, running Disk Cleanup, or moving files to another drive) is the direct fix. If the drive is already fairly full of things that are actually needed, a larger replacement drive may be the more lasting solution.",tools:["WizTree","BleachBit"]},
 {id:'pending-reboot',q:"Pending Reboot",a:"Windows or an update has made changes that only take full effect after a restart, and it's currently waiting on one. Until then the system can behave oddly and further updates may queue up behind it.<br><br>A normal restart resolves this.",tools:[]},
 {id:'wu-service',q:"Windows Update Service",a:"The background service that lets Windows check for and install updates is disabled. Normally it's set to start on demand (so it's often shown as 'Stopped' when idle - that's expected and not a problem), but 'Disabled' means it can't start at all, so Windows won't be able to update until it's turned back on.",tools:[]},
 {id:'wu-failed',q:"Failed Windows Updates",a:"One or more recent update attempts failed partway through rather than installing cleanly. This can happen for lots of reasons: a bad download, low disk space, corrupted update files, or a conflict with other software.<br><br>It can sometimes leave a PC feeling unstable or repeatedly nagging about the same update.",tools:["Windows 11 Download"]},
@@ -1006,11 +1009,11 @@ function renderProcList(){
 }
 function renderProgList(){
   const el=document.getElementById('progList');if(!el)return;
-  const rows=PROGS_ALL.filter(p=>!PG_.q||p.toLowerCase().includes(PG_.q));
+  const rows=PROGS_ALL.filter(p=>!PG_.q||p.name.toLowerCase().includes(PG_.q));
   const SZ=60,pages=Math.max(1,Math.ceil(rows.length/SZ));
   if(PG_.page>pages)PG_.page=pages;
   const slice=rows.slice((PG_.page-1)*SZ,PG_.page*SZ);
-  el.innerHTML=slice.map(p=>'<div class="prog-row">'+esc(p)+'</div>').join('')||'<div style="color:var(--faint)">No matches.</div>';
+  el.innerHTML=slice.map(p=>'<div class="prog-row"><span>'+esc(p.name)+'</span><span>'+esc(p.date||'\u2014')+'</span></div>').join('')||'<div style="color:var(--faint)">No matches.</div>';
   pager(document.getElementById('progPager'),PG_.page,pages,rows.length,slice.length,g=>{PG_.page+=g;renderProgList();});
 }
 const HF_={q:'',page:1};
@@ -1207,6 +1210,18 @@ function renderSummary(){
       notes.push(dataLink('drives','unallocated-space','<span class="y">Disk '+esc(dk.disk)+' has '+Math.round(unallocGB)+' GB ('+pct+'%) of unallocated space not assigned to any partition</span>'));
     }
   });
+  // Low free space on any drive letter, not just the system drive - a nearly-full data/games
+  // drive can be just as disruptive (install failures, save-game corruption, browser cache
+  // errors) as a nearly-full C:, and this was previously only visible by digging into the
+  // Drives tab rather than shown anywhere upfront.
+  (sp.drives||[]).forEach(dr=>{
+    const totalGB=+dr['Total Size (GB)'],freeGB=+dr['Free Space (GB)'];
+    if(!totalGB)return;
+    const freePct=dr['Percentage Free (%)']!=null?+dr['Percentage Free (%)']:(freeGB/totalGB*100);
+    if(freePct<10){
+      notes.push(dataLink('drives','low-disk-space','<span class="y">Drive '+esc(dr['Drive Label']||'?')+' has only '+Math.round(freePct)+'% free space ('+freeGB.toFixed(1)+' GB) &mdash; performance can suffer when a drive runs this low</span>'));
+    }
+  });
   if(WINUPDATE&&WINUPDATE.pendingReboot)notes.push(dataLink('updates','pending-reboot','<span class="y">System has a pending reboot (Windows Update or servicing)</span>'));
   if(WINUPDATE&&WINUPDATE.serviceStartType==='Disabled')notes.push(dataLink('updates','wu-service','<span class="y">Windows Update service is disabled</span>'));
   const wuFails=WUHISTORY.filter(u=>u.result==='Failed'||u.result==='Cancelled').length;
@@ -1313,8 +1328,8 @@ function renderSummary(){
     {re:/gigabyte.*(smart ?fan|\bsiv\b)/i, label:'Gigabyte SIV/Smart Fan', grp:'fan'},
   ];
   const foundSoft={};
-  (sp.programs||[]).forEach(p=>{
-    SOFT_FLAGS.forEach(f=>{ if(f.re.test(p)){ (foundSoft[f.grp]=foundSoft[f.grp]||new Set()).add(f.label); } });
+  PROGRAMS.forEach(p=>{
+    SOFT_FLAGS.forEach(f=>{ if(f.re.test(p.name)){ (foundSoft[f.grp]=foundSoft[f.grp]||new Set()).add(f.label); } });
   });
   const softNotes=[];
   if(SECURITY&&SECURITY.avProducts&&SECURITY.avProducts.length){
@@ -1769,7 +1784,7 @@ function renderGPU(){
   const igpu=GPUS.find(isIGPU),dgpu=GPUS.find(isDGPU);
   let mismatchActive=null;
   if(igpu&&dgpu){
-    const igpuActive=!!byGpu[igpu.name],dgpuActive=!!byGpu[dgpu.name];
+    const igpuActive=!!byGpu[igpu.name]||igpu.hres>0,dgpuActive=!!byGpu[dgpu.name]||dgpu.hres>0;
     if(igpuActive&&!dgpuActive)mismatchActive='igpu';
   }
 
@@ -1837,7 +1852,11 @@ function renderGPU(){
 
   GPUS.forEach((g,i)=>{
     const x=gpuLayout.x[i],y=gpuRowY,info=gpuInfo[i];
-    const active=!!byGpu[g.name];
+    // dxdiag's per-output display mapping (DISPLAYS/byGpu) is the primary signal, but it can come
+    // back empty on some systems even with a monitor clearly attached and running - fall back to
+    // the GPU's own WMI-reported resolution (hres>0) in that case, same fallback already used for
+    // the equivalent check on the Summary tab, so a healthy connected GPU doesn't show as "Idle".
+    const active=!!byGpu[g.name]||g.hres>0;
     const isWarnNode=mismatchActive==='igpu'&&g.name===igpu.name;
     const stroke=isWarnNode?'var(--warn)':(active?'var(--ok)':'var(--line)');
     const iconColor=isWarnNode?'var(--warn)':(active?'var(--ok)':'var(--faint)');
@@ -2178,7 +2197,7 @@ document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{
 document.querySelectorAll('.nav-group-title:not(.static)').forEach(g=>g.onclick=()=>{
   g.closest('.nav-group').classList.toggle('collapsed');
 });
-SPECS_PROGRAMS=SPECS_PROGRAMS=renderSpecs();
+renderSpecs();
 load(RAW);
 renderSummary();
 renderSys();
@@ -2192,7 +2211,7 @@ renderCPU();
 renderMemory();
 renderBattery();
 renderSecurity();
-renderAppsList(SPECS_PROGRAMS);
+renderAppsList(PROGRAMS);
 renderProcesses();
 renderExtensions();
 renderUpdates();
@@ -2455,15 +2474,30 @@ function fileadd {
 
 
 
-    $installedPrograms = Get-ItemProperty HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*,
-    HKLM:\Software\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\* |
-    Select-Object DisplayName |
-    Where-Object { $null -ne $_.DisplayName }
+    $installedPrograms = @(Get-ItemProperty HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*,
+        HKLM:\Software\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\* -ErrorAction SilentlyContinue |
+        Where-Object { $_.DisplayName } |
+        ForEach-Object {
+            $installDate = ""
+            if ($_.InstallDate -and "$($_.InstallDate)" -match '^\d{8}$') {
+                try { $installDate = [datetime]::ParseExact("$($_.InstallDate)", 'yyyyMMdd', $null).ToString('dd/MM/yyyy') } catch { }
+            }
+            [PSCustomObject]@{ name = "$($_.DisplayName)"; date = $installDate }
+        })
 
-    $programs = $installedPrograms | Out-String
+    # The registry scan reads both the 32-bit and 64-bit Uninstall keys, so the same shared
+    # redistributable (e.g. a .NET or Visual C++ runtime) commonly appears in both and shows up
+    # twice with an identical name - dedupe before sorting so the count reflects reality, keeping
+    # whichever copy actually has an install date recorded.
+    $programsByName = @{}
+    foreach ($p in $installedPrograms) {
+        $key = $p.name.ToLowerInvariant()
+        if (-not $programsByName.ContainsKey($key) -or (-not $programsByName[$key].date -and $p.date)) {
+            $programsByName[$key] = $p
+        }
+    }
+    $programs = @($programsByName.Values | Sort-Object { $_.name.ToLowerInvariant() })
 
-    specs "`n`nPrograms Installed:`n $programs"
-    
     Write-Host -NoNewline -ForegroundColor Green "$(cmark)"
     Write-Host " System specs collected"
 
@@ -3757,6 +3791,7 @@ namespace PCHH {
         $camerasJson = (ConvertTo-Json @($cameras) -Compress).Replace('</', '<\/')
         $memuseJson = if ($memuse) { (ConvertTo-Json $memuse -Compress).Replace('</', '<\/') } else { 'null' }
         $ramJson = if ($ram.Count -gt 0) { (ConvertTo-Json @($ram) -Compress -Depth 3).Replace('</', '<\/') } else { '[]' }
+        $programsJson = if ($programs.Count -gt 0) { (ConvertTo-Json @($programs) -Compress -Depth 2).Replace('</', '<\/') } else { '[]' }
         $smartJson = if ($smart.Count -gt 0) { (ConvertTo-Json @($smart) -Compress -Depth 3).Replace('</', '<\/') } else { '[]' }
         $dirtyJson = if ($dirtyVols.Count -gt 0) { (ConvertTo-Json @($dirtyVols) -Compress).Replace('</', '<\/') } else { '[]' }
         $diskLayoutJson = if ($diskLayout.Count -gt 0) { (ConvertTo-Json @($diskLayout) -Compress -Depth 4).Replace('</', '<\/') } else { '[]' }
@@ -3765,7 +3800,7 @@ namespace PCHH {
         $specsJson = (ConvertTo-Json "$specsRaw" -Compress).Replace('</', '<\/')
 
         $genStamp = (Get-Date).ToString("dd'/'MM'/'yyyy HH:mm")
-        $viewerHtml = $viewerTemplate.Replace('/*__VER__*/""', "`"$scriptVersion`"").Replace('/*__GEN__*/""', "`"$genStamp`"").Replace('/*__DATA__*/[]', $json).Replace('/*__SPECS__*/""', $specsJson).Replace('/*__DUMPS__*/[]', $dumpsJson).Replace('/*__SYSEVT__*/[]', $sysJson).Replace('/*__SMART__*/[]', $smartJson).Replace('/*__DIRTY__*/[]', $dirtyJson).Replace('/*__DISKLAYOUT__*/[]', $diskLayoutJson).Replace('/*__RAM__*/[]', $ramJson).Replace('/*__GPUS__*/[]', $gpusJson).Replace('/*__HAGS__*/null', $hagsJson).Replace('/*__ISLAPTOP__*/false', $isLaptopJson).Replace('/*__MONS__*/[]', $monsJson).Replace('/*__DISPLAYS__*/[]', $displaysJson).Replace('/*__PROCS__*/[]', $procsJson).Replace('/*__MEMUSE__*/null', $memuseJson).Replace('/*__NET__*/null', $netJson).Replace('/*__SECURITY__*/null', $securityJson).Replace('/*__HOTFIXES__*/[]', $hotfixesJson).Replace('/*__WINDOWSOLD__*/null', $windowsOldJson).Replace('/*__POWERPLAN__*/null', $powerPlanJson).Replace('/*__GENFLAGS__*/null', $generalFlagsJson).Replace('/*__CBS__*/null', $cbsJson).Replace('/*__WUHISTORY__*/[]', $wuHistoryJson).Replace('/*__WINUPDATE__*/null', $winUpdateJson).Replace('/*__DEVERR__*/[]', $devErrorsJson).Replace('/*__AUDIO__*/null', $audioJson).Replace('/*__USB__*/[]', $usbJson).Replace('/*__CAMERAS__*/[]', $camerasJson).Replace('/*__BATTERY__*/[]', $batteryJson).Replace('/*__RAMSLOTS__*/null', $ramSlotsJson)
+        $viewerHtml = $viewerTemplate.Replace('/*__VER__*/""', "`"$scriptVersion`"").Replace('/*__GEN__*/""', "`"$genStamp`"").Replace('/*__DATA__*/[]', $json).Replace('/*__SPECS__*/""', $specsJson).Replace('/*__DUMPS__*/[]', $dumpsJson).Replace('/*__SYSEVT__*/[]', $sysJson).Replace('/*__SMART__*/[]', $smartJson).Replace('/*__DIRTY__*/[]', $dirtyJson).Replace('/*__DISKLAYOUT__*/[]', $diskLayoutJson).Replace('/*__RAM__*/[]', $ramJson).Replace('/*__PROGRAMS__*/[]', $programsJson).Replace('/*__GPUS__*/[]', $gpusJson).Replace('/*__HAGS__*/null', $hagsJson).Replace('/*__ISLAPTOP__*/false', $isLaptopJson).Replace('/*__MONS__*/[]', $monsJson).Replace('/*__DISPLAYS__*/[]', $displaysJson).Replace('/*__PROCS__*/[]', $procsJson).Replace('/*__MEMUSE__*/null', $memuseJson).Replace('/*__NET__*/null', $netJson).Replace('/*__SECURITY__*/null', $securityJson).Replace('/*__HOTFIXES__*/[]', $hotfixesJson).Replace('/*__WINDOWSOLD__*/null', $windowsOldJson).Replace('/*__POWERPLAN__*/null', $powerPlanJson).Replace('/*__GENFLAGS__*/null', $generalFlagsJson).Replace('/*__CBS__*/null', $cbsJson).Replace('/*__WUHISTORY__*/[]', $wuHistoryJson).Replace('/*__WINUPDATE__*/null', $winUpdateJson).Replace('/*__DEVERR__*/[]', $devErrorsJson).Replace('/*__AUDIO__*/null', $audioJson).Replace('/*__USB__*/[]', $usbJson).Replace('/*__CAMERAS__*/[]', $camerasJson).Replace('/*__BATTERY__*/[]', $batteryJson).Replace('/*__RAMSLOTS__*/null', $ramSlotsJson)
         try {
             Set-Content -Path $reliability_html_path -Value $viewerHtml -Encoding UTF8
         } catch {
