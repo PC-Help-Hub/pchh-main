@@ -871,6 +871,9 @@ const FAQ_DATA=[
 {id:'wrong-gpu-slot',q:"Display on the Wrong GPU",a:"This PC has a dedicated graphics card, but the monitor cable is plugged into the motherboard's video output instead of the graphics card's. That routes everything through the slower integrated graphics built into the CPU, so the dedicated GPU sits there unused."
   +"<br><br>This is a very common cable mistake, especially after a fresh build or a cable getting knocked loose. The desktop will still work and look normal, but games and demanding programs will run far below the performance the GPU should be giving."
   +"<br><br>The fix is simple: move the monitor cable to one of the ports on the graphics card itself, usually found at the bottom of the case where the card's bracket is, rather than the ports built into the motherboard I/O panel at the top.",tools:["GPU-Z"]},
+{id:'basic-display-adapter',q:"Microsoft Basic Display Adapter",a:"Windows falls back to this generic, built-in driver when it can't load the real driver for the graphics card - usually because the actual driver crashed, failed to install properly, or got corrupted, often triggered by an unstable overclock or XMP/EXPO profile causing a crash on the last restart."
+  +"<br><br>Basic Display Adapter has no hardware acceleration and doesn't expose the monitor's real capabilities, which is why it causes poor performance everywhere (including the desktop, not just games) and often removes the ability to change refresh rate or resolution options that were available before."
+  +"<br><br>The fix is a clean reinstall of the proper GPU driver. Fully removing the old one first with Display Driver Uninstaller (DDU), then installing a fresh driver from AMD/NVIDIA/Intel directly, resolves this far more reliably than installing over the top of the broken one.",tools:["Display Driver Uninstaller (DDU)"]},
 {id:'software-bloatware',q:"Bloatware / PUPs",a:"This flags software with a track record of being unwanted, low-value, or actively harmful to performance: things like registry 'cleaners', aggressive PC 'optimizer' tools, or trial antivirus suites that came pre-installed. None of these are viruses, but removing them is often one of the most effective ways to speed up a slow PC.",tools:[]},
 ];
 function renderFAQ(){
@@ -1247,6 +1250,7 @@ function renderSummary(){
     {re:/supremo/i,              label:'Supremo',                    grp:'remote'},
     {re:/zoho assist/i,          label:'Zoho Assist',                grp:'remote'},
     {re:/chrome remote desktop/i,label:'Chrome Remote Desktop',      grp:'remote'},
+    {re:/parsec/i,                label:'Parsec',                    grp:'remote'},
     // Roblox/game exploit executors - frequently bundled with malware, routinely
     // quarantined or flagged by antivirus/anti-cheat, and a common cause of game bans.
     // Worth calling out even factually, since it explains a lot of "random" AV
@@ -1358,6 +1362,16 @@ function renderSummary(){
       if(igpuActive&&!dgpuActive)notes.push(dataLink('gpu','wrong-gpu-slot','<span class="y">Display is connected to the integrated GPU ('+esc(igpu.name)+'), not the dedicated GPU ('+esc(dgpu.name)+')</span>'));
     }
   }
+  // Windows falls back to this generic, unaccelerated driver when it can't load the real GPU
+  // driver - almost always the result of a crash, a bad driver install, or (very commonly) an
+  // unstable overclock/XMP profile that corrupted the driver state on the last restart. It
+  // explains poor performance everywhere (including the desktop/BIOS-adjacent screens) and an
+  // inability to change refresh rate, since the generic driver exposes neither.
+  // Matched on PNPDeviceID (ROOT\BASICDISPLAY / ROOT\BASICRENDER), not the display name - the
+  // name is localized ("Podstawowa karta graficzna Microsoft" on Polish Windows, for example)
+  // but the PNP device ID is a fixed internal string regardless of Windows language.
+  const basicGpu=GPUS.find(g=>/root\\basic(display|render)/i.test(g.pnp||'')||/microsoft basic (display|render)/i.test(g.name));
+  if(basicGpu)notes.push(dataLink('gpu','basic-display-adapter','<span class="r">Windows is using the generic Microsoft Basic Display Adapter instead of a real GPU driver</span>'));
   if(WINDOWSOLD&&WINDOWSOLD.present)notes.push(flagLink('windows-old','<span style="color:var(--dim)">Windows.old folder present. Windows was upgraded or reset around '+esc(WINDOWSOLD.date)+'</span>'));
   if(POWERPLAN&&!POWERPLAN.isDefault)notes.push('<span style="color:var(--dim)">Non-default power plan active: '+esc(POWERPLAN.name)+'</span>');
   if(GENFLAGS&&GENFLAGS.tpmDisabled)notes.push(flagLink('tpm','<span style="color:var(--dim)">TPM is present but disabled</span>'));
@@ -2888,7 +2902,21 @@ function reliabilityexport {
             $historyCount = $searcher.GetTotalHistoryCount()
             if ($historyCount -gt 0) {
                 $resultMap = @{ 1 = "In progress"; 2 = "Succeeded"; 3 = "Succeeded with errors"; 4 = "Failed"; 5 = "Cancelled" }
-                $wuHistory = @($searcher.QueryHistory(0, [Math]::Min($historyCount, 200)) | Where-Object { $_.Title -notmatch 'Security Intelligence Update' } | Select-Object -First 40 | ForEach-Object {
+                # Definition Updates (Defender virus/spyware signature refreshes) are excluded here
+                # as noise - they land multiple times a day and would drown out real update history.
+                # The category ID is a fixed GUID from Microsoft's own update classification scheme,
+                # so it works regardless of Windows display language; Title is localized (e.g. shows
+                # up in Polish, German, etc. on non-English Windows) and matching against the English
+                # phrase alone would silently stop filtering on those systems, so it's kept only as a
+                # secondary check alongside the GUID, not the primary one.
+                $definitionUpdateCategoryId = 'e0789628-ce08-4437-be74-2495b842f43b'
+                $wuHistory = @($searcher.QueryHistory(0, [Math]::Min($historyCount, 200)) | Where-Object {
+                    $isDefinitionUpdate = $_.Title -match 'Security Intelligence Update'
+                    if (-not $isDefinitionUpdate) {
+                        try { foreach ($cat in $_.Categories) { if ($cat.CategoryID -eq $definitionUpdateCategoryId) { $isDefinitionUpdate = $true; break } } } catch { }
+                    }
+                    -not $isDefinitionUpdate
+                } | Select-Object -First 40 | ForEach-Object {
                     [PSCustomObject]@{
                         title  = "$($_.Title)"
                         date   = if ($_.Date) { $_.Date.ToString("dd'/'MM'/'yyyy HH:mm") } else { "" }
@@ -3042,6 +3070,7 @@ function reliabilityexport {
                     vres       = if ($_.CurrentVerticalResolution) { [int]$_.CurrentVerticalResolution } else { 0 }
                     hz         = if ($_.CurrentRefreshRate) { [int]$_.CurrentRefreshRate } else { 0 }
                     vram       = if ($vram) { [math]::Round($vram / 1GB, 1) } else { 0 }
+                    pnp        = "$($_.PNPDeviceID)"
                 }
             })
         } catch { }
@@ -3465,11 +3494,17 @@ function reliabilityexport {
         } catch { }
         $vpns = @()
         try {
+            # WAN Miniport entries are Microsoft's own built-in protocol adapters, present on every
+            # Windows PC by default - not third-party VPN software. ComponentID is a fixed internal
+            # driver identifier (never translated) and is the reliable way to recognise them; the
+            # InterfaceDescription text below is Microsoft-authored and can be localized on non-English
+            # Windows, so it's kept only as a secondary check alongside ComponentID, not the only one.
+            $msWanMiniportIds = 'ms_pptpminiport','ms_l2tpminiport','ms_pppoeminiport','ms_sstpminiport','ms_ndiswanip','ms_ndiswanipv6','ms_ndiswanbh','ms_agilevpnminiport','ms_rasl2tp'
             $vpns = @(Get-NetAdapter -ErrorAction SilentlyContinue | Where-Object {
                 -not $_.Physical -and (
                     $_.Status -eq 'Up' -or
                     "$($_.InterfaceDescription) $($_.Name)" -match 'TAP|Wintun|WireGuard|OpenVPN|Tailscale|Nord|ExpressVPN|Proton|Surfshark|Mullvad|ZeroTier|Hamachi|Radmin|Bright|VPN|AnyConnect|GlobalProtect|Forti|Cloudflare|WARP|Pulse|SonicWall|NetExtender|CheckPoint|SoftEther|PacketiX|Windscribe|IVPN|Psiphon|Betternet|Shadowsocks|Hotspot Shield'
-                ) -and "$($_.InterfaceDescription)" -notmatch 'WAN Miniport|Bluetooth|Loopback|Kernel Debug'
+                ) -and "$($_.InterfaceDescription)" -notmatch 'WAN Miniport|Bluetooth|Loopback|Kernel Debug' -and "$($_.ComponentID)" -notin $msWanMiniportIds
             } | ForEach-Object {
                 [PSCustomObject]@{
                     name   = "$($_.Name)"
