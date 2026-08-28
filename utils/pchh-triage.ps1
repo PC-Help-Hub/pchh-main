@@ -613,6 +613,7 @@ function summary(e){
 }
 function esc(s){return String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
 function fmtSize(gb){return gb>=1000?(gb/1000).toFixed(1)+' TB':Math.round(gb)+' GB';}
+function fmtFree(gb){return gb>=1000?(gb/1000).toFixed(1)+'TB':gb.toFixed(1)+'GB';}
 // Hero tile icons - reused verbatim from the matching sidebar tab icon wherever one exists
 // (GPU, Storage, Memory), so a tile visually promises "click me to see more" honestly. CPU,
 // Motherboard and System have no dedicated tab of their own, so they get their own icon.
@@ -705,16 +706,17 @@ function renderSpecs(){
     // view does, since scanning a used/free bar per drive is far faster than reading numbers out
     // of a partition table.
     dh+='<div class="spec-section"><h2>Overview</h2><div class="drive-grid">';
-    sp.drives.forEach(dr=>{
+    const drivesSorted=[...sp.drives].sort((a,b)=>(a['Drive Label']||'').localeCompare(b['Drive Label']||''));
+    drivesSorted.forEach(dr=>{
       const totalGB=+dr['Total Size (GB)']||0;
       const freeGB=+dr['Free Space (GB)']||0;
       if(!totalGB)return;
       const usedPct=Math.min(100,Math.round((totalGB-freeGB)/totalGB*100));
       const freePct=dr['Percentage Free (%)']!=null?Math.round(+dr['Percentage Free (%)']):Math.round(freeGB/totalGB*100);
       const low=freePct<10;
-      dh+='<div class="drive"><h3>'+esc(dr['Drive Label']||'?')+(dr['Drive Type']?' <span style="color:var(--dim);font-weight:400;font-size:14px">'+esc(dr['Drive Type'])+'</span>':'')+'</h3>'+
+      dh+='<div class="drive"><h3>'+esc(dr['Drive Label']||'?')+'</h3>'+
         '<div class="meter'+(low?' low':'')+'" style="margin:10px 0 8px"><div style="width:'+usedPct+'%"></div></div>'+
-        '<div class="sub" style="margin-bottom:0">'+fmtSize(freeGB)+' free of '+fmtSize(totalGB)+' <span style="color:'+(low?'var(--warn)':'var(--faint)')+'">('+freePct+'%)</span></div>'+
+        '<div class="sub" style="margin-bottom:0">'+fmtFree(freeGB)+' free <span style="color:'+(low?'var(--warn)':'var(--faint)')+'">('+freePct+'%)</span></div>'+
         '</div>';
     });
     dh+='</div></div>';
@@ -740,9 +742,14 @@ function renderSpecs(){
       const clickable=!!sm;
       const healthLabel=(sm&&sm.health&&!(bad&&/^healthy$/i.test(sm.health)))?sm.health+(sm.op&&sm.op!=='OK'&&sm.op!==sm.health?' ('+sm.op+')':''):'';
       dh+='<div class="drive'+(bad?' smart-bad':'')+'" style="margin-bottom:14px'+(clickable?';cursor:pointer':'')+'"'+(clickable?' onclick="openSmartModal(\''+esc(dk.disk)+'\')"':'')+'>';
-      dh+='<h3>Disk '+esc(dk.disk)+(sm&&sm.name?' <span style="color:var(--dim);font-weight:400">'+esc(sm.name)+'</span>':'')+'</h3>';
-      dh+='<div class="sub">'+esc(dk.style||'Unknown')+' \u00b7 '+dk.sizeGB+' GB'+(sm&&sm.bus?' \u00b7 '+esc(sm.bus):'')+
+      const diskFreeGB=parts.filter(p=>p.letter).reduce((a,p)=>{
+        const vol=sp.drives.find(dr=>dr['Drive Label']===p.letter);
+        return a+(vol?+vol['Free Space (GB)']:0);
+      },0);
+      dh+='<h3>Disk '+esc(dk.disk)+(sm&&sm.name?' - <span style="color:var(--dim);font-weight:400">'+esc(sm.name)+'</span>':'')+'</h3>';
+      dh+='<div class="sub">'+dk.sizeGB+' GB'+(sm&&sm.bus?' \u00b7 '+esc(sm.bus):'')+
         (healthLabel?' \u00b7 <span style="color:'+(bad?'var(--err)':'var(--ok)')+'">'+esc(healthLabel)+'</span>':'')+'</div>'+
+        (diskFreeGB>0?'<div class="sub" style="margin-top:2px">'+fmtFree(diskFreeGB)+' free</div>':'')+
         (bad?'<div style="color:var(--err);font-size:13.5px;margin-bottom:6px">\u26a0 SMART warning &mdash; click for details</div>'
           :(clickable?'<div style="color:var(--faint);font-size:13px;margin-bottom:6px">Click for drive health details</div>':''));
       dh+='<div style="display:flex;height:22px;border-radius:6px;overflow:hidden;margin:10px 0;background:var(--panel2)">';
