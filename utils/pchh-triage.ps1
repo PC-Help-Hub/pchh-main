@@ -518,8 +518,8 @@ function load(raw){
   render();
 }
 
-function fmtDay(k){const d=new Date(k);const dd=String(d.getDate()).padStart(2,'0');const mm=String(d.getMonth()+1).padStart(2,'0');return dd+'/'+mm+'/'+d.getFullYear();}
-function fmtDayShort(k){const d=new Date(k);return d.getDate()+'/'+(d.getMonth()+1);}
+function fmtDay(k){const d=new Date(k);const dd=String(d.getDate()).padStart(2,'0');const mm=String(d.getMonth()+1).padStart(2,'0');return mm+'/'+dd+'/'+d.getFullYear();}
+function fmtDayShort(k){const d=new Date(k);return (d.getMonth()+1)+'/'+d.getDate();}
 function fmtTime(d){return d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});}
 
 function render(){
@@ -1082,9 +1082,9 @@ function renderProgList(){
   const el=document.getElementById('progList');if(!el)return;
   let rows=PROGS_ALL.filter(p=>!PG_.q||p.name.toLowerCase().includes(PG_.q));
   const k=PG_.key,d=PG_.dir;
-  // Install dates are stored as 'dd/MM/yyyy' strings (or blank when Windows never recorded one),
+  // Install dates are stored as 'MM/dd/yyyy' strings (or blank when Windows never recorded one),
   // so sorting by date needs them parsed into a comparable timestamp rather than sorted as text.
-  const parseInstallDate=s=>{const m=s&&s.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);return m?Date.UTC(+m[3],+m[2]-1,+m[1]):0;};
+  const parseInstallDate=s=>{const m=s&&s.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);return m?Date.UTC(+m[3],+m[1]-1,+m[2]):0;};
   rows=rows.slice().sort((a,b)=>k==='date'?d*(parseInstallDate(a.date)-parseInstallDate(b.date)):d*a.name.localeCompare(b.name,undefined,{sensitivity:'base'}));
   const SZ=60,pages=Math.max(1,Math.ceil(rows.length/SZ));
   if(PG_.page>pages)PG_.page=pages;
@@ -1912,7 +1912,7 @@ function renderGPU(){
   }
 
   const svgW=680,margin=20,boxGap=20,rowGap=56;
-  const idealW=240,minW=160;
+  const idealW=280,minW=160;
   const vramMax=Math.max(1,...GPUS.map(g=>g.vram||0));
 
   // Lays out n boxes of a shared width in a single centered horizontal row, shrinking
@@ -2119,7 +2119,7 @@ function renderMemory(){
         (m.ddrType?'<dt>Type</dt><dd>'+esc(m.ddrType)+'</dd>':'')+
         '<dt>Capacity</dt><dd>'+esc(m.cap)+' GB</dd>'+
         (m.rated?'<dt>Rated speed</dt><dd>'+esc(m.rated)+' MT/s</dd>':'')+
-        (m.pnSpeed?'<dt>Speed (from part number)</dt><dd>'+esc(m.pnSpeed)+' MT/s'+(m.rated&&+m.pnSpeed>+m.rated?' <span style="color:var(--faint)">(higher than reported rated speed)</span>':'')+'</dd>':'')+
+        (m.pnSpeed?'<dt>Speed (from part number)</dt><dd>'+esc(m.pnSpeed)+' MT/s'+'</dd>':'')+
         (m.conf?'<dt>Configured speed</dt><dd>'+esc(m.conf)+' MT/s</dd>':'')+
         '</dl></div>';
     });
@@ -2480,7 +2480,7 @@ function fileadd {
     $build = "$buildNumber.$ubr"
 
 
-    $osInstallDate = try { ([System.Management.ManagementDateTimeConverter]::ToDateTime($os.InstallDate)).ToString("dd'/'MM'/'yyyy") } catch { "" }
+    $osInstallDate = try { ([System.Management.ManagementDateTimeConverter]::ToDateTime($os.InstallDate)).ToString("MM'/'dd'/'yyyy") } catch { "" }
     $cpuCores = ($cpu | Select-Object -ExpandProperty NumberOfCores) -join "+"
     $cpuThreads = ($cpu | Select-Object -ExpandProperty ThreadCount) -join "+"
     # WMI's MaxClockSpeed is usually the CPU's rated/base speed, but on some systems it reports
@@ -2523,7 +2523,7 @@ function fileadd {
     specs "`nMotherboard Manufacturer: $motherboardMfr"
     specs "Motherboard: $motherboardModel"
     specs "BIOS Version: $biosVersion"
-    specs "BIOS Date: $([System.Management.ManagementDateTimeConverter]::ToDateTime($biosDate))"
+    specs "BIOS Date: $([System.Management.ManagementDateTimeConverter]::ToDateTime($biosDate).ToString("MM'/'dd'/'yyyy HH:mm:ss"))"
     specs "`nOS: $osName"
     specs "OS Version: $osVersion"
     specs "System Uptime: $($uptime.Days) days, $($uptime.Hours) hours, $($uptime.Minutes) minutes"
@@ -2625,7 +2625,7 @@ function fileadd {
         ForEach-Object {
             $installDate = ""
             if ($_.InstallDate -and "$($_.InstallDate)" -match '^\d{8}$') {
-                try { $installDate = [datetime]::ParseExact("$($_.InstallDate)", 'yyyyMMdd', $null).ToString('dd/MM/yyyy') } catch { }
+                try { $installDate = [datetime]::ParseExact("$($_.InstallDate)", 'yyyyMMdd', $null).ToString('MM/dd/yyyy') } catch { }
             }
             [PSCustomObject]@{ name = "$($_.DisplayName)"; date = $installDate }
         })
@@ -2704,12 +2704,12 @@ function Get-CuratedSystemEvents {
                 # https://learn.microsoft.com/en-us/archive/technet-wiki/14246.kernel-power-event-id-41
                 $pbtRaw = ($x.Event.EventData.Data | Where-Object { $_.Name -eq 'PowerButtonTimestamp' }).'#text'
                 if ($pbtRaw -and [long]$pbtRaw -gt 0) {
-                    $pbt = ([DateTime]::FromFileTime([long]$pbtRaw)).ToString("dd'/'MM'/'yyyy HH:mm:ss")
+                    $pbt = ([DateTime]::FromFileTime([long]$pbtRaw)).ToString("MM'/'dd'/'yyyy HH:mm:ss")
                 }
             } catch { }
         }
         [PSCustomObject]@{
-            t    = $_.TimeCreated.ToString("dd'/'MM'/'yyyy HH:mm:ss")
+            t    = $_.TimeCreated.ToString("MM'/'dd'/'yyyy HH:mm:ss")
             prov = ($_.ProviderName -replace '^Microsoft-Windows-', '')
             id   = "$($_.Id)"
             lvl  = [int]$_.Level
@@ -2722,7 +2722,7 @@ function Get-CuratedSystemEvents {
     if ($whea17.Count -gt 0) {
         $latest = $whea17 | Sort-Object TimeCreated -Descending | Select-Object -First 1
         $out += [PSCustomObject]@{
-            t    = $latest.TimeCreated.ToString("dd'/'MM'/'yyyy HH:mm:ss")
+            t    = $latest.TimeCreated.ToString("MM'/'dd'/'yyyy HH:mm:ss")
             prov = 'WHEA-Logger'
             id   = '17'
             lvl  = 3
@@ -2745,7 +2745,7 @@ function reliabilityexport {
         try {
             $recs = @(Get-CimInstance Win32_ReliabilityRecords -ErrorAction Stop | ForEach-Object {
                 [PSCustomObject]@{
-                    t = $_.TimeGenerated.ToString("dd'/'MM'/'yyyy HH:mm:ss")
+                    t = $_.TimeGenerated.ToString("MM'/'dd'/'yyyy HH:mm:ss")
                     s = $_.SourceName
                     e = "$($_.EventIdentifier)"
                     p = $_.ProductName
@@ -3040,7 +3040,7 @@ function reliabilityexport {
         try {
             $woPath = "$env:SystemDrive\Windows.old"
             if (Test-Path $woPath -PathType Container) {
-                $woDate = (Get-Item $woPath -ErrorAction Stop).LastWriteTime.ToString("dd'/'MM'/'yyyy")
+                $woDate = (Get-Item $woPath -ErrorAction Stop).LastWriteTime.ToString("MM'/'dd'/'yyyy")
                 $windowsOld = [PSCustomObject]@{ present = $true; date = $woDate }
             }
         } catch { }
@@ -3057,7 +3057,7 @@ function reliabilityexport {
                 $lastLine = $cbsLines | Select-Object -Last 1
                 $lastDate = $null
                 if ($lastLine -match '^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})') {
-                    try { $lastDate = [datetime]::ParseExact($matches[1], 'yyyy-MM-dd HH:mm:ss', $null).ToString("dd'/'MM'/'yyyy HH:mm") } catch { }
+                    try { $lastDate = [datetime]::ParseExact($matches[1], 'yyyy-MM-dd HH:mm:ss', $null).ToString("MM'/'dd'/'yyyy HH:mm") } catch { }
                 }
                 $cbs = [PSCustomObject]@{
                     unresolvedCount = $unresolved.Count
@@ -3072,7 +3072,7 @@ function reliabilityexport {
                 [PSCustomObject]@{
                     id   = "$($_.HotFixID)"
                     desc = "$($_.Description)"
-                    date = if ($_.InstalledOn) { $_.InstalledOn.ToString("dd'/'MM'/'yyyy") } else { "" }
+                    date = if ($_.InstalledOn) { $_.InstalledOn.ToString("MM'/'dd'/'yyyy") } else { "" }
                 }
             })
         } catch { }
@@ -3131,7 +3131,7 @@ function reliabilityexport {
                 } | Select-Object -First 40 | ForEach-Object {
                     [PSCustomObject]@{
                         title  = "$($_.Title)"
-                        date   = if ($_.Date) { $_.Date.ToString("dd'/'MM'/'yyyy HH:mm") } else { "" }
+                        date   = if ($_.Date) { $_.Date.ToString("MM'/'dd'/'yyyy HH:mm") } else { "" }
                         result = if ($resultMap.ContainsKey([int]$_.ResultCode)) { $resultMap[[int]$_.ResultCode] } else { "Unknown" }
                     }
                 } | Sort-Object date -Descending)
@@ -3350,8 +3350,8 @@ function reliabilityexport {
             $defender = if ($mpStatus) {
                 [PSCustomObject]@{
                     rtp        = "$($mpStatus.RealTimeProtectionEnabled)"
-                    lastQuick  = if ($mpStatus.QuickScanEndTime) { $mpStatus.QuickScanEndTime.ToString("dd'/'MM'/'yyyy HH:mm") } else { "" }
-                    lastFull   = if ($mpStatus.FullScanEndTime) { $mpStatus.FullScanEndTime.ToString("dd'/'MM'/'yyyy HH:mm") } else { "" }
+                    lastQuick  = if ($mpStatus.QuickScanEndTime) { $mpStatus.QuickScanEndTime.ToString("MM'/'dd'/'yyyy HH:mm") } else { "" }
+                    lastFull   = if ($mpStatus.FullScanEndTime) { $mpStatus.FullScanEndTime.ToString("MM'/'dd'/'yyyy HH:mm") } else { "" }
                     sigAge     = "$($mpStatus.AntivirusSignatureAge)"
                     sigVersion = "$($mpStatus.AntivirusSignatureVersion)"
                 }
@@ -3385,7 +3385,7 @@ function reliabilityexport {
                 $threats = @(Get-MpThreatDetection -ErrorAction Stop | Select-Object -First 25 | ForEach-Object {
                     [PSCustomObject]@{
                         name = "$($_.ThreatName)"
-                        time = $_.InitialDetectionTime.ToString("dd'/'MM'/'yyyy HH:mm")
+                        time = $_.InitialDetectionTime.ToString("MM'/'dd'/'yyyy HH:mm")
                         act  = "$($_.ActionSuccess)"
                     }
                 })
@@ -3700,7 +3700,7 @@ function reliabilityexport {
                     media  = "$($_.PhysicalMediaType)"
                     gigabitBelowRated = $gigabitBelowRated
                     driverVersion = "$($_.DriverVersion)"
-                    driverDate    = if ($_.DriverDate) { $_.DriverDate.ToString("dd'/'MM'/'yyyy") } else { "" }
+                    driverDate    = if ($_.DriverDate) { $_.DriverDate.ToString("MM'/'dd'/'yyyy") } else { "" }
                 }
             })
         } catch { }
@@ -3901,7 +3901,7 @@ namespace PCHH {
             $dumps = @(Get-ChildItem -Path $source -ErrorAction SilentlyContinue | ForEach-Object {
                 [PSCustomObject]@{
                     n = $_.Name
-                    d = $_.LastWriteTime.ToString("dd'/'MM'/'yyyy HH:mm")
+                    d = $_.LastWriteTime.ToString("MM'/'dd'/'yyyy HH:mm")
                     z = "{0:N1} MB" -f ($_.Length / 1MB)
                 }
             })
@@ -3944,7 +3944,7 @@ namespace PCHH {
         if ($null -eq $specsRaw) { $specsRaw = "" }
         $specsJson = (ConvertTo-Json "$specsRaw" -Compress).Replace('</', '<\/')
 
-        $genStamp = (Get-Date).ToString("dd'/'MM'/'yyyy HH:mm")
+        $genStamp = (Get-Date).ToString("MM'/'dd'/'yyyy HH:mm")
         $viewerHtml = $viewerTemplate.Replace('/*__VER__*/""', "`"$scriptVersion`"").Replace('/*__GEN__*/""', "`"$genStamp`"").Replace('/*__DATA__*/[]', $json).Replace('/*__SPECS__*/""', $specsJson).Replace('/*__DUMPS__*/[]', $dumpsJson).Replace('/*__SYSEVT__*/[]', $sysJson).Replace('/*__SMART__*/[]', $smartJson).Replace('/*__DIRTY__*/[]', $dirtyJson).Replace('/*__DISKLAYOUT__*/[]', $diskLayoutJson).Replace('/*__RAM__*/[]', $ramJson).Replace('/*__PROGRAMS__*/[]', $programsJson).Replace('/*__GPUS__*/[]', $gpusJson).Replace('/*__HAGS__*/null', $hagsJson).Replace('/*__ISLAPTOP__*/false', $isLaptopJson).Replace('/*__MONS__*/[]', $monsJson).Replace('/*__DISPLAYS__*/[]', $displaysJson).Replace('/*__PROCS__*/[]', $procsJson).Replace('/*__MEMUSE__*/null', $memuseJson).Replace('/*__NET__*/null', $netJson).Replace('/*__SECURITY__*/null', $securityJson).Replace('/*__HOTFIXES__*/[]', $hotfixesJson).Replace('/*__WINDOWSOLD__*/null', $windowsOldJson).Replace('/*__POWERPLAN__*/null', $powerPlanJson).Replace('/*__GENFLAGS__*/null', $generalFlagsJson).Replace('/*__CBS__*/null', $cbsJson).Replace('/*__WUHISTORY__*/[]', $wuHistoryJson).Replace('/*__WINUPDATE__*/null', $winUpdateJson).Replace('/*__DEVERR__*/[]', $devErrorsJson).Replace('/*__AUDIO__*/null', $audioJson).Replace('/*__USB__*/[]', $usbJson).Replace('/*__CAMERAS__*/[]', $camerasJson).Replace('/*__BATTERY__*/[]', $batteryJson).Replace('/*__RAMSLOTS__*/null', $ramSlotsJson)
         try {
             Set-Content -Path $reliability_html_path -Value $viewerHtml -Encoding UTF8
