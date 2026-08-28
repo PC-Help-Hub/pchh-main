@@ -204,6 +204,29 @@ body.tab-summary #summaryView,body.tab-rel #relView,body.tab-sys #sysView,body.t
 .drive.smart-bad{border-color:var(--err)}
 .drive.highlight-flash{animation:diskFlash 1.6s ease-out}
 @keyframes diskFlash{0%{box-shadow:0 0 0 3px var(--info)}100%{box-shadow:0 0 0 0 rgba(0,0,0,0)}}
+
+/* device cards (Devices tab) */
+.sub-label{color:var(--faint);font-size:13px;text-transform:uppercase;letter-spacing:.06em;margin:0 0 10px}
+.device-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin-bottom:24px}
+.device-grid:last-child{margin-bottom:0}
+.device-grid.compact{grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
+.dcard{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;display:flex;gap:12px;align-items:flex-start}
+.dcard.err-card{border-color:var(--err)}
+.dcard-icon{width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.dcard-icon svg{width:17px;height:17px;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.dcard-body{min-width:0;flex:1}
+.dcard-title{font-size:14.5px;font-weight:500;overflow-wrap:break-word}
+.dcard-badge{display:inline-block;font-size:11.5px;padding:2px 7px;border-radius:20px;margin-top:6px;margin-right:5px}
+.badge-info{color:var(--info);background:color-mix(in srgb,var(--info) 14%,transparent)}
+.badge-ok{color:var(--ok);background:color-mix(in srgb,var(--ok) 14%,transparent)}
+.badge-warn{color:var(--warn);background:color-mix(in srgb,var(--warn) 14%,transparent)}
+.badge-err{color:var(--err);background:color-mix(in srgb,var(--err) 14%,transparent)}
+.dcard-desc{color:var(--faint);font-size:13px;margin-top:6px;line-height:1.4}
+.icon-info{background:color-mix(in srgb,var(--info) 16%,transparent)}.icon-info svg{stroke:var(--info)}
+.icon-ok{background:color-mix(in srgb,var(--ok) 16%,transparent)}.icon-ok svg{stroke:var(--ok)}
+.icon-warn{background:color-mix(in srgb,var(--warn) 16%,transparent)}.icon-warn svg{stroke:var(--warn)}
+.icon-err{background:color-mix(in srgb,var(--err) 16%,transparent)}.icon-err svg{stroke:var(--err)}
+.icon-dim{background:color-mix(in srgb,var(--dim) 16%,transparent)}.icon-dim svg{stroke:var(--dim)}
 .smart-kv{grid-template-columns:1fr auto;font-size:14.5px;gap:7px 12px}
 .smart-kv dt{color:var(--dim)}
 .smart-kv dd{text-align:right;font-family:'IBM Plex Mono',monospace}
@@ -626,6 +649,11 @@ const ICON_STORAGE='<svg viewBox="0 0 24 24"><line x1="22" y1="12" x2="2" y2="12
 const ICON_MOBO='<svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>';
 const ICON_OS='<svg viewBox="0 0 24 24"><rect x="3" y="3" width="8" height="8" rx="1"/><rect x="13" y="3" width="8" height="8" rx="1"/><rect x="3" y="13" width="8" height="8" rx="1"/><rect x="13" y="13" width="8" height="8" rx="1"/></svg>';
 const ICON_INFO='<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>';
+const ICON_SPEAKER='<svg viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>';
+const ICON_MIC='<svg viewBox="0 0 24 24"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>';
+const ICON_CAMERA='<svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>';
+const ICON_USB='<svg viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>';
+const ICON_ALERT='<svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>';
 // Guards accordion-row toggles against text selection. Checking only whether the click
 // *landed* inside .msg isn't enough - drag-selecting a long/wrapped message often ends with
 // the mouse released just outside its box, which used to collapse the row mid-selection and
@@ -794,7 +822,7 @@ function renderSpecs(){
   }
   document.getElementById('drivesView').innerHTML=dh||'<div class="spec-section"><h2>Storage</h2><div style="color:var(--faint)">No storage data embedded.</div></div>';
 }
-const PS_={q:'',page:1,key:'mem',dir:-1}, PG_={q:'',page:1};
+const PS_={q:'',page:1,key:'mem',dir:-1}, PG_={q:'',page:1,key:'name',dir:1};
 let PROGS_ALL=[];
 function renderProcesses(){
   const v=document.getElementById('processesView');
@@ -803,7 +831,7 @@ function renderProcesses(){
     return;
   }
   v.innerHTML='<div class="spec-section"><h2>Running processes ('+PROCS.length+')</h2>'+
-    '<input id="procSearch" type="text" placeholder="Filter processes\u2026">'+
+    '<input id="procSearch" type="text" placeholder="Search\u2026">'+
     '<div class="proc-head">'+
     '<span class="sorth" data-key="name">Process<span class="arrow"></span></span>'+
     '<span class="sorth" data-key="cnt">Instances<span class="arrow"></span></span>'+
@@ -811,7 +839,7 @@ function renderProcesses(){
     '<div id="procList"></div><div class="pager" id="procPager"></div></div>';
   const pf=document.getElementById('procSearch');
   if(pf)pf.oninput=e=>{PS_.q=e.target.value.toLowerCase();PS_.page=1;renderProcList();};
-  document.querySelectorAll('.sorth').forEach(hd=>hd.onclick=()=>{
+  v.querySelectorAll('.sorth').forEach(hd=>hd.onclick=()=>{
     const k=hd.dataset.key;
     if(PS_.key===k)PS_.dir=-PS_.dir; else {PS_.key=k;PS_.dir=k==='name'?1:-1;}
     PS_.page=1;renderProcList();
@@ -823,12 +851,19 @@ function renderAppsList(programs){
   const v=document.getElementById('appsView');
   v.innerHTML=PROGS_ALL.length?
     '<div class="spec-section"><h2>Installed programs ('+PROGS_ALL.length+')</h2>'+
-    '<input id="progSearch" type="text" placeholder="Filter programs\u2026">'+
-    '<div class="prog-head"><span>Program</span><span>Installed</span></div>'+
+    '<input id="progSearch" type="text" placeholder="Search\u2026">'+
+    '<div class="prog-head">'+
+    '<span class="sorth" data-key="name">Program<span class="arrow"></span></span>'+
+    '<span class="sorth" data-key="date">Installed<span class="arrow"></span></span></div>'+
     '<div id="progList"></div><div class="pager" id="progPager"></div></div>'
     :'<div class="spec-section"><h2>Installed Apps</h2><div style="color:var(--faint)">No data embedded.</div></div>';
   const ps=document.getElementById('progSearch');
   if(ps)ps.oninput=e=>{PG_.q=e.target.value.toLowerCase();PG_.page=1;renderProgList();};
+  v.querySelectorAll('.sorth').forEach(hd=>hd.onclick=()=>{
+    const k=hd.dataset.key;
+    if(PG_.key===k)PG_.dir=-PG_.dir; else {PG_.key=k;PG_.dir=k==='name'?1:-1;}
+    PG_.page=1;renderProgList();
+  });
   renderProgList();
 }
 const WH_={page:1};
@@ -1038,18 +1073,26 @@ function renderProcList(){
   if(PS_.page>pages)PS_.page=pages;
   const slice=rows.slice((PS_.page-1)*SZ,PS_.page*SZ);
   el.innerHTML=slice.map(p=>'<div class="proc-row"><span>'+esc(p.name)+'</span><span>'+esc(String(p.cnt))+'</span><span class="mono">'+esc(String(p.mem))+' MB</span></div>').join('')||'<div style="color:var(--faint);padding:10px 4px">No matches.</div>';
-  document.querySelectorAll('.sorth').forEach(hd=>{
+  document.querySelectorAll('#processesView .sorth').forEach(hd=>{
     hd.querySelector('.arrow').textContent=hd.dataset.key===PS_.key?(PS_.dir>0?' \u25b2':' \u25bc'):'';
   });
   pager(document.getElementById('procPager'),PS_.page,pages,rows.length,slice.length,g=>{PS_.page+=g;renderProcList();});
 }
 function renderProgList(){
   const el=document.getElementById('progList');if(!el)return;
-  const rows=PROGS_ALL.filter(p=>!PG_.q||p.name.toLowerCase().includes(PG_.q));
+  let rows=PROGS_ALL.filter(p=>!PG_.q||p.name.toLowerCase().includes(PG_.q));
+  const k=PG_.key,d=PG_.dir;
+  // Install dates are stored as 'dd/MM/yyyy' strings (or blank when Windows never recorded one),
+  // so sorting by date needs them parsed into a comparable timestamp rather than sorted as text.
+  const parseInstallDate=s=>{const m=s&&s.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);return m?Date.UTC(+m[3],+m[2]-1,+m[1]):0;};
+  rows=rows.slice().sort((a,b)=>k==='date'?d*(parseInstallDate(a.date)-parseInstallDate(b.date)):d*a.name.localeCompare(b.name,undefined,{sensitivity:'base'}));
   const SZ=60,pages=Math.max(1,Math.ceil(rows.length/SZ));
   if(PG_.page>pages)PG_.page=pages;
   const slice=rows.slice((PG_.page-1)*SZ,PG_.page*SZ);
   el.innerHTML=slice.map(p=>'<div class="prog-row"><span>'+esc(p.name)+'</span><span>'+esc(p.date||'\u2014')+'</span></div>').join('')||'<div style="color:var(--faint)">No matches.</div>';
+  document.querySelectorAll('#appsView .sorth').forEach(hd=>{
+    hd.querySelector('.arrow').textContent=hd.dataset.key===PG_.key?(PG_.dir>0?' \u25b2':' \u25bc'):'';
+  });
   pager(document.getElementById('progPager'),PG_.page,pages,rows.length,slice.length,g=>{PG_.page+=g;renderProgList();});
 }
 const HF_={q:'',page:1};
@@ -1346,6 +1389,7 @@ function renderSummary(){
     {re:/streamlabs/i,           label:'Streamlabs OBS',             grp:'audio'},
     {re:/hola vpn/i,             label:'Hola VPN',                   grp:'net'},
     {re:/killer network|killer control center/i, label:'Killer Network Manager', grp:'net'},
+    {re:/exitlag/i,              label:'ExitLag',                    grp:'net'},
     {re:/wallpaper engine/i,     label:'Wallpaper Engine',            grp:'wallpaper'},
     {re:/translucenttb/i,        label:'TranslucentTB',              grp:'shell'},
     {re:/explorerpatcher/i,      label:'ExplorerPatcher',            grp:'shell'},
@@ -2193,39 +2237,56 @@ function renderNet(){
 function renderDevices(){
   const v=document.getElementById('devicesView');
   let h='';
+  const isVirtualAudio=n=>/vb-audio|voicemeeter|cable (input|output)|virtual audio/i.test(n);
+  const isVirtualCam=n=>/obs virtual|virtual camera|droidcam|snap camera/i.test(n);
   if(AUDIO&&(AUDIO.playbackDevices&&AUDIO.playbackDevices.length||AUDIO.recordingDevices&&AUDIO.recordingDevices.length)){
-    const isVirtual=n=>/vb-audio|voicemeeter|cable (input|output)|virtual audio/i.test(n);
-    const devRow=d=>'<dt style="grid-column:1/-1">'+esc(d.name)+(isVirtual(d.name)?' <span style="color:var(--info)">(virtual)</span>':'')+'</dt>';
     h+='<div class="spec-section"><h2>Audio</h2>';
     if(AUDIO.playbackDevices&&AUDIO.playbackDevices.length){
-      h+='<div style="color:var(--faint);font-size:13px;text-transform:uppercase;letter-spacing:.06em;margin:8px 0 4px">Playback (output)</div><dl class="kv">';
-      AUDIO.playbackDevices.forEach(d=>{h+=devRow(d);});
-      h+='</dl>';
+      h+='<div class="sub-label">Playback (output)</div><div class="device-grid compact">';
+      AUDIO.playbackDevices.forEach(d=>{
+        const virtual=isVirtualAudio(d.name);
+        h+='<div class="dcard"><div class="dcard-icon icon-info">'+ICON_SPEAKER+'</div>'+
+          '<div class="dcard-body"><div class="dcard-title">'+esc(d.name)+'</div>'+
+          (virtual?'<span class="dcard-badge badge-info">Virtual</span>':'')+
+          '</div></div>';
+      });
+      h+='</div>';
     }
     if(AUDIO.recordingDevices&&AUDIO.recordingDevices.length){
-      h+='<div style="color:var(--faint);font-size:13px;text-transform:uppercase;letter-spacing:.06em;margin:12px 0 4px">Recording (input)</div><dl class="kv">';
-      AUDIO.recordingDevices.forEach(d=>{h+=devRow(d);});
-      h+='</dl>';
+      h+='<div class="sub-label">Recording (input)</div><div class="device-grid compact">';
+      AUDIO.recordingDevices.forEach(d=>{
+        const virtual=isVirtualAudio(d.name);
+        h+='<div class="dcard"><div class="dcard-icon icon-ok">'+ICON_MIC+'</div>'+
+          '<div class="dcard-body"><div class="dcard-title">'+esc(d.name)+'</div>'+
+          (virtual?'<span class="dcard-badge badge-info">Virtual</span>':'')+
+          '</div></div>';
+      });
+      h+='</div>';
     }
     h+='</div>';
   }
   if(CAMERAS&&CAMERAS.length){
-    h+='<div class="spec-section"><h2>Webcams &amp; Capture Devices ('+CAMERAS.length+')</h2><dl class="kv">';
+    h+='<div class="spec-section"><h2>Webcams &amp; Capture Devices ('+CAMERAS.length+')</h2><div class="device-grid compact">';
     CAMERAS.forEach(c=>{
       const ok=/^ok$/i.test(c.status);
-      h+='<dt>'+esc(c.name)+'</dt><dd style="color:'+(ok?'var(--ok)':'var(--warn)')+'">'+esc(c.status||'Unknown')+'</dd>';
+      const virtual=isVirtualCam(c.name);
+      h+='<div class="dcard'+(ok?'':' err-card')+'"><div class="dcard-icon '+(ok?'icon-ok':'icon-warn')+'">'+ICON_CAMERA+'</div>'+
+        '<div class="dcard-body"><div class="dcard-title">'+esc(c.name)+'</div>'+
+        '<span class="dcard-badge '+(ok?'badge-ok':'badge-warn')+'">'+esc(c.status||'Unknown')+'</span>'+
+        (virtual?'<span class="dcard-badge badge-info">Virtual</span>':'')+
+        '</div></div>';
     });
-    h+='</dl></div>';
+    h+='</div></div>';
   }
   if(USBDEVS&&USBDEVS.length){
-    h+='<div class="spec-section"><h2>Peripherals ('+USBDEVS.length+')</h2><dl class="kv">';
+    h+='<div class="spec-section"><h2>Peripherals ('+USBDEVS.length+')</h2><div class="device-grid compact">';
     USBDEVS.forEach(u=>{
-      h+='<dt style="grid-column:1/-1">'+esc(u.name)+'</dt>';
+      h+='<div class="dcard"><div class="dcard-icon icon-dim">'+ICON_USB+'</div>'+
+        '<div class="dcard-body"><div class="dcard-title">'+esc(u.name)+'</div></div></div>';
     });
-    h+='</dl></div>';
+    h+='</div></div>';
   }
   if(DEVERR.length){
-    h+='<div class="spec-section" id="devErrSection"><h2>Device Manager errors ('+DEVERR.length+')</h2><dl class="kv">';
     const DEVERR_CODES={
       '1':'Device not configured correctly',
       '3':'Driver may be corrupted, or system is low on resources',
@@ -2251,11 +2312,16 @@ function renderDevices(){
       '48':'A previous driver for this device is blocked from loading',
       '52':'Drivers aren\u2019t digitally signed',
     };
+    h+='<div class="spec-section" id="devErrSection"><h2>Device Manager errors ('+DEVERR.length+')</h2><div class="device-grid">';
     DEVERR.forEach(e=>{
       const desc=DEVERR_CODES[String(e.code)];
-      h+='<dt>'+esc(e.name)+'</dt><dd style="color:var(--err)">Error code '+esc(e.code)+(desc?' <span style="color:var(--faint)">\u2014 '+desc+'</span>':'')+'</dd>';
+      h+='<div class="dcard err-card"><div class="dcard-icon icon-err">'+ICON_ALERT+'</div>'+
+        '<div class="dcard-body"><div class="dcard-title">'+esc(e.name)+'</div>'+
+        '<span class="dcard-badge badge-err">Error code '+esc(e.code)+'</span>'+
+        (desc?'<div class="dcard-desc">'+esc(desc)+'</div>':'')+
+        '</div></div>';
     });
-    h+='</dl></div>';
+    h+='</div></div>';
   }
   if(!h)h='<div class="spec-section"><h2>Devices</h2><div style="color:var(--faint)">No audio, webcam, or USB peripheral data was collected.</div></div>';
   v.innerHTML=h;
