@@ -1707,21 +1707,29 @@ function renderShutdowns(){
     v.innerHTML='<div class="spec-section"><h2>Unexpected Shutdowns</h2><div class="sys-ok">\u2713 No unexpected shutdowns found.</div></div>';
     return;
   }
-  let h='<div class="spec-section"><h2>Unexpected Shutdowns ('+merged.length+')</h2>'+
-    '<div class="sys-note">A shutdown Windows never got a clean "powering off" signal for &mdash; caused by a crash, power loss, overheating, a hard reset, or a freeze that needed a force restart.</div>'+
-    '<dl class="kv">';
-  merged.forEach(x=>{
+  const sorted=[...merged].sort((a,b)=>b.d-a.d);
+  let h='<div class="spec-section"><h2>Unexpected Shutdowns ('+sorted.length+')</h2>';
+  let lastDay=null;
+  sorted.forEach(x=>{
+    const dk=x.d.toISOString().slice(0,10);
+    if(dk!==lastDay){lastDay=dk;h+='<div class="day-head">'+fmtDay(dk)+'</div>';}
     const bcLabel=x.bc?('0x'+parseInt(x.bc).toString(16).toUpperCase()+(BC_NAMES[x.bc]?' '+BC_NAMES[x.bc]:'')):'';
-    let cause;
-    if(bcLabel)cause='<span class="r">Bugcheck '+esc(bcLabel)+'</span>';
-    else if(x.pbt)cause='<span class="y">Power button held down</span>';
-    else cause='<span style="color:var(--faint)">No crash code recorded &mdash; likely a power loss, hard reset, or hang</span>';
-    const pbtNote=x.pbt?' <span style="color:var(--faint)">\u00b7 button held at '+esc(fmtTime(x.pbt))+(x.pbt.toISOString().slice(0,10)!==x.d.toISOString().slice(0,10)?' on '+esc(fmtDay(x.pbt.toISOString().slice(0,10))):'')+'</span>':'';
-    h+='<dt class="mono" title="Source: '+esc(x.src)+'">'+esc(fmtDay(x.d.toISOString().slice(0,10)))+', '+esc(fmtTime(x.d))+'</dt>'+
-      '<dd>'+cause+pbtNote+'</dd>';
+    let cat,title;
+    if(bcLabel){cat='err';title='Bugcheck '+esc(bcLabel);}
+    else if(x.pbt){cat='warn';title='Power button held down';}
+    else{cat='info';title='No crash code recorded';}
+    const pbtNote=x.pbt?'Power button held at '+esc(fmtTime(x.pbt))+(x.pbt.toISOString().slice(0,10)!==dk?' on '+esc(fmtDay(x.pbt.toISOString().slice(0,10))):'')+'\n':'';
+    const detail=pbtNote+'Source: '+esc(x.src)+
+      (!bcLabel&&!x.pbt?'\nLikely a power loss, hard reset, or hang.':'');
+    h+='<div class="row"><span class="time mono">'+fmtTime(x.d)+'</span>'+
+      '<span class="dot d-'+cat+'"></span>'+
+      '<span class="title">'+title+'</span>'+
+      '<div class="msg mono">'+detail+'</div></div>';
   });
-  h+='</dl></div>';
+  h+='</div>';
   v.innerHTML=h;
+  v.querySelectorAll('.row').forEach(r=>r.onclick=(e)=>{ if(e.target.closest('.msg')||hasTextSelection())return; r.classList.toggle('open'); });
+  v.querySelectorAll('.row .msg').forEach(m=>m.onclick=e=>e.stopPropagation());
 }
 function renderSecurity(){
   const v=document.getElementById('securityView');
@@ -2151,7 +2159,7 @@ function renderNet(){
     h+='</div></div>';
   }
   if(NET.vpns&&NET.vpns.length){
-    h+='<div class="spec-section"><h2>Virtual / tunnel adapters ('+NET.vpns.length+')</h2><div class="drive-grid">';
+    h+='<div class="spec-section"><h2>Network Adapters ('+NET.vpns.length+')</h2><div class="drive-grid">';
     NET.vpns.forEach(a=>{
       const up=/^up$/i.test(a.status);
       h+='<div class="drive"><h3>'+esc(a.name)+'</h3>'+
@@ -2165,9 +2173,9 @@ function renderNet(){
     const sig=parseInt(w.signal)||0;
     h+='<div class="spec-section"><h2>Wi-Fi connection</h2>'+
       '<div class="drive" style="max-width:420px">'+
+      '<div class="sub" style="margin-bottom:6px">Signal '+esc(w.signal)+'</div>'+
       '<div class="meter'+(sig<50?' low':'')+'" style="margin-bottom:8px"><div style="width:'+sig+'%"></div></div>'+
       '<dl class="kv smart-kv">'+
-      '<dt>Signal</dt><dd>'+esc(w.signal)+'</dd>'+
       (w.band?'<dt>Band</dt><dd>'+esc(w.band)+'</dd>':'')+
       (w.channel?'<dt>Channel</dt><dd>'+esc(w.channel)+(w.width?' ('+esc(w.width)+')':'')+'</dd>':'')+
       (w.radio?'<dt>Radio type</dt><dd>'+esc(w.radio)+'</dd>':'')+
