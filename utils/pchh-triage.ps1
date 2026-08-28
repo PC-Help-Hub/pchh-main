@@ -1955,7 +1955,7 @@ function renderGPU(){
   const svgH=monRowY+MON_H+24;
 
   let defs='<defs><marker id="gfxDot" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="5" markerHeight="5"><circle cx="5" cy="5" r="4" fill="context-stroke"/></marker></defs>';
-  let svg='<svg width="100%" viewBox="0 0 '+svgW+' '+svgH+'" role="img"><title>GPU to display connections</title>'+defs;
+  let svg='<svg width="100%" viewBox="0 0 '+svgW+' '+svgH+'" style="max-width:'+svgW+'px;height:auto;display:block" role="img"><title>GPU to display connections</title>'+defs;
 
   displays.forEach((d,di)=>{
     const gi=GPUS.findIndex(g=>g.name===d.gpu);
