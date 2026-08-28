@@ -773,9 +773,10 @@ function renderSpecs(){
     });
     dh+='</div></div>';
   }
-  if(DISKLAYOUT.length){
+  if(DISKLAYOUT.length||SMART.length){
     const smartByDisk={};
     SMART.forEach(d=>{smartByDisk[String(d.disk)]=d;});
+    const usedSmartIds={};
     const disksSorted=[...DISKLAYOUT].sort((a,b)=>(+a.disk)-(+b.disk));
     dh+='<div class="spec-section"><h2>Disk layout</h2>';
     const TYPE_COLOR={'EFI System Partition':'var(--info)','Recovery':'var(--warn)','Recovery (MBR)':'var(--warn)','Microsoft Reserved':'var(--faint)','Data':'var(--ok)','System':'var(--dim)','Unallocated':'var(--panel)'};
@@ -789,6 +790,7 @@ function renderSpecs(){
       const unallocGB=Math.max(0,total-partSum);
       const parts=unallocGB>0.5?[...dk.partitions,{type:'Unallocated',sizeGB:unallocGB,letter:''}]:dk.partitions;
       const sm=smartByDisk[String(dk.disk)];
+      if(sm)usedSmartIds[String(dk.disk)]=true;
       const crit=sm?smartProbs(sm):[];
       const crcProbs=sm?smartCrcProbs(sm):[];
       const bad=crit.length>0;
@@ -817,6 +819,27 @@ function renderSpecs(){
         dh+='<dt><span style="display:inline-block;width:9px;height:9px;border-radius:2px;'+swatch+';margin-right:6px"></span>'+esc(p.type)+(p.letter?' ('+esc(p.letter)+')':'')+'</dt><dd></dd>';
       });
       dh+='</dl></div>';
+    });
+    // Some systems number disks differently between Get-PhysicalDisk (used for SMART/CrystalDiskInfo-
+    // style data) and Get-Disk (used for the partition layout above) - e.g. NVMe drives behind certain
+    // controllers. When that happens a real, healthy drive can be entirely absent from the layout view
+    // above even though it's reported fine in SMART. Show it here instead of silently dropping it.
+    SMART.forEach(sm=>{
+      if(usedSmartIds[String(sm.disk)])return;
+      const crit=smartProbs(sm);
+      const crcProbs=smartCrcProbs(sm);
+      const bad=crit.length>0;
+      const warnOnly=!bad&&crcProbs.length>0;
+      const healthLabel=(sm.health&&!(bad&&/^healthy$/i.test(sm.health)))?sm.health+(sm.op&&sm.op!=='OK'&&sm.op!==sm.health?' ('+sm.op+')':''):'';
+      dh+='<div class="drive'+(bad?' smart-bad':(warnOnly?' smart-warn':''))+'" id="diskBlock-'+esc(sm.disk)+'" style="margin-bottom:14px;cursor:pointer" onclick="openSmartModal(\''+esc(sm.disk)+'\')">';
+      dh+='<h3>Disk '+esc(sm.disk)+(sm.name?' - <span style="color:var(--dim);font-weight:400">'+esc(sm.name)+'</span>':'')+'</h3>';
+      dh+='<div class="sub">'+(sm.bus?esc(sm.bus):'')+
+        (healthLabel?' \u00b7 <span style="color:'+(bad?'var(--err)':'var(--ok)')+'">'+esc(healthLabel)+'</span>':'')+'</div>'+
+        (bad?'<div style="color:var(--err);font-size:13.5px;margin-bottom:6px">\u26a0 SMART warning &mdash; click for details</div>'
+          :warnOnly?'<div style="color:var(--warn);font-size:13.5px;margin-bottom:6px">\u26a0 CRC errors &mdash; click for details</div>'
+          :'<div style="color:var(--faint);font-size:13px;margin-bottom:6px">Click for drive health details</div>')+
+        '<div style="color:var(--faint);font-size:12.5px">No partition layout available for this drive (disk numbering mismatch between data sources)</div>';
+      dh+='</div>';
     });
     dh+='</div>';
     const alerts=[];
