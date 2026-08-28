@@ -202,6 +202,8 @@ body.tab-summary #summaryView,body.tab-rel #relView,body.tab-sys #sysView,body.t
 .drive .meter.low div{background:var(--warn)}
 .drive .use{color:var(--dim);font-size:14px}
 .drive.smart-bad{border-color:var(--err)}
+.drive.highlight-flash{animation:diskFlash 1.6s ease-out}
+@keyframes diskFlash{0%{box-shadow:0 0 0 3px var(--info)}100%{box-shadow:0 0 0 0 rgba(0,0,0,0)}}
 .smart-kv{grid-template-columns:1fr auto;font-size:14.5px;gap:7px 12px}
 .smart-kv dt{color:var(--dim)}
 .smart-kv dd{text-align:right;font-family:'IBM Plex Mono',monospace}
@@ -705,6 +707,15 @@ function renderSpecs(){
     // Disk layout section below gives per-partition, but laid out the way Windows' own "This PC"
     // view does, since scanning a used/free bar per drive is far faster than reading numbers out
     // of a partition table.
+    // Map each drive letter to the physical disk number it lives on, so the Overview card can
+    // show "Disk 0" etc alongside the letter without the reader needing to cross-reference the
+    // Disk layout section below.
+    const letterToDisk={};
+    DISKLAYOUT.forEach(dk=>{(dk.partitions||[]).forEach(p=>{if(p.letter)letterToDisk[p.letter]=dk.disk;});});
+    // Same SMART lookup the Disk layout section below uses, built early so drives with a failing
+    // physical disk can be flagged red up here too, not just further down the page.
+    const smartByDiskEarly={};
+    SMART.forEach(d=>{smartByDiskEarly[String(d.disk)]=d;});
     dh+='<div class="spec-section"><h2>Overview</h2><div class="drive-grid">';
     const drivesSorted=[...sp.drives].sort((a,b)=>(a['Drive Label']||'').localeCompare(b['Drive Label']||''));
     drivesSorted.forEach(dr=>{
@@ -714,9 +725,16 @@ function renderSpecs(){
       const usedPct=Math.min(100,Math.round((totalGB-freeGB)/totalGB*100));
       const freePct=dr['Percentage Free (%)']!=null?Math.round(+dr['Percentage Free (%)']):Math.round(freeGB/totalGB*100);
       const low=freePct<10;
-      dh+='<div class="drive"><h3>'+esc(dr['Drive Label']||'?')+'</h3>'+
+      const diskNum=letterToDisk[dr['Drive Label']];
+      const smEarly=diskNum!=null?smartByDiskEarly[String(diskNum)]:null;
+      const bad=smEarly?smartProbs(smEarly).length>0:false;
+      const rawName=dr['Drive Name'];
+      const driveName=(rawName&&rawName!=='No Name Found')?rawName:'Local Disk';
+      dh+='<div class="drive'+(bad?' smart-bad':'')+'"'+(diskNum!=null?' style="cursor:pointer" onclick="highlightDisk(\''+esc(diskNum)+'\')"':'')+'><h3>'+esc(driveName)+' ('+esc(dr['Drive Label']||'?')+')</h3>'+
+        '<div class="sub" style="margin:2px 0 12px">'+fmtSize(totalGB)+'</div>'+
         '<div class="meter'+(low?' low':'')+'" style="margin:10px 0 8px"><div style="width:'+usedPct+'%"></div></div>'+
         '<div class="sub" style="margin-bottom:0">'+fmtFree(freeGB)+' free <span style="color:'+(low?'var(--warn)':'var(--faint)')+'">('+freePct+'%)</span></div>'+
+        (bad?'<div style="color:var(--err);font-size:13px;margin-top:6px">\u26a0 SMART warning on this disk</div>':'')+
         '</div>';
     });
     dh+='</div></div>';
@@ -741,15 +759,11 @@ function renderSpecs(){
       const bad=probs.length>0;
       const clickable=!!sm;
       const healthLabel=(sm&&sm.health&&!(bad&&/^healthy$/i.test(sm.health)))?sm.health+(sm.op&&sm.op!=='OK'&&sm.op!==sm.health?' ('+sm.op+')':''):'';
-      dh+='<div class="drive'+(bad?' smart-bad':'')+'" style="margin-bottom:14px'+(clickable?';cursor:pointer':'')+'"'+(clickable?' onclick="openSmartModal(\''+esc(dk.disk)+'\')"':'')+'>';
-      const diskFreeGB=parts.filter(p=>p.letter).reduce((a,p)=>{
-        const vol=sp.drives.find(dr=>dr['Drive Label']===p.letter);
-        return a+(vol?+vol['Free Space (GB)']:0);
-      },0);
-      dh+='<h3>Disk '+esc(dk.disk)+(sm&&sm.name?' - <span style="color:var(--dim);font-weight:400">'+esc(sm.name)+'</span>':'')+'</h3>';
-      dh+='<div class="sub">'+dk.sizeGB+' GB'+(sm&&sm.bus?' \u00b7 '+esc(sm.bus):'')+
+      const letters=parts.filter(p=>p.letter).map(p=>p.letter).join(', ');
+      dh+='<div class="drive'+(bad?' smart-bad':'')+'" id="diskBlock-'+esc(dk.disk)+'" style="margin-bottom:14px'+(clickable?';cursor:pointer':'')+'"'+(clickable?' onclick="openSmartModal(\''+esc(dk.disk)+'\')"':'')+'>';
+      dh+='<h3>Disk '+esc(dk.disk)+(letters?' ('+esc(letters)+')':'')+(sm&&sm.name?' - <span style="color:var(--dim);font-weight:400">'+esc(sm.name)+'</span>':'')+'</h3>';
+      dh+='<div class="sub">'+fmtSize(dk.sizeGB)+(sm&&sm.bus?' \u00b7 '+esc(sm.bus):'')+
         (healthLabel?' \u00b7 <span style="color:'+(bad?'var(--err)':'var(--ok)')+'">'+esc(healthLabel)+'</span>':'')+'</div>'+
-        (diskFreeGB>0?'<div class="sub" style="margin-top:2px">'+fmtFree(diskFreeGB)+' free</div>':'')+
         (bad?'<div style="color:var(--err);font-size:13.5px;margin-bottom:6px">\u26a0 SMART warning &mdash; click for details</div>'
           :(clickable?'<div style="color:var(--faint);font-size:13px;margin-bottom:6px">Click for drive health details</div>':''));
       dh+='<div style="display:flex;height:22px;border-radius:6px;overflow:hidden;margin:10px 0;background:var(--panel2)">';
@@ -757,19 +771,13 @@ function renderSpecs(){
         const pct=Math.max(1.5,(p.sizeGB/total*100));
         const col=TYPE_COLOR[p.type]||'var(--dim)';
         const style=p.type==='Unallocated'?'width:'+pct+'%;background:repeating-linear-gradient(135deg,var(--panel2),var(--panel2) 4px,var(--line) 4px,var(--line) 8px);border-right:1px solid var(--panel)':'width:'+pct+'%;background:'+col+';border-right:1px solid var(--panel)';
-        dh+='<div title="'+esc(p.type)+(p.letter?' ('+esc(p.letter)+')':'')+' \u00b7 '+p.sizeGB.toFixed(1)+' GB" style="'+style+'"></div>';
+        const tip=esc(p.type)+(p.letter?' ('+esc(p.letter)+')':'')+' \u00b7 '+p.sizeGB.toFixed(1)+' GB';
+        dh+='<div onmouseenter="showPartTip(event,\''+tip.replace(/'/g,"\\'")+'\')" onmousemove="positionPartTip(event)" onmouseleave="hidePartTip()" style="cursor:default;'+style+'"></div>';
       });
       dh+='</div><dl class="kv smart-kv">';
       parts.forEach(p=>{
         const swatch=p.type==='Unallocated'?'background:repeating-linear-gradient(135deg,var(--panel2),var(--panel2) 2px,var(--line) 2px,var(--line) 4px)':'background:'+(TYPE_COLOR[p.type]||'var(--dim)');
-        // Show free space directly against any partition with a drive letter, sourced from the
-        // same logical-drive data the storage tile uses - free space otherwise only exists as a
-        // percentage buried in the raw specs text, with no visible home in this view at all.
-        const vol=p.letter?sp.drives.find(dr=>dr['Drive Label']===p.letter):null;
-        const freeGB=vol?+vol['Free Space (GB)']:null;
-        const freePct=vol?+vol['Percentage Free (%)']:null;
-        const freeNote=freeGB!=null?' <span style="color:var(--dim);font-weight:400">('+freeGB.toFixed(1)+' GB free'+(freePct!=null?', '+Math.round(freePct)+'%':'')+')</span>':'';
-        dh+='<dt><span style="display:inline-block;width:9px;height:9px;border-radius:2px;'+swatch+';margin-right:6px"></span>'+esc(p.type)+(p.letter?' ('+esc(p.letter)+')':'')+'</dt><dd>'+p.sizeGB.toFixed(1)+' GB'+freeNote+'</dd>';
+        dh+='<dt><span style="display:inline-block;width:9px;height:9px;border-radius:2px;'+swatch+';margin-right:6px"></span>'+esc(p.type)+(p.letter?' ('+esc(p.letter)+')':'')+'</dt><dd></dd>';
       });
       dh+='</dl></div>';
     });
@@ -1065,6 +1073,42 @@ function smartProbs(d){
   if(+d.reu>0)probs.push(d.reu+' uncorrected read errors');
   if(+d.weu>0)probs.push(d.weu+' uncorrected write errors');
   return probs;
+}
+// Custom hover tooltip for the disk-layout partition bars - a native title attribute works but
+// is slow to appear and easy to miss, so a small styled tooltip that follows the cursor gives an
+// immediate, on-theme readout of each partition's size.
+// Clicking a drive card in the Overview jumps to and briefly highlights the matching physical
+// disk down in Disk layout, so the reader doesn't have to hunt for which disk a drive letter is on.
+function highlightDisk(diskNum){
+  const el=document.getElementById('diskBlock-'+diskNum);
+  if(!el)return;
+  document.querySelectorAll('.drive.highlight-flash').forEach(x=>x.classList.remove('highlight-flash'));
+  el.scrollIntoView({behavior:'smooth',block:'center'});
+  void el.offsetWidth;
+  el.classList.add('highlight-flash');
+  el.addEventListener('animationend',()=>el.classList.remove('highlight-flash'),{once:true});
+}
+function showPartTip(e,text){
+  let tip=document.getElementById('partTip');
+  if(!tip){
+    tip=document.createElement('div');
+    tip.id='partTip';
+    tip.style.cssText='position:fixed;pointer-events:none;background:var(--panel2);border:1px solid var(--line);padding:6px 10px;border-radius:6px;font-size:13px;color:var(--text);z-index:1000;white-space:nowrap;box-shadow:0 4px 12px rgba(0,0,0,.35)';
+    document.body.appendChild(tip);
+  }
+  tip.textContent=text;
+  tip.style.display='block';
+  positionPartTip(e);
+}
+function positionPartTip(e){
+  const tip=document.getElementById('partTip');
+  if(!tip)return;
+  tip.style.left=(e.clientX+14)+'px';
+  tip.style.top=(e.clientY+14)+'px';
+}
+function hidePartTip(){
+  const tip=document.getElementById('partTip');
+  if(tip)tip.style.display='none';
 }
 function openSmartModal(diskNum){
   const d=SMART.find(x=>String(x.disk)===String(diskNum));
