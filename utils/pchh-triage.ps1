@@ -959,6 +959,8 @@ const FAQ_DATA=[
 {id:'wu-service',q:"Windows Update Service",a:"The background service that lets Windows check for and install updates is disabled. Normally it's set to start on demand (so it's often shown as 'Stopped' when idle - that's expected and not a problem), but 'Disabled' means it can't start at all, so Windows won't be able to update until it's turned back on.",tools:[]},
 {id:'wu-failed',q:"Failed Windows Updates",a:"One or more recent update attempts failed partway through rather than installing cleanly. This can happen for lots of reasons: a bad download, low disk space, corrupted update files, or a conflict with other software.<br><br>It can sometimes leave a PC feeling unstable or repeatedly nagging about the same update.",tools:["Windows 11 Download"]},
 {id:'ram-speed',q:"RAM Speed (XMP/EXPO)",a:"Your memory (RAM) is capable of running faster than it currently is. This almost always means that a feature called XMP (Intel) or EXPO (AMD) isn't enabled.<br><br>XMP/EXPO is a one-click profile in the BIOS that allows your RAM to run at its advertised speed. When it's disabled, your RAM will default to a lower speed. Enabling it isn't overclocking, and isn't dangerous. We'd recommend enabling it, which can be done through your BIOS. If you're unsure how to do that, you can ask one of our advisors for more help.<br><br><i>Note: some systems can struggle to run RAM at its full advertised speed for various reasons, which is why it isn't enabled by default. When this happens, it can sometimes help to disable it, to prevent system instability or crashes.</i><br><br>This isn't dangerous either way, but running below the rated speed does mean the RAM isn't performing the way it was bought to.",tools:["CPU-Z"]},
+{id:'pagefile-manual',q:"Page File Manually Managed",a:"Windows normally handles the page file (a portion of a drive used as overflow when physical RAM fills up) itself, growing and shrinking it as needed. Someone has turned off 'Automatically manage paging file size for all drives', meaning it's set to a fixed size (or a custom drive) by hand instead.<br><br>This isn't inherently a problem, but it's a common source of trouble if the size chosen is too small for the workload, or if it was set on a drive that's since become full or was removed/replaced. A page file that's too small can cause 'out of memory' errors or crashes even when the drive has plenty of free space otherwise.<br><br>If there isn't a specific reason it was changed (some people do this deliberately to save SSD writes, or as an old 'performance tweak' that no longer really applies on modern systems), switching it back to automatic under System Properties &gt; Advanced &gt; Performance Settings &gt; Advanced &gt; Virtual Memory is usually the simplest fix.",tools:[]},
+{id:'pagefile-disabled',q:"No Page File Configured",a:"There is no page file on this PC at all - every drive is set to 'No paging file' rather than a size. This is more serious than a manually-sized page file, and isn't recommended even on a system with a lot of RAM.<br><br>Without a page file, Windows has nowhere to overflow to once physical RAM fills up, so instead of slowing down it can crash, refuse to launch programs, or throw 'out of memory' errors well before RAM actually looks full (some of it is reserved and can't be reallocated the way a page file's space can). It also prevents Windows from writing a memory dump when the system crashes, which removes a key diagnostic tool for tracking down the cause of any crash.<br><br>The fix is the same either way: System Properties &gt; Advanced &gt; Performance Settings &gt; Advanced &gt; Virtual Memory, then either switch back to 'Automatically manage paging file size for all drives', or manually set a page file on at least one drive.",tools:[]},
 {id:'antivirus-conflict',q:"Multiple Antivirus Programs",a:"More than one antivirus program is trying to actively scan the system at the same time. This is a common, often-overlooked cause of slowdowns, false-positive quarantines, and general instability, since the two programs can end up fighting over the same files.",tools:[]},
 {id:'defender-rtp',q:"Defender Real-Time Protection",a:"Windows' built-in antivirus isn't actively scanning for threats. This can be intentional if another antivirus is installed, or it can be accidental. Malware sometimes disables it deliberately to avoid detection.",tools:[]},
 {id:'bitlocker-on',q:"BitLocker Enabled",a:"One or more drives are encrypted with BitLocker. This isn't a problem &mdash; it's just worth knowing about, since it affects a few things:<ul style='margin:8px 0 8px 20px;padding:0'><li>Before a wipe, reset, reinstall, or drive removal: without the recovery key, an encrypted drive that gets locked out cannot be read or recovered.</li><li>Before a <b>BIOS/UEFI update</b>, or any change to boot order, Secure Boot, or the TPM: these can change the measurements BitLocker checks at startup and trigger a recovery key prompt on the next boot. Suspending BitLocker first (Control Panel &gt; BitLocker Drive Encryption &gt; Suspend protection) avoids this, and it resumes automatically after the next restart.</li></ul>If a wipe, reset, or BIOS update is planned, confirm the recovery key is backed up somewhere accessible (Microsoft account, Active Directory, or a printed/saved copy) before proceeding.",tools:[]},
@@ -1388,6 +1390,9 @@ function renderSummary(){
     const slow=RAM.filter(m=>effRated(m)&&m.conf&&+m.conf<+effRated(m));
     if(slow.length)notes.push(dataLink('memory','ram-speed','<span class="y">RAM configured at '+esc(slow[0].conf)+' MT/s, rated '+esc(effRated(slow[0]))+' MT/s</span>'));
   }
+  const pgfileState=specVal(sp.info,'Page File Managed');
+  if(pgfileState==='Disabled')notes.push(dataLink('memory','pagefile-disabled','<span class="r">No page file is configured &mdash; this is set to \'No paging file\' on every drive</span>'));
+  else if(pgfileState==='Manual')notes.push(dataLink('memory','pagefile-manual','<span class="y">Page file is manually managed (automatic management is turned off)</span>'));
   // Known software flags: anti-cheat/kernel drivers, OC & monitoring tools, RGB/peripheral suites, bloatware/PUPs
   const SOFT_FLAGS=[
     {re:/riot vanguard/i,        label:'Riot Vanguard',              grp:'ac'},
@@ -2152,6 +2157,7 @@ function renderMemory(){
   const v=document.getElementById('memoryView');
   const sp=parseSpecs(SPECS);
   const pageFile=specVal(sp.info,'Page File Size');
+  const pageFileManaged=specVal(sp.info,'Page File Managed');
   let h='';
   if(RAM.length){
     h+='<div class="spec-section"><h2>Memory modules ('+RAM.length+')</h2>';
@@ -2193,6 +2199,7 @@ function renderMemory(){
         (MEMUSE&&MEMUSE.pagedPool!=null?'<dt>Paged pool</dt><dd>'+Math.round(MEMUSE.pagedPool)+' MB</dd>':'')+
         (MEMUSE&&MEMUSE.nonPagedPool!=null?'<dt>Non-paged pool</dt><dd>'+Math.round(MEMUSE.nonPagedPool)+' MB</dd>':'')+
         (pageFile?'<dt>Page file size</dt><dd>'+esc(pageFile)+'</dd>':'')+
+        (pageFileManaged?'<dt>Page file management</dt><dd>'+(pageFileManaged==='Manual'?'<span style="color:var(--warn)">Manual (auto-manage off)</span>':pageFileManaged==='Disabled'?'<span style="color:var(--err)">Disabled (no page file)</span>':esc(pageFileManaged))+'</dd>':'')+
         '</dl></div>';
     }
     h+='</div></div>';
@@ -2549,8 +2556,18 @@ function fileadd {
     $lboottime = (Get-CimInstance -ClassName Win32_OperatingSystem).LastBootUpTime
     $uptime = (Get-Date) - $lboottime
 
-    $pgfile = Get-WmiObject -Query "SELECT * FROM Win32_PageFileUsage"
-    $pgfilesize = $pgfile.AllocatedBaseSize
+    $pgfile = @(Get-WmiObject -Query "SELECT * FROM Win32_PageFileUsage")
+    $pgfilesize = if ($pgfile.Count -gt 0) { ($pgfile | Measure-Object -Property AllocatedBaseSize -Sum).Sum } else { 0 }
+    # AutomaticManagedPagefile reflects the "Automatically manage paging file size for all
+    # drives" checkbox in System Properties > Advanced > Performance > Virtual Memory - people
+    # commonly turn this off to hand-set a custom size, which is worth surfacing since a
+    # manually-set size that's too small (or on the wrong drive) is a common cause of low-memory
+    # symptoms that don't show up any other way in this report. A more serious variant of the
+    # same setting is "No paging file" on every drive - Win32_PageFileUsage then returns zero
+    # instances entirely (there's no page file to report on), so that's checked for separately
+    # rather than just falling through to a size of 0 MB.
+    $pgfileAuto = try { (Get-WmiObject Win32_ComputerSystem).AutomaticManagedPagefile } catch { $null }
+    $pgfileManagedState = if ($pgfile.Count -eq 0) { "Disabled" } elseif ($null -eq $pgfileAuto) { "" } elseif ($pgfileAuto) { "Automatic" } else { "Manual" }
 
     $installedMemory = Get-WmiObject Win32_ComputerSystem | Select-Object -ExpandProperty TotalPhysicalMemory
     $ramSpeed = ((Get-WmiObject Win32_PhysicalMemory | Select-Object -ExpandProperty Speed | Sort-Object -Unique) -join '/')
@@ -2580,7 +2597,8 @@ function fileadd {
     }
     specs "Secure Boot State: $secureBootState"
     specs "Fast Boot State: $fastbootState"
-    specs "Page File Size: $pgfilesize MB"
+    specs "Page File Size: $(if ($pgfileManagedState -eq 'Disabled') { 'None' } else { "$pgfilesize MB" })"
+    if ($pgfileManagedState) { specs "Page File Managed: $pgfileManagedState" }
     specs "CPU Cores/Threads: ${cpuCores}C / ${cpuThreads}T"
     if ($cpuSpeedGHz) { specs "CPU Speed: ${cpuSpeedGHz} GHz" }
     if ($cpuSocket) { specs "CPU Socket: $cpuSocket" }
