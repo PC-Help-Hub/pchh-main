@@ -120,6 +120,7 @@ body{background:var(--bg);color:var(--text);font-family:'Albert Sans',sans-serif
 .g{color:var(--ok)}
 .r{color:var(--err)}
 .y{color:var(--warn)}
+.i{color:var(--info)}
 .view{display:none}
 @keyframes viewFadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
 body.tab-summary #summaryView,body.tab-rel #relView,body.tab-sys #sysView,body.tab-shutdowns #shutdownsView,body.tab-mobo #moboView,body.tab-cpu #cpuView,body.tab-drives #drivesView,body.tab-gpu #gpuView,body.tab-memory #memoryView,body.tab-battery #batteryView,body.tab-net #netView,body.tab-devices #devicesView,body.tab-security #securityView,body.tab-processes #processesView,body.tab-apps #appsView,body.tab-updates #updatesView,body.tab-extensions #extensionsView,body.tab-faq #faqView,body.tab-tools #toolsView,body.tab-dumps #dumpsView{display:block;animation:viewFadeIn .28s cubic-bezier(.16,1,.3,1)}
@@ -202,6 +203,7 @@ body.tab-summary #summaryView,body.tab-rel #relView,body.tab-sys #sysView,body.t
 .drive .meter.low div{background:var(--warn)}
 .drive .use{color:var(--dim);font-size:14px}
 .drive.smart-bad{border-color:var(--err)}
+.drive.smart-warn{border-color:var(--warn)}
 .drive.highlight-flash{animation:diskFlash 1.6s ease-out}
 @keyframes diskFlash{0%{box-shadow:0 0 0 3px var(--info)}100%{box-shadow:0 0 0 0 rgba(0,0,0,0)}}
 
@@ -755,14 +757,18 @@ function renderSpecs(){
       const low=freePct<10;
       const diskNum=letterToDisk[dr['Drive Label']];
       const smEarly=diskNum!=null?smartByDiskEarly[String(diskNum)]:null;
-      const bad=smEarly?smartProbs(smEarly).length>0:false;
+      const critEarly=smEarly?smartProbs(smEarly):[];
+      const crcEarly=smEarly?smartCrcProbs(smEarly):[];
+      const bad=critEarly.length>0;
+      const warnOnly=!bad&&crcEarly.length>0;
       const rawName=dr['Drive Name'];
       const driveName=(rawName&&rawName!=='No Name Found')?rawName:'Local Disk';
-      dh+='<div class="drive'+(bad?' smart-bad':'')+'"'+(diskNum!=null?' style="cursor:pointer" onclick="highlightDisk(\''+esc(diskNum)+'\')"':'')+'><h3>'+esc(driveName)+' ('+esc(dr['Drive Label']||'?')+')</h3>'+
+      dh+='<div class="drive'+(bad?' smart-bad':(warnOnly?' smart-warn':''))+'"'+(diskNum!=null?' style="cursor:pointer" onclick="highlightDisk(\''+esc(diskNum)+'\')"':'')+'><h3>'+esc(driveName)+' ('+esc(dr['Drive Label']||'?')+')</h3>'+
         '<div class="sub" style="margin:2px 0 12px">'+fmtSize(totalGB)+'</div>'+
         '<div class="meter'+(low?' low':'')+'" style="margin:10px 0 8px"><div style="width:'+usedPct+'%"></div></div>'+
         '<div class="sub" style="margin-bottom:0">'+fmtFree(freeGB)+' free <span style="color:'+(low?'var(--warn)':'var(--faint)')+'">('+freePct+'%)</span></div>'+
-        (bad?'<div style="color:var(--err);font-size:13px;margin-top:6px">\u26a0 SMART warning on this disk</div>':'')+
+        (bad?'<div style="color:var(--err);font-size:13px;margin-top:6px">\u26a0 SMART warning on this disk</div>'
+         :warnOnly?'<div style="color:var(--warn);font-size:13px;margin-top:6px">\u26a0 CRC errors on this disk</div>':'')+
         '</div>';
     });
     dh+='</div></div>';
@@ -783,16 +789,19 @@ function renderSpecs(){
       const unallocGB=Math.max(0,total-partSum);
       const parts=unallocGB>0.5?[...dk.partitions,{type:'Unallocated',sizeGB:unallocGB,letter:''}]:dk.partitions;
       const sm=smartByDisk[String(dk.disk)];
-      const probs=sm?smartProbs(sm):[];
-      const bad=probs.length>0;
+      const crit=sm?smartProbs(sm):[];
+      const crcProbs=sm?smartCrcProbs(sm):[];
+      const bad=crit.length>0;
+      const warnOnly=!bad&&crcProbs.length>0;
       const clickable=!!sm;
       const healthLabel=(sm&&sm.health&&!(bad&&/^healthy$/i.test(sm.health)))?sm.health+(sm.op&&sm.op!=='OK'&&sm.op!==sm.health?' ('+sm.op+')':''):'';
       const letters=parts.filter(p=>p.letter).map(p=>p.letter).join(', ');
-      dh+='<div class="drive'+(bad?' smart-bad':'')+'" id="diskBlock-'+esc(dk.disk)+'" style="margin-bottom:14px'+(clickable?';cursor:pointer':'')+'"'+(clickable?' onclick="openSmartModal(\''+esc(dk.disk)+'\')"':'')+'>';
+      dh+='<div class="drive'+(bad?' smart-bad':(warnOnly?' smart-warn':''))+'" id="diskBlock-'+esc(dk.disk)+'" style="margin-bottom:14px'+(clickable?';cursor:pointer':'')+'"'+(clickable?' onclick="openSmartModal(\''+esc(dk.disk)+'\')"':'')+'>';
       dh+='<h3>Disk '+esc(dk.disk)+(letters?' ('+esc(letters)+')':'')+(sm&&sm.name?' - <span style="color:var(--dim);font-weight:400">'+esc(sm.name)+'</span>':'')+'</h3>';
       dh+='<div class="sub">'+fmtSize(dk.sizeGB)+(sm&&sm.bus?' \u00b7 '+esc(sm.bus):'')+
         (healthLabel?' \u00b7 <span style="color:'+(bad?'var(--err)':'var(--ok)')+'">'+esc(healthLabel)+'</span>':'')+'</div>'+
         (bad?'<div style="color:var(--err);font-size:13.5px;margin-bottom:6px">\u26a0 SMART warning &mdash; click for details</div>'
+          :warnOnly?'<div style="color:var(--warn);font-size:13.5px;margin-bottom:6px">\u26a0 CRC errors &mdash; click for details</div>'
           :(clickable?'<div style="color:var(--faint);font-size:13px;margin-bottom:6px">Click for drive health details</div>':''));
       dh+='<div style="display:flex;height:22px;border-radius:6px;overflow:hidden;margin:10px 0;background:var(--panel2)">';
       parts.forEach(p=>{
@@ -813,7 +822,9 @@ function renderSpecs(){
     const alerts=[];
     SMART.forEach(d=>{
       const probs=smartProbs(d);
+      const crc=smartCrcProbs(d);
       if(probs.length)alerts.push('<li><span class="r" style="color:var(--err)">Disk '+esc(d.disk)+' ('+esc(d.name)+'): '+esc(probs.join(', '))+'</span></li>');
+      if(crc.length)alerts.push('<li><span class="y" style="color:var(--warn)">Disk '+esc(d.disk)+' ('+esc(d.name)+'): '+esc(crc.join(', '))+'</span></li>');
     });
     DIRTY.forEach(v=>alerts.push('<li><span style="color:var(--warn)">Volume '+esc(v)+' has its dirty bit set</span></li>'));
     dh+='<div class="spec-section" style="margin-top:26px"><h2>SMART data</h2>'+
@@ -910,7 +921,7 @@ const FAQ_DATA=[
 {id:'unexpected-shutdown',q:"Unexpected Shutdowns",a:"Windows didn't shut down properly last time, meaning it never received the normal 'the user is turning off the PC' signal. This can be caused by:<ul style='margin:8px 0 8px 20px;padding:0'><li>a full system crash (a 'blue screen')</li><li>a power cut</li><li>overheating (thermal shutdown)</li><li>someone holding the power button</li><li>the PC freezing and being force-restarted</li></ul>If a specific bugcheck code is shown, that's the technical reason Windows gave. It can point toward whether this is a hardware, driver, or Windows problem. Most bugcheck codes are Google-able and have common fixes.<br><br>When Windows detects the power button was physically held down for 4+ seconds, it records that moment separately from the shutdown itself - that's shown as 'Power button held down' with the exact time, which usually means the PC was unresponsive and had to be force-closed rather than crashing cleanly with a bugcheck.",tools:["WhoCrashed","OCCT","MemTest86","Display Driver Uninstaller (DDU)"]},
 {id:'memory-dump',q:"Memory Dump",a:"When Windows crashes badly, a 'blue screen' happens. Windows tries to save a snapshot of exactly what the computer was doing at that moment to a file called a memory dump.<br><br>Memory dump(s) are included in the zip this tool creates. If you have them, you can share the zip file with us and we'll try to debug for you. Memory dumps are one of the most useful pieces of evidence for figuring out precisely what caused a crash.<br><br>If there are no memory dumps in the zip file but you've been experiencing crashes, shutdowns, or freezing, that means Windows wasn't able to create one. This can (but not always) indicate a hardware problem over a software one. Windows will usually try to generate a memory dump when the system crashes.",tools:["WhoCrashed"]},
 {id:'whea',q:"Fatal Hardware Error (WHEA)",a:"WHEA is Windows' hardware error reporting system. A fatal WHEA error means a core piece of hardware, usually the CPU, memory controller, or a PCIe device, reported a serious problem Windows couldn't recover from, and the machine likely crashed or rebooted as a result.<br><br>This is a strong indication that something is physically wrong or unstable, often an overclock, degraded hardware, or insufficient voltage, rather than a software issue.",tools:["OCCT","MemTest86","HWiNFO"]},
-{id:'disk-smart',q:"Storage / SMART Warnings",a:"Your drives (SSD, NVMe, hard drive) constantly track their own health statistics using something called SMART data. This data lists specific problems the drive itself has self-reported, such as:<ul style='margin:8px 0 8px 20px;padding:0'><li>reallocated sectors (damaged areas it's had to work around)</li><li>pending or uncorrectable sectors (data that couldn't be read reliably)</li><li>a high UltraDMA CRC error count (usually a loose or failing cable)</li></ul>If a drive predicts its own failure, it's important that you back up anything important from it immediately. Drive failures are often random and unpredictable.",tools:["CrystalDiskInfo"]},
+{id:'disk-smart',q:"Storage / SMART Warnings",a:"Your drives (SSD, NVMe, hard drive) constantly track their own health statistics using something called SMART data. This data lists specific problems the drive itself has self-reported, such as:<ul style='margin:8px 0 8px 20px;padding:0'><li>reallocated sectors (damaged areas it's had to work around)</li><li>pending or uncorrectable sectors (data that couldn't be read reliably)</li></ul>If a drive predicts its own failure, it's important that you back up anything important from it immediately. Drive failures are often random and unpredictable.<br><br>A high <b>UltraDMA CRC error</b> count is shown separately as a warning rather than a critical issue - it's usually a loose or failing cable or connection, not the drive itself dying, and is often fixed by reseating or replacing the cable.",tools:["CrystalDiskInfo"]},
 {id:'dirty-bit',q:"Dirty Bit",a:"This means Windows flagged a drive as not having been cleanly unmounted, usually caused by the same unexpected shutdown or crash reported elsewhere in this report. It's a marker for Windows to check that drive's filesystem for errors next time it gets the chance.<br><br>On its own it isn't necessarily a sign of a failing drive, and is used as an indication that something might be wrong.",tools:[]},
 {id:'device-manager-errors',q:"Device Manager Errors",a:"Windows found a piece of hardware but couldn't properly load a driver for it, or the device itself reported a problem. This usually means a missing, outdated, or corrupted driver. Occasionally it's a genuine hardware fault.",tools:["AMD Drivers & Support","NVIDIA Drivers & Support","Intel Drivers & Support"]},
 {id:'mbr-secureboot',q:"MBR Partitioning",a:"Windows drives use one of two partitioning styles: MBR or the newer GPT. Secure Boot, a feature that helps stop malware loading before Windows starts, requires GPT.<br><br>If the main drive (the one with Windows installed on it) is MBR, Secure Boot can't be turned on without converting the drive or doing a clean reinstall of Windows, which is a bigger job and best not attempted without guidance.",tools:[]},
@@ -927,7 +938,7 @@ const FAQ_DATA=[
 {id:'ram-speed',q:"RAM Speed (XMP/EXPO)",a:"Your memory (RAM) is capable of running faster than it currently is. This almost always means that a feature called XMP (Intel) or EXPO (AMD) isn't enabled.<br><br>XMP/EXPO is a one-click profile in the BIOS that allows your RAM to run at its advertised speed. When it's disabled, your RAM will default to a lower speed. Enabling it isn't overclocking, and isn't dangerous. We'd recommend enabling it, which can be done through your BIOS. If you're unsure how to do that, you can ask one of our advisors for more help.<br><br><i>Note: some systems can struggle to run RAM at its full advertised speed for various reasons, which is why it isn't enabled by default. When this happens, it can sometimes help to disable it, to prevent system instability or crashes.</i><br><br>This isn't dangerous either way, but running below the rated speed does mean the RAM isn't performing the way it was bought to.",tools:["CPU-Z"]},
 {id:'antivirus-conflict',q:"Multiple Antivirus Programs",a:"More than one antivirus program is trying to actively scan the system at the same time. This is a common, often-overlooked cause of slowdowns, false-positive quarantines, and general instability, since the two programs can end up fighting over the same files.",tools:[]},
 {id:'defender-rtp',q:"Defender Real-Time Protection",a:"Windows' built-in antivirus isn't actively scanning for threats. This can be intentional if another antivirus is installed, or it can be accidental. Malware sometimes disables it deliberately to avoid detection.",tools:[]},
-{id:'bitlocker-on',q:"BitLocker Enabled",a:"The system drive is encrypted with BitLocker. This is worth knowing before any wipe, reset, reinstall, or drive removal &mdash; without the recovery key, an encrypted drive that gets locked out (for example, after a motherboard or TPM change) cannot be read or recovered.<br><br>If a wipe or reset is planned, confirm the recovery key is backed up somewhere accessible (Microsoft account, Active Directory, or a printed/saved copy) before proceeding.",tools:[]},
+{id:'bitlocker-on',q:"BitLocker Enabled",a:"One or more drives are encrypted with BitLocker. This isn't a problem &mdash; it's just worth knowing about, since it affects a few things:<ul style='margin:8px 0 8px 20px;padding:0'><li>Before a wipe, reset, reinstall, or drive removal: without the recovery key, an encrypted drive that gets locked out cannot be read or recovered.</li><li>Before a <b>BIOS/UEFI update</b>, or any change to boot order, Secure Boot, or the TPM: these can change the measurements BitLocker checks at startup and trigger a recovery key prompt on the next boot. Suspending BitLocker first (Control Panel &gt; BitLocker Drive Encryption &gt; Suspend protection) avoids this, and it resumes automatically after the next restart.</li></ul>If a wipe, reset, or BIOS update is planned, confirm the recovery key is backed up somewhere accessible (Microsoft account, Active Directory, or a printed/saved copy) before proceeding.",tools:[]},
 {id:'firewall-disabled',q:"Firewall Disabled",a:"Windows Firewall isn't active on one or more network profiles (Domain, Private, or Public), leaving the system more exposed to unwanted network connections.",tools:[]},
 {id:'defender-threats',q:"Defender Threat Detections",a:"Windows Defender has previously found and acted on something it identified as malware, a virus, or another threat on this PC. This is historical. It doesn't necessarily mean anything is currently infected, but repeated or recent detections are worth taking seriously.",tools:[]},
 {id:'defender-exclusions',q:"Risky Defender Exclusions",a:"An exclusion tells Windows Defender to skip scanning a specific file, folder, or file type. Excluding a game folder is common and usually fine.<br><br>Excluding an entire drive, a broad system folder, or all .exe files is far more dangerous, since it means malware placed there would never be scanned at all. Check the Security tab for exactly what's excluded.",tools:[]},
@@ -1112,9 +1123,16 @@ function smartProbs(d){
   if(+d.rl>0)probs.push(d.rl+' reallocated sectors');
   if(+d.pend>0)probs.push(d.pend+' pending sectors');
   if(+d.unc>0)probs.push(d.unc+' uncorrectable sectors');
-  if(+d.crc>0)probs.push(d.crc+' UltraDMA CRC errors');
   if(+d.reu>0)probs.push(d.reu+' uncorrected read errors');
   if(+d.weu>0)probs.push(d.weu+' uncorrected write errors');
+  return probs;
+}
+// UltraDMA CRC errors are usually a cable/connection problem (a loose or marginal SATA cable,
+// a bad port), not the drive's own media failing, so they're tracked separately from the
+// critical failure-signal attributes above and shown as a warning rather than a red flag.
+function smartCrcProbs(d){
+  const probs=[];
+  if(+d.crc>0)probs.push(d.crc+' UltraDMA CRC errors (often a loose or failing cable)');
   return probs;
 }
 // Custom hover tooltip for the disk-layout partition bars - a native title attribute works but
@@ -1300,7 +1318,9 @@ function renderSummary(){
   if(wheaFatal)notes.push(dataLink('sys','whea','<span class="r"><b>'+wheaFatal+'</b> Fatal hardware error'+(wheaFatal>1?'s':'')+' (WHEA)</span>'));
   SMART.forEach(d=>{
     const probs=smartProbs(d);
+    const crc=smartCrcProbs(d);
     if(probs.length)notes.push(dataLink('drives','disk-smart','<span class="r">Disk '+esc(d.disk)+' ('+esc(d.name)+'): '+esc(probs.join(', '))+'</span>'));
+    if(crc.length)notes.push(dataLink('drives','disk-smart','<span class="y">Disk '+esc(d.disk)+' ('+esc(d.name)+'): '+esc(crc.join(', '))+'</span>'));
   });
   DIRTY.forEach(v=>notes.push(dataLink('drives','dirty-bit','<span class="y">Volume '+esc(v)+' has its dirty bit set</span>')));
   if(DEVERR.length){
@@ -1485,8 +1505,11 @@ function renderSummary(){
       notes.push(dataLink('security','rdp-enabled','<span class="y">Remote Desktop (RDP) is enabled'+(extra.length?' &mdash; '+extra.join(', '):'')+'</span>'));
     }
     if(SECURITY.bitlocker&&SECURITY.bitlocker.length){
-      const osVol=SECURITY.bitlocker.find(b=>b.type==='OperatingSystem')||SECURITY.bitlocker.find(b=>b.drive==='C:');
-      if(osVol&&osVol.status==='On')notes.push(dataLink('security','bitlocker-on','<span class="y">BitLocker is enabled on the system drive &mdash; back up the recovery key before wiping or resetting</span>'));
+      const onVols=SECURITY.bitlocker.filter(b=>b.status==='On');
+      if(onVols.length){
+        const drives=onVols.map(b=>b.drive).filter(Boolean);
+        notes.push(dataLink('security','bitlocker-on','<span class="i">BitLocker is enabled'+(drives.length?' on '+esc(drives.join(', ')):'')+'</span>'));
+      }
     }
   }
   const gpuDrvRe=/nvlddmkm|amdwddmg|amdkmdag|atikmdag/i;
