@@ -64,21 +64,27 @@ $viewerTemplate = @'
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>PCHH Triage - System Report</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Albert+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Roboto+Mono:wght@400;500&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&display=swap" rel="stylesheet">
 <style>
 :root{
-  --bg:#0b0c0f; --panel:#151720; --panel2:#1e212b; --line:#2c313d;
-  --text:#f5f7fa; --dim:#aab0bd; --faint:#767e8c;
-  --err:#ff6b6b; --warn:#ffc069; --ok:#3ddc97; --info:#6aa7ff;
+  --bg:#111418; --panel:#1D2024; --panel2:#1D2024; --line:#2A2E33; --line2:#43474E;
+  --text:#E2E2E9; --dim:#C3C6CF; --faint:#8F9299;
+  --err:#FFB4AB; --err-c:#93000A; --err-on-c:#FFDAD6; --err-container:#3B2C2C;
+  --warn:#FFDF9B; --warn-c:#5C4600; --warn-on-c:#3F2E00; --warn-container:#332703;
+  --ok:#8BD17C; --info:#A0CAFD; --info-c:#004A7D; --info-on-c:#D1E4FF;
 }
 *{box-sizing:border-box;margin:0;padding:0}
 @media (prefers-reduced-motion: reduce){*{animation-duration:.001ms!important;animation-iteration-count:1!important}}
-body{background:var(--bg);color:var(--text);font-family:'Albert Sans',sans-serif;font-size:16px;min-height:100vh}
-#appShell{display:flex;background:var(--bg);padding:40px 16px 40px 40px;gap:16px;min-height:100vh;width:100%}
-.mono{font-family:'IBM Plex Mono',monospace}
-#sidebar{width:230px;flex:0 0 230px;background:var(--panel2);border:1px solid var(--line);border-radius:16px;display:flex;flex-direction:column;padding:36px 16px 22px}
-#brand{font-size:19px;font-weight:600;letter-spacing:.01em;padding:0 10px 18px}
-#content{flex:1;min-width:0}
+body{background:var(--bg);color:var(--text);font-family:'Roboto',system-ui,sans-serif;font-size:16px;height:100vh;overflow:hidden}
+.material-symbols-outlined{font-family:'Material Symbols Outlined';font-weight:normal;font-style:normal;font-size:24px;line-height:1;letter-spacing:normal;text-transform:none;display:inline-block;white-space:nowrap;word-wrap:normal;direction:ltr;vertical-align:middle;-webkit-font-feature-settings:'liga';-webkit-font-smoothing:antialiased;flex-shrink:0}
+#appShell{display:flex;background:var(--bg);padding:40px 16px 40px 40px;gap:16px;height:100vh;width:100%}
+.mono{font-family:'Roboto Mono',monospace}
+#sidebar{width:300px;flex:0 0 300px;background:var(--panel2);border-radius:16px;display:flex;flex-direction:column;padding:12px 12px 8px;overflow:hidden}
+#brand{display:flex;align-items:center;gap:12px;padding:16px 16px 20px;font-size:19px;font-weight:600;letter-spacing:.01em}
+#brand .material-symbols-outlined{font-size:30px;color:var(--info)}
+#brand-sub{font:400 12px/16px Roboto;color:var(--faint);font-weight:400}
+#content{flex:1;min-width:0;height:100%;min-height:0;display:flex;flex-direction:column;overflow-y:auto}
 @media (max-width:900px){
   #appShell{flex-direction:column;padding:16px}
   #sidebar{width:auto;flex:0 0 auto;flex-direction:row;flex-wrap:wrap;align-items:center;padding:14px}
@@ -88,23 +94,30 @@ body{background:var(--bg);color:var(--text);font-family:'Albert Sans',sans-serif
   .nav-group-title{display:none}
   #sideFoot{width:100%;order:99;flex-direction:row;justify-content:space-between;padding-top:10px}
 }
-#tabs{display:flex;flex-direction:column;gap:2px;flex:1;overflow-y:auto}
-.nav-group{margin-bottom:14px}
-.nav-group-title{display:flex;align-items:center;justify-content:space-between;color:var(--text);font-size:18px;text-transform:none;letter-spacing:0;font-weight:600;padding:8px 10px;cursor:pointer;border-radius:6px;user-select:none}
-.nav-group-title:hover{color:var(--text)}
-.nav-group-title.static{cursor:default}
+#tabs{display:flex;flex-direction:column;gap:2px;flex:1;overflow-y:auto;overflow-x:hidden}
+.nav-group{margin-bottom:2px}
+.nav-group-title{display:flex;align-items:center;justify-content:space-between;color:var(--dim);font:500 14px/20px Roboto;text-transform:none;letter-spacing:0;padding:0 28px;height:40px;cursor:pointer;border-radius:6px;user-select:none}
+.nav-group-title:hover{color:var(--dim)}
+.nav-group-title.static{cursor:default;height:40px}
 .nav-group-title.static:hover{color:var(--dim)}
-.nav-group-title .chev{font-size:10px;transition:transform .15s;color:var(--faint)}
+.nav-group-title .chev{font-size:18px;transition:transform .15s;color:var(--faint)}
 .nav-group.collapsed .nav-group-title .chev{transform:rotate(-90deg)}
 .nav-group.collapsed .nav-group-items{display:none}
 .nav-group-items{display:flex;flex-direction:column;gap:2px}
 #sideFoot{margin-top:auto;padding-top:14px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:4px}
 #sideFoot span{color:var(--faint);font-size:12px}
-.tab{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:none;border:none;color:var(--dim);font-family:inherit;font-size:16px;font-weight:500;padding:9px 10px 9px 20px;cursor:pointer;border-radius:9px}
-.tab svg{width:16px;height:16px;flex-shrink:0;opacity:.65;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
-.tab.on svg,.tab:hover svg{opacity:1}
-.tab:hover{color:var(--text);background:color-mix(in srgb,var(--panel2) 60%,transparent)}
-.tab.on{color:var(--text);background:var(--panel2)}
+.tab{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:none;border:none;color:var(--dim);font-family:'Roboto',inherit;font-size:15px;font-weight:500;height:52px;padding:0 24px;cursor:pointer;border-radius:26px}
+.tab .material-symbols-outlined{font-size:24px;color:currentColor}
+.tab:hover{color:var(--text);background:#272A2F}
+.tab.on{color:var(--info-on-c);background:var(--info-c)}
+.tab.on .material-symbols-outlined{font-variation-settings:'FILL' 1}
+.tab-badge{margin-left:auto;min-width:20px;height:20px;padding:0 6px;box-sizing:border-box;border-radius:10px;background:var(--err-c);color:var(--err-on-c);font:500 11px/20px Roboto;text-align:center;flex:none}
+.tab-badge.warn{background:var(--warn-container);color:var(--warn)}
+.flag-sep{width:1px;align-self:stretch;background:var(--line2);margin:0 4px}
+.nav-group-title .group-badge{display:none;margin-left:auto;margin-right:10px;min-width:10px;width:10px;height:10px;padding:0}
+.nav-group.collapsed .nav-group-title .group-badge.show{display:block}
+.nav-group-title .group-badge{background:var(--err)}
+.nav-group-title .group-badge.warn{background:var(--warn)}
 #summary{padding:0;display:flex;flex-direction:column;gap:6px;font-size:15.5px;line-height:1.55}
 
 
@@ -123,45 +136,329 @@ body{background:var(--bg);color:var(--text);font-family:'Albert Sans',sans-serif
 .i{color:var(--info)}
 .view{display:none}
 @keyframes viewFadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
-body.tab-summary #summaryView,body.tab-rel #relView,body.tab-sys #sysView,body.tab-shutdowns #shutdownsView,body.tab-mobo #moboView,body.tab-cpu #cpuView,body.tab-drives #drivesView,body.tab-gpu #gpuView,body.tab-memory #memoryView,body.tab-battery #batteryView,body.tab-net #netView,body.tab-devices #devicesView,body.tab-security #securityView,body.tab-processes #processesView,body.tab-apps #appsView,body.tab-updates #updatesView,body.tab-extensions #extensionsView,body.tab-faq #faqView,body.tab-tools #toolsView,body.tab-dumps #dumpsView{display:block;animation:viewFadeIn .28s cubic-bezier(.16,1,.3,1)}
+body.tab-battery #batteryView,body.tab-faq #faqView,body.tab-tools #toolsView,body.tab-dumps #dumpsView{display:block;animation:viewFadeIn .28s cubic-bezier(.16,1,.3,1)}
+body.tab-summary #summaryView,body.tab-diagsummary #diagsummaryView,body.tab-rel #relView,body.tab-mobo #moboView,body.tab-cpu #cpuView,body.tab-drives #drivesView,body.tab-gpu #gpuView,body.tab-memory #memoryView,body.tab-net #netView,body.tab-devices #devicesView,body.tab-security #securityView,body.tab-apps #appsView,body.tab-processes #processesView,body.tab-updates #updatesView,body.tab-extensions #extensionsView,body.tab-sys #sysView,body.tab-shutdowns #shutdownsView{display:flex;flex-direction:column;min-height:0;flex:1;animation:viewFadeIn .28s cubic-bezier(.16,1,.3,1)}
+body.tab-summary #content,body.tab-diagsummary #content,body.tab-rel #content,body.tab-mobo #content,body.tab-cpu #content,body.tab-drives #content,body.tab-gpu #content,body.tab-memory #content,body.tab-net #content,body.tab-devices #content,body.tab-security #content,body.tab-apps #content,body.tab-processes #content,body.tab-updates #content,body.tab-extensions #content,body.tab-sys #content,body.tab-shutdowns #content{overflow:hidden}
 #pageTitle{padding:36px 36px 0;font-size:40px;font-weight:700;letter-spacing:-.01em;color:var(--text);max-width:1160px}
+body.tab-summary #pageTitle{display:none}
+body.tab-diagsummary #pageTitle{display:none}
+body.tab-security #pageTitle{display:none}
+body.tab-cpu #pageTitle{display:none}
+body.tab-drives #pageTitle{display:none}
+body.tab-gpu #pageTitle{display:none}
+body.tab-mobo #pageTitle{display:none}
+body.tab-net #pageTitle{display:none}
+body.tab-memory #pageTitle{display:none}
+body.tab-devices #pageTitle{display:none}
+body.tab-rel #pageTitle{display:none}
+body.tab-apps #pageTitle{display:none}
+body.tab-processes #pageTitle{display:none}
+body.tab-updates #pageTitle{display:none}
+body.tab-extensions #pageTitle{display:none}
+body.tab-sys #pageTitle{display:none}
 #pageTitleSub{color:var(--info);font-weight:600}
-#summaryView,#relView,#sysView,#shutdownsView,#moboView,#cpuView,#drivesView,#netView,#securityView,#appsView,#dumpsView,#memoryView,#gpuView,#batteryView,#devicesView,#processesView,#extensionsView,#updatesView,#toolsView,#faqView{padding:20px 36px 64px;max-width:1160px}
+#dumpsView,#batteryView,#toolsView,#faqView{padding:20px 36px 64px;max-width:1160px}
 .sys-ok{color:var(--ok);padding:24px 0;font-size:16px}
 .sys-note{color:var(--faint);font-size:13px;margin-bottom:14px}
 .spec-section{margin-bottom:40px}
 
-/* System Summary hero: identity strip + at-a-glance spec tiles */
-#summaryHero{margin-bottom:36px}
-.identity{display:flex;align-items:center;justify-content:space-between;gap:24px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:22px 26px;margin-bottom:16px}
-.identity-left{display:flex;align-items:center;gap:16px;min-width:0}
-.identity-icon{width:46px;height:46px;flex-shrink:0;border-radius:10px;background:var(--panel2);display:flex;align-items:center;justify-content:center}
-.identity-icon svg{width:24px;height:24px;stroke:var(--info);fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
-.identity-text{min-width:0}
-.identity-title{font-size:21px;font-weight:700;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.identity-sub{color:var(--dim);font-size:14px;margin-top:3px}
-.status-pill{display:flex;align-items:center;gap:8px;background:var(--panel2);border:1px solid var(--line);border-radius:20px;padding:8px 16px;font-size:14px;white-space:nowrap;flex-shrink:0}
-.status-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
-.status-pill.warn{color:var(--warn)}.status-pill.warn .status-dot{background:var(--warn)}
-.status-pill.err{color:var(--err)}.status-pill.err .status-dot{background:var(--err)}
-.status-pill.ok{color:var(--ok)}.status-pill.ok .status-dot{background:var(--ok)}
-.tile-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
-@media (max-width:820px){.tile-grid{grid-template-columns:repeat(2,1fr)}}
-@media (max-width:520px){.tile-grid{grid-template-columns:1fr}.identity{flex-wrap:wrap}}
-.tile{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:20px 22px 22px;transition:border-color .15s ease;cursor:pointer}
-.tile:hover{border-color:var(--dim)}
-.tile-head{display:flex;align-items:center;gap:10px;margin-bottom:14px}
-.tile-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.tile-icon svg{width:17px;height:17px;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
-.tile-label{color:var(--faint);font-size:12px;text-transform:uppercase;letter-spacing:.07em;font-weight:600}
-.tile-value{font-size:17px;font-weight:600;line-height:1.35;margin-bottom:6px}
-.tile-line{color:var(--dim);font-size:13.5px;line-height:1.6}
-.c-cpu .tile-icon{background:color-mix(in srgb,var(--info) 16%,transparent)}.c-cpu .tile-icon svg{stroke:var(--info)}
-.c-gpu .tile-icon{background:color-mix(in srgb,var(--ok) 16%,transparent)}.c-gpu .tile-icon svg{stroke:var(--ok)}
-.c-ram .tile-icon{background:color-mix(in srgb,var(--warn) 16%,transparent)}.c-ram .tile-icon svg{stroke:var(--warn)}
-.c-storage .tile-icon{background:color-mix(in srgb,#c398ff 16%,transparent)}.c-storage .tile-icon svg{stroke:#c398ff}
-.c-mobo .tile-icon{background:color-mix(in srgb,var(--dim) 16%,transparent)}.c-mobo .tile-icon svg{stroke:var(--dim)}
-.c-os .tile-icon{background:color-mix(in srgb,var(--info) 16%,transparent)}.c-os .tile-icon svg{stroke:none;fill:var(--info)}
+/* Summary tab: M3 page header (breadcrumb + title + status chip + actions) and spec tile grid */
+#summaryView{padding:0}
+#summaryHead{padding:24px 40px 28px;display:flex;flex-direction:column;gap:24px;flex:none}
+#summaryCrumb{display:flex;align-items:center;gap:8px;min-height:40px}
+#summaryCrumb .crumb{font:400 13px/18px Roboto;color:var(--faint);display:flex;align-items:center;gap:6px}
+#summaryCrumb .crumb b{color:var(--dim);font-weight:400}
+#summaryActions{margin-left:auto;display:flex;gap:8px}
+.m3-btn{display:flex;align-items:center;gap:8px;height:36px;padding:0 14px 0 10px;border:1px solid #8D9199;border-radius:18px;font:500 13px/18px Roboto;color:var(--text);cursor:pointer;background:none}
+.m3-btn:hover{background:#272A2F}
+.m3-btn.filled{border:none;padding:0 20px 0 16px;background:var(--info);color:#00325A}
+.m3-btn.filled:hover{background:#B9D8FF}
+#summaryTitleRow{display:flex;align-items:flex-end;gap:24px}
+#summaryTitle{font:400 32px/40px Roboto;overflow-wrap:anywhere}
+#summarySub{font:400 14px/20px Roboto;color:var(--faint);margin-top:6px}
+#summaryChip{margin-left:auto;display:flex;align-items:center;gap:8px;height:36px;padding:0 16px 0 12px;border-radius:18px;white-space:nowrap;font:500 13px/18px Roboto;cursor:pointer}
+#summaryChip:hover{filter:brightness(1.15)}
+#summaryChip .status-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+#summaryChip.err{background:var(--err-container);border:1px solid var(--err-c);color:var(--err)}
+#summaryChip.err .status-dot{background:var(--err)}
+#summaryChip.warn{background:var(--warn-container);border:1px solid var(--warn-c);color:var(--warn)}
+#summaryChip.warn .status-dot{background:var(--warn)}
+#summaryChip.ok{background:var(--panel);border:1px solid var(--line2);color:var(--ok)}
+#summaryChip.ok .status-dot{background:var(--ok)}
+#summaryBody{padding:0 40px 40px;flex:1;min-height:0;overflow-y:auto}
+.tile-grid{display:grid;grid-template-columns:repeat(3,1fr);grid-auto-rows:1fr;gap:20px;height:100%}
+@media (max-width:1100px){.tile-grid{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:680px){.tile-grid{grid-template-columns:1fr}#summaryHead{padding:20px 16px 20px}#summaryBody{padding:0 16px 32px}#summaryTitle{font-size:26px;line-height:32px}}
+.tile{background:var(--panel);border-radius:16px;padding:25px 25px 29px;display:flex;flex-direction:column;gap:20px;cursor:pointer;transition:background .1s ease;border:1px solid transparent}
+.tile:hover{background:#22262B}
+.tile-err{border-color:var(--err)}
+.tile-warn{border-color:var(--warn)}
+.tile-head{display:flex;align-items:center;gap:14px}
+.tile-icon{width:48px;height:48px;flex:none;border-radius:14px;background:var(--info-c);color:var(--info-on-c);display:grid;place-items:center}
+.tile-icon .material-symbols-outlined{font-size:26px}
+.tile-titles{min-width:0}
+.tile-label{color:var(--faint);font:500 10px/14px Roboto;letter-spacing:.08em;text-transform:uppercase}
+.tile-value{font:400 18px/24px Roboto;overflow-wrap:anywhere}
+.tile-chevron{margin-left:auto;color:var(--faint);flex:none}
+.tile-warnbadge{margin-left:auto;flex:none;width:28px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:8px}
+.tile-warnbadge .material-symbols-outlined{font-size:18px}
+.tile-warnbadge-warn{background:var(--warn-container);color:var(--warn)}
+.tile-warnbadge-err{background:var(--err-container);color:var(--err)}
+.tile-div{height:1px;background:var(--line2)}
+.tile-kv{display:grid;grid-template-columns:auto 1fr;gap:10px 16px;font:400 13px/19px Roboto;color:var(--dim)}
+.tile-kv dt{color:var(--faint)}
+.tile-kv dd{overflow-wrap:anywhere}
+.tile-warn-text{color:var(--warn)}
+.tile-bars{display:flex;flex-direction:column;gap:14px}
+.tile-bar-row{display:flex;flex-direction:column;gap:8px}
+.tile-bar-label{display:flex;justify-content:space-between;font:400 13px/18px Roboto;color:var(--dim)}
+.tile-bar-label span:first-child{color:var(--faint)}
+.tile-bar-track{height:8px;border-radius:4px;background:var(--line2);overflow:hidden}
+.tile-bar-fill{height:100%;background:var(--info)}
+.tile-bar-fill.low{background:var(--warn)}
+
+/* Shared "detail page" system: header + posture strip + cards, used by Security and other
+   redesigned detail pages (Processor, Storage, etc. to follow the same pattern). */
+.dp-view{padding:0}
+.dp-head{padding:24px 40px 18px;display:flex;flex-direction:column;gap:18px;flex:none}
+.dp-crumb{display:flex;align-items:center;gap:8px;min-height:40px}
+.dp-crumb .crumb{font:400 14px/20px Roboto;color:var(--faint);display:flex;align-items:center;gap:6px}
+.dp-crumb .crumb b{color:var(--dim);font-weight:400}
+.dp-actions{margin-left:auto;display:flex;gap:8px}
+.dp-title-row{display:flex;align-items:flex-end;gap:24px}
+.dp-title{font:400 32px/40px Roboto}
+.dp-sub{font:400 14px/20px Roboto;color:var(--faint);margin-top:6px}
+.dp-status{margin-left:auto;display:flex;align-items:center;gap:8px;font:500 13px/18px Roboto;white-space:nowrap;flex:none}
+.dp-status .status-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.dp-status.err{color:var(--err)}.dp-status.err .status-dot{background:var(--err)}
+.dp-status.warn{color:var(--warn)}.dp-status.warn .status-dot{background:var(--warn)}
+.dp-status.ok{color:var(--ok)}.dp-status.ok .status-dot{background:var(--ok)}
+.dp-posture{padding:0 40px 14px;display:grid;gap:12px;flex:none}
+.dp-posture-card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px;display:flex;align-items:center;gap:12px;cursor:default}
+.dp-posture-card.err{background:var(--err-container);border-color:var(--err-c)}
+.dp-posture-card.warn{background:var(--warn-container);border-color:var(--warn-c)}
+.dp-posture-card .material-symbols-outlined{font-size:22px}
+.dp-posture-t{font:500 13px/18px Roboto}
+.dp-posture-s{font:400 12px/16px Roboto;color:var(--faint)}
+.dp-posture-card.err .dp-posture-t{color:var(--err-on-c)}
+.dp-posture-card.warn .dp-posture-t{color:var(--warn)}
+.dp-body{flex:1;min-height:0;padding:0 40px 40px;display:grid;grid-template-columns:1fr 1fr;gap:16px;align-content:start}
+@media (max-width:900px){.dp-body{grid-template-columns:1fr}}
+.dp-card{background:var(--panel);border-radius:16px;padding:20px 22px}
+.dp-card-head{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.dp-card-title{font:400 18px/24px Roboto}
+.dp-card-count{font:400 13px/18px Roboto;color:var(--faint)}
+.dp-card-note{font:400 13px/18px Roboto;color:var(--faint);margin:-6px 0 12px}
+.dp-row{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--line)}
+.dp-row:last-child{border-bottom:none}
+.dp-row-label{flex:1;font:400 14px/20px Roboto;color:var(--dim)}
+.dp-row-val{font:500 13px/18px Roboto;white-space:nowrap}
+.dp-kv{display:grid;grid-template-columns:auto 1fr;gap:0 20px;font:400 14px/20px Roboto}
+.dp-kv dt{color:var(--faint);padding:10px 0;border-bottom:1px solid var(--line)}
+.dp-kv dd{padding:10px 0;border-bottom:1px solid var(--line);text-align:right;color:var(--dim)}
+.dp-kv dt:last-of-type,.dp-kv dd:last-of-type{border-bottom:none}
+.dp-banner{margin-top:12px;display:flex;align-items:center;gap:10px;padding:11px 13px;border-radius:10px;background:var(--warn-container);cursor:pointer}
+.dp-banner .material-symbols-outlined{font-size:18px;color:var(--warn);flex:none}
+.dp-banner-text{flex:1;font:400 13px/18px Roboto;color:var(--warn)}
+.dp-banner-link{font:500 12px/18px Roboto;color:var(--info);white-space:nowrap;flex:none}
+.dp-banner.err{background:var(--err-container)}
+.dp-banner.info{background:var(--panel)}
+.dp-banner.info .material-symbols-outlined,.dp-banner.info .dp-banner-text{color:var(--dim)}
+/* dp-cards have no border of their own, so outline them with an inset ring rather than a border - no layout shift */
+.dp-card.vol-card-warn{border:none;box-shadow:inset 0 0 0 1px var(--warn)}
+.dp-card.vol-card-err{border:none;box-shadow:inset 0 0 0 1px var(--err)}
+.dp-banner.err .material-symbols-outlined,.dp-banner.err .dp-banner-text{color:var(--err)}
+.dp-flag-row{display:flex;align-items:center;gap:9px;padding:10px 13px;border-radius:9px;background:var(--warn-container);font:400 13px/18px Roboto;color:var(--warn);overflow-wrap:anywhere}
+.dp-flag-row .material-symbols-outlined{font-size:16px;flex:none}
+.dp-plain-row{padding:10px 13px;border-radius:9px;background:#272A2F;font:400 13px/18px Roboto;color:var(--dim);overflow-wrap:anywhere}
+.dp-empty{color:var(--faint);font:400 14px/20px Roboto;padding:8px 0}
+.dp-stats{padding:0 40px;display:grid;grid-template-columns:repeat(4,1fr);gap:16px;flex:none;margin-bottom:24px}
+.dp-stat{background:var(--panel);border-radius:16px;padding:20px 22px}
+.dp-stat-l{font:500 11px/16px Roboto;letter-spacing:.09em;text-transform:uppercase;color:var(--faint)}
+.dp-stat-v{font:300 32px/40px Roboto;margin-top:4px}
+.dp-stat-sub{font:400 13px/18px Roboto;color:var(--faint);margin-top:2px}
+.dp-stat-v .unit{font-size:18px;color:var(--dim)}
+.dp-stat-s{font:400 13px/19px Roboto;color:var(--dim)}
+.dp-split{padding:20px 40px 40px;flex:1;min-height:0;overflow-y:auto;display:flex;gap:20px;align-items:flex-start}
+.dp-split-main{flex:1;min-width:0}
+.dp-split-side{width:400px;flex:none;display:flex;flex-direction:column;gap:16px}
+@media (max-width:1100px){.dp-split{flex-direction:column}.dp-split-side{width:100%}.dp-stats{grid-template-columns:repeat(2,1fr)}}
+.dp-table-note{margin-top:16px;font:400 13px/19px Roboto;color:var(--faint)}
+.dp-clickrow{display:flex;align-items:center;gap:12px;padding:13px 15px;border-radius:12px;background:#272A2F;cursor:pointer}
+.dp-clickrow:hover{background:#2F3338}
+.dp-clickrow .material-symbols-outlined{font-size:20px;flex:none}
+.dp-clickrow-t{font:500 14px/20px Roboto}
+.dp-clickrow-s{font:400 12px/18px Roboto;color:var(--faint)}
+.dp-chip{height:32px;padding:0 12px;border-radius:8px;border:1px solid var(--line2);color:var(--info);font:500 13px/30px Roboto;cursor:pointer}
+
+/* Storage page */
+.dp-content{flex:1;min-height:0;overflow-y:auto;padding:0 40px 40px;display:flex;flex-direction:column;gap:20px}
+.dp-section-label{font:500 11px/16px Roboto;letter-spacing:.09em;text-transform:uppercase;color:var(--faint);margin-bottom:12px}
+.vol-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
+.vol-stack{display:flex;flex-direction:column;gap:12px}
+.vol-stack .vol-card{flex-direction:row;align-items:center;gap:20px}
+.vol-stack .vol-top{flex:0 0 260px}
+.vol-stack .vol-bar-track{flex:1;margin:0}
+.vol-stack .vol-foot{flex:0 0 220px;flex-direction:column;align-items:flex-end;gap:2px}
+.vol-card{background:var(--panel);border-radius:16px;padding:21px 23px;display:flex;flex-direction:column;gap:14px;cursor:pointer;border:1px solid transparent}
+.vol-card-err{border:1px solid var(--err)}
+.vol-card-warn{border:1px solid var(--warn)}
+.vol-card:hover{background:#22262B}
+.vol-top{display:flex;align-items:center;gap:12px}
+.vol-letter{font:400 20px/26px Roboto}
+.vol-sub{font:400 14px/20px Roboto;color:var(--faint)}
+/* side-by-side volume cards: name on its own line, disk/bus + chip underneath */
+.vol-grid .vol-top{flex-wrap:wrap;row-gap:6px}
+.vol-grid .vol-letter{flex:1 1 100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.vol-grid .vol-top .vol-chip{margin-left:auto}
+.vol-chip{margin-left:auto;display:flex;align-items:center;gap:6px;height:26px;padding:0 10px;border-radius:8px;font:500 12px/26px Roboto;white-space:nowrap}
+.vol-chip.ok{background:#0F2A16;color:var(--ok)}
+.vol-chip.warn{background:var(--warn-container);color:var(--warn)}
+.vol-chip.err{background:var(--err-container);color:var(--err)}
+.vol-chip.plain{background:#272A2F;color:var(--dim)}
+.vol-chip .material-symbols-outlined{font-size:15px}
+.vol-bar-track{height:10px;border-radius:5px;background:var(--line2);overflow:hidden}
+.vol-bar-fill{height:100%;background:var(--info)}
+.vol-bar-fill.warn{background:var(--warn)}
+.vol-bar-fill.err{background:var(--err)}
+.vol-foot{display:flex;justify-content:space-between;font:400 14px/20px Roboto}
+.disk-card{background:var(--panel);border-radius:16px;padding:21px 25px;display:flex;flex-direction:column;gap:14px;margin-bottom:12px;border:1px solid transparent}
+.disk-top{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.disk-name{font:400 20px/26px Roboto}
+.disk-model{font:400 15px/22px Roboto;color:var(--dim)}
+.disk-size{margin-left:auto;font:400 15px/22px Roboto;color:var(--faint)}
+.disk-expand{font-size:20px;color:var(--faint);cursor:pointer}
+.disk-bar{display:flex;gap:3px;height:44px;overflow:hidden;border-radius:6px}
+.disk-legend{display:flex;flex-wrap:wrap;gap:16px;font:400 13px/18px Roboto;color:var(--faint)}
+.disk-legend span.sw{display:inline-flex;align-items:center;gap:6px}
+.disk-legend .dot{width:10px;height:10px;border-radius:2px;flex:none}
+.disk-mismatch-note{color:var(--faint);font:400 12.5px/18px Roboto}
+
+/* Devices page */
+.dev-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+.dev-card{background:var(--panel);border-radius:12px;padding:14px 16px;display:flex;align-items:center;gap:12px}
+.dev-card.err{background:var(--err-container)}
+.dev-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex:none}
+.dev-icon .material-symbols-outlined{font-size:19px}
+.dev-icon.ok{background:#0F2A16;color:var(--ok)}
+.dev-icon.warn{background:var(--warn-container);color:var(--warn)}
+.dev-icon.err{background:var(--err-c);color:var(--err-on-c)}
+.dev-icon.plain{background:#272A2F;color:var(--faint)}
+.dev-body{min-width:0;flex:1}
+.dev-title{font:500 14px/20px Roboto;overflow-wrap:anywhere}
+.dev-desc{font:400 12px/17px Roboto;color:var(--faint);margin-top:2px}
+.dev-badges{display:flex;gap:6px;margin-top:4px;flex-wrap:wrap}
+.dev-badge{display:inline-flex;height:20px;padding:0 8px;border-radius:6px;font:500 11px/20px Roboto;white-space:nowrap}
+.dev-badge.ok{background:#0F2A16;color:var(--ok)}
+.dev-badge.warn{background:var(--warn-container);color:var(--warn)}
+.dev-badge.err{background:var(--err-c);color:var(--err-on-c)}
+
+/* Installed Programs / list-table pages (Software family) */
+.list-flagband{padding:0 40px 16px;flex:none}
+.list-flagband-inner{background:var(--panel);border-radius:16px;padding:18px 22px;display:flex;align-items:center;gap:22px;flex-wrap:wrap}
+.list-flagband-label{flex:none}
+.list-flagband-label .l1{font:500 11px/16px Roboto;letter-spacing:.09em;text-transform:uppercase;color:var(--faint)}
+.list-flagband-label .l2{font:400 14px/20px Roboto;color:var(--dim);margin-top:2px}
+.flagpill{display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 14px;border-radius:8px;border:1px solid var(--line2);color:var(--dim);font:500 13px/32px Roboto;cursor:pointer}
+.flagpill:hover{background:#272A2F}
+.flagpill .n{font-weight:400;color:var(--faint)}
+.flagpill.on{background:var(--warn-container);color:var(--warn);border-color:transparent}
+.flagpill.on .n{color:var(--warn);opacity:.8}
+.flagpill.zero{border-color:var(--line);color:#5B6068;cursor:default}
+.flagpill.zero:hover{background:none}
+.list-controls{padding:12px 40px 20px;flex:none;display:flex;align-items:center;gap:12px}
+.list-search{flex:1;display:flex;align-items:center;gap:12px;height:48px;padding:0 18px;border-radius:24px;background:var(--panel);color:var(--faint)}
+.list-search input{flex:1;align-self:stretch;height:auto;margin:0;padding:0;background:none;border:none;outline:none;color:var(--text);font:400 15px/normal Roboto,sans-serif;min-width:0}
+.list-search input::placeholder{color:var(--faint)}
+.list-search .material-symbols-outlined{font-size:22px;line-height:1;display:flex;align-items:center}
+.dp-card .list-search{background:#272A2F}
+.list-sort{display:flex;align-items:center;gap:8px;height:40px;padding:0 14px;border:1px solid var(--line2);border-radius:20px;font:500 14px/20px Roboto;color:var(--dim);cursor:pointer;white-space:nowrap}
+.list-sort:hover{background:#272A2F}
+.list-wrap{flex:1;min-height:0;display:flex;flex-direction:column;padding:0 40px 20px}
+.list-head{background:var(--panel);border-radius:16px 16px 0 0;padding:0 24px;flex:none;display:grid;gap:24px;border-bottom:1px solid var(--line2)}
+.list-head-col{display:flex;align-items:center;gap:6px;height:48px;font:500 12px/16px Roboto;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);cursor:pointer}
+.list-head-col:not(.sortable){cursor:default}
+.list-head-col.active{color:var(--info)}
+.list-head-col .material-symbols-outlined{font-size:16px;color:var(--faint)}
+.list-head-col.active .material-symbols-outlined{color:var(--info)}
+.list-body{flex:1;min-height:0;overflow-y:auto;background:var(--panel);border-radius:0 0 16px 16px;padding:6px 0}
+.list-row{padding:0 24px;display:grid;gap:24px;align-items:center;height:52px;cursor:pointer}
+.list-row:hover{background:#22262B}
+.list-row .c1{font:400 15px/22px Roboto;overflow-wrap:anywhere;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.list-row .c2{font:400 14px/20px 'Roboto Mono',monospace;color:var(--dim)}
+.list-row .c2.faint{color:var(--faint)}
+.list-tag{height:24px;padding:0 10px;border-radius:6px;border:1px solid var(--line2);color:var(--dim);font:500 12px/22px Roboto;white-space:nowrap;display:inline-block}
+.list-tag.warn{background:var(--warn-container);color:var(--warn);border:none;line-height:24px}
+.list-empty-row{padding:40px 24px;text-align:center;color:var(--faint)}
+.list-pager{flex:none;display:flex;align-items:center;gap:16px;padding:14px 4px 0}
+.list-pager-count{font:400 14px/20px Roboto;color:var(--faint)}
+.list-pager-nums{margin-left:auto;display:flex;align-items:center;gap:4px}
+.list-pager-btn{width:40px;height:40px;border-radius:20px;display:grid;place-items:center;color:var(--dim);cursor:pointer;background:none;border:none;font-family:inherit}
+.list-pager-btn:hover{background:#272A2F}
+.list-pager-btn:disabled{color:var(--line2);cursor:default}
+.list-pager-btn:disabled:hover{background:none}
+.list-pager-num{min-width:40px;height:40px;padding:0 12px;box-sizing:border-box;border-radius:20px;color:var(--dim);font:500 14px/40px Roboto;text-align:center;cursor:pointer;background:none;border:none;font-family:inherit}
+.list-pager-num:hover{background:#272A2F}
+.list-pager-num.on{background:var(--info-c);color:var(--info-on-c)}
+
+/* Event Viewer */
+.evt-layout{flex:1;min-height:0;display:flex;gap:20px;padding:0 40px 40px}
+.evt-facets{width:220px;flex:none;overflow-y:auto;display:flex;flex-direction:column;gap:2px}
+.evt-facets-label{font:500 11px/16px Roboto;letter-spacing:.09em;text-transform:uppercase;color:var(--faint);padding:4px 10px 10px}
+.evt-facet-item{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:8px;cursor:pointer;font:400 14px/20px Roboto;color:var(--dim);overflow:hidden}
+.evt-facet-item:hover{background:#272A2F}
+.evt-facet-item.on{background:var(--info-c);color:var(--info-on-c)}
+.evt-facet-item .t{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.evt-facet-item .n{flex:none;color:var(--faint);font:400 12px/16px Roboto}
+.evt-facet-item.on .n{color:var(--info-on-c);opacity:.75}
+.evt-list-col{flex:1;min-width:0;display:flex;flex-direction:column;gap:12px;min-height:0}
+.evt-list-col .list-search{flex:none}
+.evt-rows{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:2px;background:var(--panel);border-radius:16px;padding:8px}
+
+/* Unexpected Shutdowns */
+.dev-badge.info{background:#272A2F;color:var(--info)}
+
+/* Diagnostic Summary page */
+#diagsummaryView{padding:0}
+#diagHead{padding:24px 40px 20px;display:flex;flex-direction:column;gap:16px;flex:none}
+#diagCrumb{display:flex;align-items:center;gap:8px;min-height:40px}
+#diagCrumb .crumb{font:400 13px/18px Roboto;color:var(--faint);display:flex;align-items:center;gap:6px}
+#diagCrumb .crumb b{color:var(--dim);font-weight:400}
+#diagActions{margin-left:auto;display:flex;gap:8px}
+#diagTitle{font:400 32px/40px Roboto}
+#diagSub{font:400 14px/20px Roboto;color:var(--faint);margin-top:4px}
+#diagStats{padding:0 40px 14px;display:flex;gap:12px;flex-wrap:wrap;flex:none}
+.diag-stat{flex:1;min-width:150px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 16px;display:flex;align-items:center;gap:12px;cursor:pointer}
+.diag-stat:hover{background:#22262B}
+.diag-stat.on{border-color:var(--dim)}
+.diag-stat.crit{background:var(--err-container);border-color:var(--err-c)}
+.diag-stat.warn{background:var(--warn-container);border-color:var(--warn-c)}
+.diag-stat .material-symbols-outlined{font-size:22px}
+.diag-stat-n{font:400 24px/28px Roboto}
+.diag-stat-l{font:500 12px/16px Roboto}
+#diagToolbar{padding:0 40px 12px;flex:none}
+#diagSearchBox{display:flex;align-items:center;gap:10px;height:42px;padding:0 16px;border-radius:21px;background:var(--panel);color:var(--faint)}
+#diagSearchBox .material-symbols-outlined{font-size:20px}
+#diagSearch{background:none;border:none;outline:none;color:var(--text);font:400 14px/normal Roboto,sans-serif;flex:1;align-self:stretch;margin:0;padding:0;min-width:0}
+#diagSearchBox .material-symbols-outlined{line-height:1;display:flex;align-items:center}
+#diagSearch::placeholder{color:var(--faint)}
+#diagBody{padding:0 40px 40px;flex:1;min-height:0;overflow-y:auto}
+.diag-group-head{display:flex;align-items:center;gap:10px;padding:16px 2px 6px}
+.diag-group-label{font:500 11px/16px Roboto;letter-spacing:.08em;text-transform:uppercase}
+.diag-group-label.crit{color:var(--err)}
+.diag-group-label.warn{color:var(--warn)}
+.diag-group-count{font:400 12px/16px Roboto;color:var(--faint)}
+.diag-group-line{flex:1;height:1px;background:var(--line)}
+.diag-row{display:flex;align-items:center;gap:16px;padding:12px 14px;border-radius:10px}
+.diag-row:hover{background:#22262B}
+.diag-crit-box{background:var(--err-container);border-left:3px solid var(--err);border-radius:10px;padding:4px 0;overflow:hidden}
+.diag-crit-box .diag-row{border-radius:0}
+.diag-crit-box .diag-row+.diag-row{border-top:1px solid rgba(255,255,255,.06)}
+.diag-crit-box .diag-row:hover{background:rgba(255,255,255,.04)}
+.diag-row-main{flex:1;min-width:0;font:400 14px/20px Roboto}
+.diag-chip{flex:none;height:24px;padding:0 9px;border-radius:8px;background:#272A2F;color:var(--info);font:500 11px/24px Roboto;white-space:nowrap;cursor:pointer}
+.diag-chip:hover{background:var(--info-c);color:var(--info-on-c)}
+@media (max-width:680px){#diagHead{padding:20px 16px}#diagStats,#diagToolbar,#diagBody{padding-left:16px;padding-right:16px}#diagTitle{font-size:24px;line-height:30px}}
 
 .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:100;align-items:center;justify-content:center;padding:24px}
 .modal-overlay.open{display:flex}
@@ -204,7 +501,14 @@ body.tab-summary #summaryView,body.tab-rel #relView,body.tab-sys #sysView,body.t
 .drive .use{color:var(--dim);font-size:14px}
 .drive.smart-bad{border-color:var(--err)}
 .drive.smart-warn{border-color:var(--warn)}
-.drive.highlight-flash{animation:diskFlash 1.6s ease-out}
+.disk-card.vol-card-err{border-color:var(--err)}
+.disk-card.vol-card-warn{border-color:var(--warn)}
+.disk-card.highlight-flash,.dp-card.highlight-flash{animation:diskFlash 1.6s ease-out}
+.slot-grid{display:grid;gap:10px}
+.slot-chip{margin-left:0;height:36px;font-size:13px;line-height:36px;justify-content:center;cursor:pointer;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.slot-chip:hover{background:var(--info-c);color:var(--info-on-c)}
+.slot-chip.empty{border:1px dashed var(--line2);background:none;cursor:default}
+.slot-chip.empty:hover{background:none;color:inherit}
 @keyframes diskFlash{0%{box-shadow:0 0 0 3px var(--info)}100%{box-shadow:0 0 0 0 rgba(0,0,0,0)}}
 
 /* device cards (Devices tab) */
@@ -242,12 +546,6 @@ body.tab-summary #summaryView,body.tab-rel #relView,body.tab-sys #sysView,body.t
 .pg-info{color:var(--faint);font-size:13.5px}
 .sorth{cursor:pointer;user-select:none}
 .sorth:hover{color:var(--text)}
-#procSearch{background:var(--panel);border:1px solid var(--line);border-radius:6px;color:var(--text);padding:8px 12px;font-size:14px;font-family:inherit;width:260px;margin-bottom:6px}
-#procSearch:focus{outline:none;border-color:var(--dim)}
-#progSearch{background:var(--panel);border:1px solid var(--line);border-radius:6px;color:var(--text);padding:8px 12px;font-size:14px;font-family:inherit;width:260px;margin-bottom:10px}
-#hfSearch{background:var(--panel);border:1px solid var(--line);border-radius:6px;color:var(--text);padding:8px 12px;font-size:14px;font-family:inherit;width:260px;margin-bottom:10px}
-#hfSearch:focus{outline:none;border-color:var(--dim)}
-#progSearch:focus{outline:none;border-color:var(--dim)}
 .prog-row{display:grid;grid-template-columns:1fr 110px;padding:5px 4px;border-bottom:1px solid color-mix(in srgb,var(--line) 40%,transparent);font-size:14.5px;font-family:'Albert Sans',sans-serif;color:var(--text)}
 .prog-row span:nth-child(2){text-align:right;color:var(--dim);font-family:'IBM Plex Mono',monospace;font-size:13px}
 .prog-head{display:grid;grid-template-columns:1fr 110px;color:var(--faint);font-size:13px;text-transform:uppercase;letter-spacing:.06em;padding:6px 4px;border-bottom:1px solid var(--line);margin-top:8px}
@@ -255,123 +553,149 @@ body.tab-summary #summaryView,body.tab-rel #relView,body.tab-sys #sysView,body.t
 @media (max-width:600px){.kv{grid-template-columns:1fr;gap:0}.kv dt{margin-top:8px}}
 h1{font-size:24px;font-weight:600;letter-spacing:.01em}
 #range{color:var(--dim);font-size:14px}
-#drop{display:block;margin:0 0 16px;font-size:12px;color:var(--faint);border:1px dashed var(--line);border-radius:8px;padding:8px 10px;cursor:pointer;text-align:center}
-#drop:hover{color:var(--dim);border-color:var(--dim)}
-body.dragging #drop{color:var(--info);border-color:var(--info)}
+#drop{display:flex;align-items:center;justify-content:center;gap:8px;height:44px;margin:0 16px 24px;border:none;border-radius:22px;background:#3B4858;color:#D7E3F8;font:500 15px/20px Roboto;cursor:pointer;text-align:center}
+#drop:hover{background:#465464}
+#drop .material-symbols-outlined{font-size:20px}
+body.dragging #drop{background:var(--info-c);color:var(--info-on-c)}
 
 /* timeline */
-#timeline{padding:18px 0 6px}
-#tlHead{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px}
-#tlRange{color:var(--text);font-size:15px;font-weight:500}
-#tlHint{color:var(--faint);font-size:13.5px}
+.rel-content{flex:1;min-height:0;padding:0 40px 40px;display:flex;flex-direction:column;gap:14px}
+#timeline{background:var(--panel);border-radius:16px;padding:20px 24px 16px;display:flex;flex-direction:column;gap:14px;flex:none}
+#controls{flex:none}
+#list{flex:1;min-height:0;overflow-y:auto}
+#tlHead{display:flex;align-items:center;gap:14px}
+#tlLabel{font:500 11px/16px Roboto;letter-spacing:.09em;text-transform:uppercase;color:var(--faint)}
+#tlRange{color:var(--dim);font:400 14px/20px Roboto}
 #tl-inner{display:flex;align-items:stretch;gap:10px}
 #tl-main{flex:1;min-width:0}
-.tl-nav{background:var(--panel);border:1px solid var(--line);border-radius:8px;color:var(--dim);font-size:20px;width:34px;cursor:pointer;font-family:inherit;align-self:stretch}
-.tl-nav:hover:not(:disabled){color:var(--text);border-color:var(--dim)}
+.tl-nav{background:none;border:none;border-radius:20px;color:var(--dim);font-size:22px;width:40px;cursor:pointer;font-family:inherit}
+.tl-nav:hover:not(:disabled){background:#272A2F;color:var(--text)}
 .tl-nav:disabled{opacity:.3;cursor:default}
-#bars{display:flex;align-items:flex-end;gap:6px;height:72px;border-bottom:1px solid var(--line);padding-bottom:1px}
-.bar{flex:1;display:flex;flex-direction:column;justify-content:flex-end;gap:2px;cursor:pointer;min-width:4px;border-radius:3px 3px 0 0;position:relative}
-.bar div{width:100%}
+#bars{display:flex;align-items:flex-end;gap:10px;height:132px}
+.bar{flex:1;display:flex;flex-direction:column-reverse;gap:2px;cursor:pointer;min-width:4px}
+.bar div{width:100%;border-radius:3px}
 .bar .seg-err{background:var(--err)}
 .bar .seg-warn{background:var(--warn)}
-.bar .seg-ok{background:#2f3542}
-.bar.clean .seg-ok{background:color-mix(in srgb,var(--ok) 45%,#2f3542)}
-.bar:hover .seg-ok,.bar.active .seg-ok{background:#3d4554}
-.bar.clean:hover .seg-ok,.bar.clean.active .seg-ok{background:color-mix(in srgb,var(--ok) 60%,#2f3542)}
-.bar.active{outline:1px solid var(--dim);outline-offset:1px}
-#axis{display:flex;gap:6px;margin-top:6px}
-.axis-lab{flex:1;text-align:center;color:var(--faint);font-size:13px;white-space:nowrap;overflow:hidden}
-.axis-lab.active{color:var(--text)}
+.bar .seg-ok{background:#3B4858}
+.bar.clean .seg-ok{opacity:.45}
+.bar.active{outline:2px solid var(--info);outline-offset:3px;border-radius:4px}
+#axis{display:flex;gap:10px;margin-top:6px}
+.axis-lab{flex:1;text-align:center;color:var(--faint);font:400 12px/16px 'Roboto Mono',monospace;white-space:nowrap;overflow:hidden}
+.axis-lab.active{color:var(--info);font-weight:500}
 
 /* controls */
-#controls{padding:12px 0;display:flex;gap:8px;flex-wrap:wrap;align-items:center;border-bottom:1px solid var(--line)}
-.chip{background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:8px 16px;font-size:14px;color:var(--dim);cursor:pointer;font-family:inherit}
-.chip .n{color:var(--faint);margin-left:4px}
-.chip.on{color:var(--text);border-color:var(--dim)}
-.chip.on.c-err{color:var(--err);border-color:var(--err)}
-.chip.on.c-warn{color:var(--warn);border-color:var(--warn)}
-.chip.on.c-info{color:var(--info);border-color:var(--info)}
-#search{background:var(--panel);border:1px solid var(--line);border-radius:6px;color:var(--text);padding:9px 13px;font-size:14px;font-family:inherit;width:220px;margin-left:auto}
-#search:focus{outline:none;border-color:var(--dim)}
-#clearDay{display:none;font-size:12px;color:var(--info);cursor:pointer;background:none;border:none;font-family:inherit}
+#controls{padding:14px 0;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.chip{display:flex;align-items:center;gap:8px;height:36px;padding:0 14px;border-radius:8px;background:none;border:1px solid var(--line2);font:500 14px/34px Roboto;color:var(--dim);cursor:pointer;font-family:inherit}
+.chip:hover{background:#272A2F}
+.chip .material-symbols-outlined{font-size:18px}
+.chip .n{font-weight:400;opacity:.75;margin-left:0}
+.chip.c-err.on{background:var(--err-c);color:var(--err-on-c);border-color:transparent}
+.chip.c-warn.on{background:var(--warn-c);color:var(--warn);border-color:transparent}
+.chip.c-info.on{background:var(--info-c);color:var(--info-on-c);border-color:transparent}
+.chip.src-chip.on{background:#272A2F;color:var(--text);border-color:var(--dim)}
+.chip-sep{width:1px;height:24px;background:var(--line2);margin:0 4px}
+.src-tag{flex:none;font:500 11px/22px Roboto;padding:0 8px;border-radius:6px;background:#272A2F;color:var(--dim);white-space:nowrap}
+.src-tag.src-both{color:var(--info)}
+#search{background:var(--panel);border:none;border-radius:22px;color:var(--text);padding:0 18px;height:44px;font:400 15px/44px Roboto;font-family:inherit;flex:1 1 100%;order:-1;margin:0 0 4px;outline:none}
+#search::placeholder{color:var(--faint)}
+#search::placeholder{color:var(--faint)}
+#search:focus{outline:none}
+#clearDay{display:none;align-items:center;gap:6px;height:36px;padding:0 10px 0 14px;border-radius:8px;background:var(--info-c);color:var(--info-on-c);font:500 14px/36px Roboto;cursor:pointer;border:none;font-family:inherit}
 
 /* rows */
 #list{padding:8px 0 48px}
-.day-head{color:var(--text);font-size:16px;font-weight:500;padding:22px 0 8px;border-bottom:1px solid var(--line);margin-bottom:4px}
-.sev-head{font-size:15px;font-weight:500;padding:12px 0 5px 4px}
-.sev-err{color:var(--err)}.sev-warn{color:var(--warn)}.sev-info{color:var(--info)}
-.row{display:grid;grid-template-columns:58px 12px 1fr;gap:10px;padding:9px 8px;border-radius:6px;cursor:pointer;align-items:baseline}
-.row:hover{background:var(--panel)}
-.row.open{background:var(--panel2)}
-.time{color:var(--faint);font-size:14px}
-.dot{width:8px;height:8px;border-radius:50%;align-self:center}
+.day-head{display:flex;align-items:center;gap:12px;padding:12px 4px 10px;color:var(--text);font:500 16px/22px Roboto}
+.day-head .n{font:400 14px/20px Roboto;color:var(--faint)}
+.day-head .ln{flex:1;height:1px;background:var(--line)}
+.sev-head{display:flex;align-items:center;gap:8px;padding:8px 4px;font:500 12px/16px Roboto;letter-spacing:.08em;text-transform:uppercase}
+.sev-head .n{font-weight:400;letter-spacing:0;text-transform:none;color:var(--faint)}
+.sev-err{color:var(--err)}.sev-warn{color:var(--warn)}.sev-info{color:var(--dim)}
+.row{display:flex;align-items:center;gap:18px;padding:12px 18px;border-radius:12px;cursor:pointer;margin-bottom:2px;flex-wrap:wrap}
+.row:hover{background:#22262B}
+.row.open{background:#22262B}
+.row.cat-err{background:var(--err-container);border-left:4px solid var(--err)}
+.time{width:52px;flex:none;color:var(--faint);font:500 14px/20px 'Roboto Mono',monospace}
+.row.cat-err .time{color:var(--dim)}
+.dot{width:10px;height:10px;border-radius:50%;flex:none}
 .d-err{background:var(--err)}.d-warn{background:var(--warn)}.d-info{background:var(--info)}
-.title{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.title{flex:1;min-width:0;font:500 16px/22px Roboto;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .row.open .title{white-space:normal}
-.src{color:var(--dim);font-size:14px;margin-left:10px}
-.msg{grid-column:3;color:var(--dim);font-size:14px;line-height:1.5;padding:6px 0 2px;white-space:pre-wrap;display:none;word-break:break-word;cursor:text;user-select:text}
-.row.open .msg{display:block}
-.faq-row{grid-template-columns:12px 1fr}
-.faq-row .msg{grid-column:2}
+.row.cat-err .title{color:var(--err-on-c)}
+.src{display:block;color:var(--faint);font:400 14px/20px Roboto;margin-left:0}
+.row.cat-err .src{color:var(--dim)}
+.evt-meta{flex:none;font:500 13px/26px 'Roboto Mono',monospace;color:var(--dim);background:#111418;border:1px solid var(--line2);border-radius:8px;padding:0 10px}
+.evt-chevron{flex:none;color:var(--faint)}
+.row.cat-err .evt-chevron{color:var(--err)}
+.msg{color:var(--dim);font:400 14px/22px 'Roboto Mono',monospace;padding:12px 0 2px;white-space:pre-wrap;display:none;word-break:break-word;cursor:text;user-select:text;width:100%}
+.row.open .msg{display:block;background:#111418;border-radius:10px;padding:14px 16px;margin-top:2px}
+.shut-facts{display:none;width:100%;grid-template-columns:130px 1fr;gap:8px 16px;background:#111418;border-radius:10px;padding:14px 16px;font:400 14px/20px Roboto;color:var(--text);cursor:text}
+.row.open .shut-facts{display:grid}
+.sf-k{color:var(--faint)}
+.sf-dim{color:var(--faint)}
+.sf-err{color:var(--err)}
+.shut-facts a{color:var(--info);cursor:pointer;text-decoration:underline;text-decoration-style:dotted;text-underline-offset:3px}
+.faq-row{padding:9px 8px}
 #empty{color:var(--faint);padding:40px 0;text-align:center;display:none}
 @media (max-width:600px){
-  #timeline,#controls,#list{padding-left:14px;padding-right:14px}
   #search{width:100%;margin-left:0}
-  .row{grid-template-columns:44px 10px 1fr}
-  #summaryView,#relView,#sysView,#shutdownsView,#moboView,#cpuView,#drivesView,#netView,#securityView,#appsView,#dumpsView,#memoryView,#gpuView,#batteryView,#devicesView,#processesView,#extensionsView,#updatesView,#toolsView,#faqView{padding:24px 16px 48px}
   #pageTitle{font-size:28px;padding:24px 16px 0}
+}@media print{
+  body,#appShell,#content{height:auto!important;overflow:visible!important}
+  #sidebar{display:none!important}
+  .dp-view,#summaryView,#diagsummaryView,#relView{display:block!important}
+  .dp-body,.dp-split,.dp-content,.rel-content,#summaryBody,#diagBody,#list,.evt-layout,.evt-facets,.evt-rows{overflow:visible!important;height:auto!important;flex:none!important}
+  .dp-actions,#summaryActions,#diagActions{display:none!important}
 }
 </style>
 </head>
 <body class="tab-summary">
 <div id="appShell">
 <aside id="sidebar">
-  <div id="brand">PCHH Triage</div>
-  <label id="drop">Open another CSV<input type="file" accept=".csv" hidden></label>
+  <div id="brand"><span class="material-symbols-outlined">monitor_heart</span><div>PCHH Triage<div id="brand-sub"></div></div></div>
+  <label id="drop"><span class="material-symbols-outlined">upload_file</span>Open another CSV<input type="file" accept=".csv" hidden></label>
   <nav id="tabs">
     <div class="nav-group">
       <div class="nav-group-title static"><span>Overview</span></div>
       <div class="nav-group-items">
-        <button class="tab on" data-tab="summary"><svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Summary</button>
+        <button class="tab on" data-tab="summary"><span class="material-symbols-outlined">dashboard</span><span class="tab-label">Summary</span></button>
       </div>
     </div>
     <div class="nav-group">
-      <div class="nav-group-title"><span>Diagnostics</span><span class="chev">&#9660;</span></div>
+      <div class="nav-group-title"><span>Diagnostics</span><span class="material-symbols-outlined chev">expand_more</span></div>
       <div class="nav-group-items">
-        <button class="tab" data-tab="rel"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Reliability History</button>
-        <button class="tab" data-tab="sys"><svg viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>Event Viewer</button>
-        <button class="tab" data-tab="shutdowns"><svg viewBox="0 0 24 24"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"/><line x1="12" y1="2" x2="12" y2="12"/></svg>Unexpected Shutdowns</button>
-        <button class="tab" data-tab="dumps" id="dumpsTab" style="display:none"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>Memory Dumps</button>
+        <button class="tab" data-tab="diagsummary"><span class="material-symbols-outlined">fact_check</span><span class="tab-label">Summary</span><span class="tab-badge" id="diagTabBadge" style="display:none"></span></button>
+        <button class="tab" data-tab="rel"><span class="material-symbols-outlined">timeline</span><span class="tab-label">Events</span><span class="tab-badge" id="relTabBadge" style="display:none"></span></button>
+        <button class="tab" data-tab="dumps" id="dumpsTab" style="display:none"><span class="material-symbols-outlined">description</span><span class="tab-label">Memory Dumps</span></button>
       </div>
     </div>
-    <div class="nav-group">
-      <div class="nav-group-title"><span>Hardware</span><span class="chev">&#9660;</span></div>
+    <div class="nav-group collapsed">
+      <div class="nav-group-title"><span>Hardware</span><span class="material-symbols-outlined chev">expand_more</span></div>
       <div class="nav-group-items">
-        <button class="tab" data-tab="cpu"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2" ry="2"/><rect x="9" y="9" width="6" height="6"/><line x1="9" y1="1" x2="9" y2="4"/><line x1="15" y1="1" x2="15" y2="4"/><line x1="9" y1="20" x2="9" y2="23"/><line x1="15" y1="20" x2="15" y2="23"/><line x1="20" y1="9" x2="23" y2="9"/><line x1="20" y1="14" x2="23" y2="14"/><line x1="1" y1="9" x2="4" y2="9"/><line x1="1" y1="14" x2="4" y2="14"/></svg>Processor</button>
-        <button class="tab" data-tab="gpu"><svg viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="11" rx="2"/><circle cx="8" cy="11.5" r="2"/><circle cx="15" cy="11.5" r="2"/><line x1="5" y1="17" x2="5" y2="20"/><line x1="9" y1="17" x2="9" y2="20"/><line x1="21" y1="9" x2="23" y2="9"/><line x1="21" y1="13" x2="23" y2="13"/></svg>Graphics</button>
-        <button class="tab" data-tab="memory"><svg viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"/><rect x="2" y="14" width="20" height="8" rx="2" ry="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg>Memory</button>
-        <button class="tab" data-tab="drives"><svg viewBox="0 0 24 24"><line x1="22" y1="12" x2="2" y2="12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/><line x1="6" y1="16" x2="6.01" y2="16"/><line x1="10" y1="16" x2="10.01" y2="16"/></svg>Storage</button>
-        <button class="tab" data-tab="mobo"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>Motherboard</button>
-        <button class="tab" data-tab="battery" id="batteryTab" style="display:none"><svg viewBox="0 0 24 24"><rect x="1" y="6" width="18" height="12" rx="2" ry="2"/><line x1="23" y1="13" x2="23" y2="11"/></svg>Battery</button>
-        <button class="tab" data-tab="net"><svg viewBox="0 0 24 24"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>Network</button>
-        <button class="tab" data-tab="devices"><svg viewBox="0 0 24 24"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"/><line x1="8" y1="12" x2="16" y2="12"/></svg>Devices</button>
+        <button class="tab" data-tab="cpu"><span class="material-symbols-outlined">memory</span><span class="tab-label">Processor</span><span class="tab-badge warn" id="cpuTabBadge" style="display:none"></span></button>
+        <button class="tab" data-tab="gpu"><span class="material-symbols-outlined">videogame_asset</span><span class="tab-label">Graphics</span><span class="tab-badge warn" id="gpuTabBadge" style="display:none"></span></button>
+        <button class="tab" data-tab="memory"><span class="material-symbols-outlined">developer_board</span><span class="tab-label">Memory</span><span class="tab-badge warn" id="memoryTabBadge" style="display:none"></span></button>
+        <button class="tab" data-tab="drives"><span class="material-symbols-outlined">hard_drive</span><span class="tab-label">Storage</span><span class="tab-badge warn" id="drivesTabBadge" style="display:none"></span></button>
+        <button class="tab" data-tab="mobo"><span class="material-symbols-outlined">dashboard_customize</span><span class="tab-label">Motherboard</span><span class="tab-badge warn" id="moboTabBadge" style="display:none"></span></button>
+        <button class="tab" data-tab="battery" id="batteryTab" style="display:none"><span class="material-symbols-outlined">battery_full</span><span class="tab-label">Battery</span></button>
+        <button class="tab" data-tab="net"><span class="material-symbols-outlined">lan</span><span class="tab-label">Network</span><span class="tab-badge warn" id="netTabBadge" style="display:none"></span></button>
+        <button class="tab" data-tab="devices"><span class="material-symbols-outlined">devices_other</span><span class="tab-label">Devices</span><span class="tab-badge warn" id="devicesTabBadge" style="display:none"></span></button>
       </div>
     </div>
-    <div class="nav-group">
-      <div class="nav-group-title"><span>System</span><span class="chev">&#9660;</span></div>
+    <div class="nav-group collapsed">
+      <div class="nav-group-title"><span>Software</span><span class="material-symbols-outlined chev">expand_more</span></div>
       <div class="nav-group-items">
-        <button class="tab" data-tab="security"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>Security</button>
-        <button class="tab" data-tab="processes"><svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>Processes</button>
-        <button class="tab" data-tab="apps"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>Apps</button>
-        <button class="tab" data-tab="updates"><svg viewBox="0 0 24 24"><polyline points="8 17 12 21 16 17"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.88 18.09A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.29"/></svg>Updates</button>
-        <button class="tab" data-tab="extensions"><svg viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>Extensions</button>
+        <button class="tab" data-tab="apps"><span class="material-symbols-outlined">apps</span><span class="tab-label">Installed Programs</span><span class="tab-badge warn" id="appsTabBadge" style="display:none"></span></button>
+        <button class="tab" data-tab="processes"><span class="material-symbols-outlined">memory_alt</span><span class="tab-label">Running Processes</span></button>
+        <button class="tab" data-tab="updates"><span class="material-symbols-outlined">system_update</span><span class="tab-label">Windows Updates</span><span class="tab-badge warn" id="updatesTabBadge" style="display:none"></span></button>
+        <button class="tab" data-tab="extensions"><span class="material-symbols-outlined">extension</span><span class="tab-label">Browser Extensions</span></button>
+        <button class="tab" data-tab="security"><span class="material-symbols-outlined">shield</span><span class="tab-label">Security</span><span class="tab-badge" id="securityTabBadge" style="display:none"></span></button>
       </div>
     </div>
-    <div class="nav-group">
-      <div class="nav-group-title"><span>Help</span><span class="chev">&#9660;</span></div>
+    <div class="nav-group collapsed">
+      <div class="nav-group-title"><span>Help</span><span class="material-symbols-outlined chev">expand_more</span></div>
       <div class="nav-group-items">
-        <button class="tab" data-tab="faq"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>FAQ</button>
-        <button class="tab" data-tab="tools"><svg viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94z"/></svg>Tools &amp; Utilities</button>
+        <button class="tab" data-tab="faq"><span class="material-symbols-outlined">help</span><span class="tab-label">FAQ</span></button>
+        <button class="tab" data-tab="tools"><span class="material-symbols-outlined">construction</span><span class="tab-label">Tools &amp; Utilities</span></button>
       </div>
     </div>
   </nav>
@@ -382,47 +706,97 @@ body.dragging #drop{color:var(--info);border-color:var(--info)}
 <h1 id="pageTitle">PCHH Triage <span id="pageTitleSub">- Summary</span></h1>
 
 <div id="summaryView" class="view">
-  <div id="summaryHero"></div>
-  <div class="spec-section"><h2>General Notes</h2><div id="notesBody"></div></div>
+  <div id="summaryHead">
+    <div id="summaryCrumb"><span class="crumb">Overview <span class="material-symbols-outlined" style="font-size:16px">chevron_right</span> <b>Summary</b></span>
+      <div id="summaryActions">
+        <div class="m3-btn" id="copySpecsBtn"><span class="material-symbols-outlined" style="font-size:18px">content_copy</span>Copy</div>
+      </div>
+    </div>
+    <div id="summaryTitleRow">
+      <div style="min-width:0">
+        <div id="summaryTitle"></div>
+        <div id="summarySub"></div>
+      </div>
+      <div id="summaryChip" onclick="return goTab('diagsummary')"><span class="status-dot"></span><span id="summaryChipText"></span></div>
+    </div>
+  </div>
+  <div id="summaryBody">
+    <div id="summaryHero"></div>
+  </div>
 </div>
 
-<div id="relView" class="view">
+<div id="diagsummaryView" class="view">
+  <div id="diagHead">
+    <div id="diagCrumb"><span class="crumb">Diagnostics <span class="material-symbols-outlined" style="font-size:16px">chevron_right</span> <b>Diagnostic Summary</b></span>
+      <div id="diagActions">
+        <div class="m3-btn" id="copyNotesBtn"><span class="material-symbols-outlined" style="font-size:18px">content_copy</span>Copy</div>
+      </div>
+    </div>
+    <div>
+      <div id="diagTitle">Diagnostic summary</div>
+      <div id="diagSub"></div>
+    </div>
+  </div>
+  <div id="diagStats"></div>
+  <div id="diagToolbar">
+    <div id="diagSearchBox"><span class="material-symbols-outlined">search</span><input id="diagSearch" placeholder="Search notes, components, event IDs"></div>
+  </div>
+  <div id="diagBody"></div>
+</div>
+
+<div id="relView" class="view dp-view">
+<div class="dp-head">
+  <div class="dp-crumb"><span class="crumb">Diagnostics <span class="material-symbols-outlined" style="font-size:16px">chevron_right</span> <b>Events</b></span>
+    <div class="dp-actions">
+      <div class="m3-btn" id="copyRelBtn"><span class="material-symbols-outlined" style="font-size:18px">content_copy</span>Copy</div>
+      <div class="m3-btn filled" id="printRelBtn"><span class="material-symbols-outlined" style="font-size:18px">print</span>Print</div>
+    </div>
+  </div>
+  <div><div class="dp-title">Events</div><div class="dp-sub" id="relSub"></div></div>
+</div>
+<div class="rel-content">
 <div id="timeline">
-  <div id="tlHead"><span id="tlRange" class="mono"></span><span id="tlHint">Click a bar to see that day's events. Use the arrows to move back two weeks.</span></div>
+  <div id="tlHead"><span id="tlLabel">Events per day</span><span id="tlRange" class="mono"></span>
+    <div style="margin-left:auto;display:flex;gap:4px">
+      <button id="tlPrev" class="tl-nav" title="Earlier"><span class="material-symbols-outlined">chevron_left</span></button>
+      <button id="tlNext" class="tl-nav" title="Later"><span class="material-symbols-outlined">chevron_right</span></button>
+    </div>
+  </div>
   <div id="tl-inner">
-    <button id="tlPrev" class="tl-nav" title="Earlier">&#8249;</button>
     <div id="tl-main"><div id="bars"></div><div id="axis"></div></div>
-    <button id="tlNext" class="tl-nav" title="Later">&#8250;</button>
   </div>
 </div>
 
 <div id="controls">
-  <button class="chip c-err" data-cat="err">&#10060;&#65038; Critical events<span class="n"></span></button>
-  <button class="chip c-warn" data-cat="warn">&#9888;&#65038; Warnings<span class="n"></span></button>
-  <button class="chip c-info" data-cat="info">&#8505;&#65038; Informational events<span class="n"></span></button>
+  <button class="chip c-err" data-cat="err"><span class="material-symbols-outlined">error</span>Error<span class="n"></span></button>
+  <button class="chip c-warn" data-cat="warn"><span class="material-symbols-outlined">warning</span>Warnings<span class="n"></span></button>
+  <button class="chip c-info" data-cat="info">Informational<span class="n"></span></button>
+  <span class="chip-sep"></span>
+  <button class="chip src-chip" data-src="">All sources<span class="n"></span></button>
+  <button class="chip src-chip" data-src="rel">Reliability<span class="n"></span></button>
+  <button class="chip src-chip" data-src="sys">System log<span class="n"></span></button>
   <button id="clearDay"></button>
-  <input id="search" type="text" placeholder="Search product or message…">
+  <input id="search" type="text" placeholder="Search program, source, message or event ID">
 </div>
 
 <div id="list"></div>
 <div id="empty">No events match.</div>
 </div>
+</div>
 
-<div id="sysView" class="view"></div>
-<div id="shutdownsView" class="view"></div>
-<div id="moboView" class="view"></div>
-<div id="cpuView" class="view"></div>
-<div id="drivesView" class="view"></div>
-<div id="gpuView" class="view"></div>
-<div id="memoryView" class="view"></div>
+<div id="moboView" class="view dp-view"></div>
+<div id="cpuView" class="view dp-view"></div>
+<div id="drivesView" class="view dp-view"></div>
+<div id="gpuView" class="view dp-view"></div>
+<div id="memoryView" class="view dp-view"></div>
 <div id="batteryView" class="view"></div>
-<div id="netView" class="view"></div>
-<div id="devicesView" class="view"></div>
-<div id="securityView" class="view"></div>
-<div id="processesView" class="view"></div>
-<div id="appsView" class="view"></div>
-<div id="updatesView" class="view"></div>
-<div id="extensionsView" class="view"></div>
+<div id="netView" class="view dp-view"></div>
+<div id="devicesView" class="view dp-view"></div>
+<div id="securityView" class="view dp-view"></div>
+<div id="processesView" class="view dp-view"></div>
+<div id="appsView" class="view dp-view"></div>
+<div id="updatesView" class="view dp-view"></div>
+<div id="extensionsView" class="view dp-view"></div>
 <div id="faqView" class="view"></div>
 <div id="toolsView" class="view"><div class="spec-section"><h2>Diagnostics &amp; Monitoring</h2><div class="drive-grid"><a class="drive tool-card" id="tool-hwinfo" data-tool="HWiNFO" href="https://www.hwinfo.com/download/" target="_blank" rel="noopener"><h3>HWiNFO</h3><div class="sub" style="line-height:1.5">Real-time hardware sensor monitoring &mdash; temperatures, voltages, clock speeds, fan speeds.</div></a><a class="drive tool-card" id="tool-cpu-z" data-tool="CPU-Z" href="https://www.cpuid.com/softwares/cpu-z.html" target="_blank" rel="noopener"><h3>CPU-Z</h3><div class="sub" style="line-height:1.5">Quick reference for CPU, motherboard, and RAM specifications.</div></a><a class="drive tool-card" id="tool-gpu-z" data-tool="GPU-Z" href="https://www.techpowerup.com/gpuz/" target="_blank" rel="noopener"><h3>GPU-Z</h3><div class="sub" style="line-height:1.5">CPU-Z's GPU-focused equivalent &mdash; driver version, VRAM, clocks, sensors.</div></a><a class="drive tool-card" id="tool-crystaldiskinfo" data-tool="CrystalDiskInfo" href="https://crystalmark.info/en/software/crystaldiskinfo/" target="_blank" rel="noopener"><h3>CrystalDiskInfo</h3><div class="sub" style="line-height:1.5">Drive health and SMART status at a glance.</div></a><a class="drive tool-card" id="tool-hdsentinel" data-tool="HDSentinel" href="https://www.hdsentinel.com/" target="_blank" rel="noopener"><h3>HDSentinel</h3><div class="sub" style="line-height:1.5">Alternative drive health monitor with predictive failure estimates and more detailed SMART reporting.</div></a><a class="drive tool-card" id="tool-latencymon" data-tool="LatencyMon" href="https://www.resplendence.com/latencymon" target="_blank" rel="noopener"><h3>LatencyMon</h3><div class="sub" style="line-height:1.5">Measures system latency and DPC issues &mdash; the standard tool for diagnosing audio crackling and stuttering.</div></a></div></div><div class="spec-section"><h2>Stability &amp; Stress Testing</h2><div class="drive-grid"><a class="drive tool-card" id="tool-memtest86" data-tool="MemTest86" href="https://www.memtest86.com/" target="_blank" rel="noopener"><h3>MemTest86</h3><div class="sub" style="line-height:1.5">Bootable RAM stability test, run outside Windows &mdash; the standard way to confirm or rule out bad memory.</div></a><a class="drive tool-card" id="tool-occt" data-tool="OCCT" href="https://www.ocbase.com/" target="_blank" rel="noopener"><h3>OCCT</h3><div class="sub" style="line-height:1.5">Combined CPU/GPU/RAM stress test with built-in stability and error detection.</div></a><a class="drive tool-card" id="tool-furmark" data-tool="FurMark" href="https://geeks3d.com/furmark/" target="_blank" rel="noopener"><h3>FurMark</h3><div class="sub" style="line-height:1.5">GPU stress test &mdash; useful for spotting thermal throttling or instability under sustained load.</div></a></div></div><div class="spec-section"><h2>Crash Analysis</h2><div class="drive-grid"><a class="drive tool-card" id="tool-whocrashed" data-tool="WhoCrashed" href="https://www.resplendence.com/whocrashed" target="_blank" rel="noopener"><h3>WhoCrashed</h3><div class="sub" style="line-height:1.5">Plain-English analysis of minidump files &mdash; pairs directly with the .dmp files this tool collects.</div></a><a class="drive tool-card" id="tool-windbg" data-tool="WinDbg" href="https://learn.microsoft.com/en-us/windows-hardware/drivers/debugger/debugger-download-tools" target="_blank" rel="noopener"><h3>WinDbg</h3><div class="sub" style="line-height:1.5">Microsoft's own debugger &mdash; a more advanced tool for reading minidumps in full detail, down to the exact stack trace.</div></a></div></div><div class="spec-section"><h2>Advanced System Tools</h2><div class="drive-grid"><a class="drive tool-card" id="tool-process-explorer" data-tool="Process Explorer" href="https://learn.microsoft.com/en-us/sysinternals/downloads/process-explorer" target="_blank" rel="noopener"><h3>Process Explorer</h3><div class="sub" style="line-height:1.5">A far deeper Task Manager replacement from Microsoft's Sysinternals suite &mdash; inspect loaded DLLs, handles, and process trees.</div></a><a class="drive tool-card" id="tool-autoruns" data-tool="Autoruns" href="https://learn.microsoft.com/en-us/sysinternals/downloads/autoruns" target="_blank" rel="noopener"><h3>Autoruns</h3><div class="sub" style="line-height:1.5">The definitive startup-entry inspector from Sysinternals &mdash; see and control everything set to launch with Windows, in far more depth than this report's own startup check.</div></a></div></div><div class="spec-section"><h2>Cleanup &amp; Disk Space</h2><div class="drive-grid"><a class="drive tool-card" id="tool-bleachbit" data-tool="BleachBit" href="https://www.bleachbit.org/" target="_blank" rel="noopener"><h3>BleachBit</h3><div class="sub" style="line-height:1.5">Clears temporary files and caches to free up disk space.</div></a><a class="drive tool-card" id="tool-wiztree" data-tool="WizTree" href="https://diskanalyzer.com/" target="_blank" rel="noopener"><h3>WizTree</h3><div class="sub" style="line-height:1.5">Visualises what's actually taking up space on a drive.</div></a></div></div><div class="spec-section"><h2>Driver Management</h2><div class="drive-grid"><div class="drive tool-card-group" id="tool-display-driver-uninstaller-ddu" data-tool="Display Driver Uninstaller (DDU)"><a class="tool-card-link" href="https://www.wagnardsoft.com/" target="_blank" rel="noopener"><h3>Display Driver Uninstaller (DDU)</h3><div class="sub" style="line-height:1.5">Fully removes GPU drivers before a clean reinstall &mdash; the standard fix for driver-related instability.</div></a><a class="tool-video-link" href="https://youtu.be/ULgWBAlgpfk" target="_blank" rel="noopener">&#9654; Watch tutorial</a></div><a class="drive tool-card" id="tool-amd-drivers-amp-support" data-tool="AMD Drivers &amp; Support" href="https://www.amd.com/en/support" target="_blank" rel="noopener"><h3>AMD Drivers &amp; Support</h3><div class="sub" style="line-height:1.5">Official AMD driver downloads.</div></a><a class="drive tool-card" id="tool-nvidia-drivers-amp-support" data-tool="NVIDIA Drivers &amp; Support" href="https://www.nvidia.com/Download/index.aspx" target="_blank" rel="noopener"><h3>NVIDIA Drivers &amp; Support</h3><div class="sub" style="line-height:1.5">Official NVIDIA driver downloads.</div></a><a class="drive tool-card" id="tool-intel-drivers-amp-support" data-tool="Intel Drivers &amp; Support" href="https://www.intel.com/content/www/us/en/support/detect.html" target="_blank" rel="noopener"><h3>Intel Drivers &amp; Support</h3><div class="sub" style="line-height:1.5">Official Intel driver downloads.</div></a></div></div><div class="spec-section"><h2>Installation Media</h2><div class="drive-grid"><div class="drive tool-card-group" id="tool-windows-11-download" data-tool="Windows 11 Download"><a class="tool-card-link" href="https://www.microsoft.com/software-download/windows11" target="_blank" rel="noopener"><h3>Windows 11 Download</h3><div class="sub" style="line-height:1.5">Official Microsoft page for Windows 11 installation media.</div></a><a class="tool-video-link" href="https://youtu.be/TiqcfvO_8Tc" target="_blank" rel="noopener">&#9654; Watch tutorial</a></div><a class="drive tool-card" id="tool-rufus" data-tool="Rufus" href="https://rufus.ie/" target="_blank" rel="noopener"><h3>Rufus</h3><div class="sub" style="line-height:1.5">Creates bootable USB installers from a Windows ISO &mdash; the alternative to the official Windows 11 media creation tool.</div></a></div></div><div class="spec-section"><h2>Motherboard / BIOS Vendor Support</h2><div class="drive-grid"><a class="drive tool-card" id="tool-asus-support" data-tool="ASUS Support" href="https://www.asus.com/support/" target="_blank" rel="noopener"><h3>ASUS Support</h3><div class="sub" style="line-height:1.5">Official ASUS driver and BIOS downloads.</div></a><a class="drive tool-card" id="tool-msi-support" data-tool="MSI Support" href="https://www.msi.com/support/" target="_blank" rel="noopener"><h3>MSI Support</h3><div class="sub" style="line-height:1.5">Official MSI driver and BIOS downloads.</div></a><a class="drive tool-card" id="tool-gigabyte-support" data-tool="Gigabyte Support" href="https://www.gigabyte.com/Support" target="_blank" rel="noopener"><h3>Gigabyte Support</h3><div class="sub" style="line-height:1.5">Official Gigabyte driver and BIOS downloads.</div></a><a class="drive tool-card" id="tool-asrock-support" data-tool="ASRock Support" href="https://www.asrock.com/support/index.asp" target="_blank" rel="noopener"><h3>ASRock Support</h3><div class="sub" style="line-height:1.5">Official ASRock driver and BIOS downloads.</div></a><a class="drive tool-card" id="tool-dell-support" data-tool="Dell Support" href="https://www.dell.com/support/home/" target="_blank" rel="noopener"><h3>Dell Support</h3><div class="sub" style="line-height:1.5">Official Dell driver and BIOS downloads (by service tag).</div></a><a class="drive tool-card" id="tool-hp-support" data-tool="HP Support" href="https://support.hp.com/" target="_blank" rel="noopener"><h3>HP Support</h3><div class="sub" style="line-height:1.5">Official HP driver and BIOS downloads.</div></a><a class="drive tool-card" id="tool-lenovo-support" data-tool="Lenovo Support" href="https://support.lenovo.com/" target="_blank" rel="noopener"><h3>Lenovo Support</h3><div class="sub" style="line-height:1.5">Official Lenovo driver and BIOS downloads.</div></a></div></div></div>
 <div id="dumpsView" class="view"></div>
@@ -468,13 +842,15 @@ const GEN = /*__GEN__*/"";
 
 // --- parsing / classification ---
 function parseDate(s){
-  // DD/MM/YYYY HH:MM:SS or MM/DD/YYYY, detect: first field >12 means DD first
+  // The PowerShell side always formats timestamps as MM/dd/yyyy (see every ToString("MM'/'dd'/'yyyy...")
+  // call in the collector) - never locale-dependent DD/MM. Guessing the order from the numbers
+  // themselves silently mis-parsed any date where the day-of-month was 12 or under (e.g. 09/11
+  // read as day 9 of month 11 instead of day 11 of month 9), scattering real events across the
+  // wrong months and leaving the reliability timeline looking flat.
   const m = s.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})[ ,]+(\d{1,2}):(\d{2}):(\d{2})\s*(AM|PM)?/i);
   if(!m) return null;
-  let [,a,b,y,h,mi,se,ap] = m;
-  a=+a;b=+b;h=+h;
-  let day=a, mon=b;
-  if(a<=12 && b>12){ day=b; mon=a; }
+  let [,mon,day,y,h,mi,se,ap] = m;
+  mon=+mon;day=+day;h=+h;
   if(ap){ if(/pm/i.test(ap)&&h<12)h+=12; if(/am/i.test(ap)&&h===12)h=0; }
   return new Date(+y, mon-1, day, h, +mi, +se);
 }
@@ -505,16 +881,40 @@ function classify(r){
   if(/fail|error status: 1|not.*success/i.test(msg.toLowerCase()) && !/status: 0/.test(msg)) return 'warn';
   return 'info';
 }
-const CATNAMES={err:'Critical events',warn:'Warnings',info:'Informational events'};
+const CATNAMES={err:'Error events',warn:'Warnings',info:'Informational events'};
 
-let events=[], state={cats:new Set(['err','warn']), q:'', day:null, tlEnd:null};
+// events = the merged Events timeline: reliability history + curated System log entries, with the
+// separate records of one unexpected shutdown (6008 in both logs, Kernel-Power 41) folded into a
+// single incident row. relEvents keeps reliability history on its own for the summary counts.
+let events=[], relEvents=[], state={cats:new Set(['err','warn']), src:null, q:'', day:null, tlEnd:null};
+function sysCat(lvl){return lvl<=2?'err':lvl===3?'warn':'info';}
+const SRC_LABEL={rel:'Reliability',sys:'System log',both:'Reliability + System log'};
 const TL_WIN=14;
 
 function load(raw){
-  events = raw.map(r=>{
+  SHUTS_=null;
+  relEvents = raw.map(r=>{
     const d=parseDate(r.t);
-    return {...r, d, cat:classify(r), dayKey:d?d.toISOString().slice(0,10):'?'};
+    return {...r, d, cat:classify(r), src:'rel', dayKey:d?d.toISOString().slice(0,10):'?'};
   }).filter(e=>e.d).sort((a,b)=>b.d-a.d);
+  const sysEvents=SYSEVT.map(r=>{
+    const d=parseDate(r.t);
+    return {t:r.t, s:r.prov, e:String(r.id), p:r.prov, m:r.msg||'', bc:r.bc, cnt:r.cnt, d, cat:sysCat(r.lvl), src:'sys', dayKey:d?d.toISOString().slice(0,10):'?'};
+  }).filter(e=>e.d);
+  const shuts=getShutdowns();
+  const isShutPart=e=>(e.src==='rel'&&e.s==='EventLog')||(e.src==='sys'&&(e.e==='41'||e.e==='6008'));
+  const shutRows=shuts.map(x=>{
+    const parts=[...relEvents,...sysEvents].filter(e=>isShutPart(e)&&Math.abs(e.d-x.d)<2*60*1000);
+    return {kind:'shutdown', shut:x, d:x.when, cat:'err', p:'Unexpected shutdown', s:'', e:'',
+      src:(x.rel&&(x.kp||x.sys))?'both':(x.rel?'rel':'sys'),
+      m:parts.map(e=>'['+SRC_LABEL[e.src]+' \u00b7 '+e.s+' '+e.e+' \u00b7 logged '+fmtTime(e.d)+']\n'+e.m).join('\n\n'),
+      dayKey:x.when.toISOString().slice(0,10), _parts:parts};
+  });
+  const absorbed=new Set(shutRows.flatMap(r=>r._parts));
+  events=[...relEvents,...sysEvents].filter(e=>!absorbed.has(e)).concat(shutRows).sort((a,b)=>b.d-a.d);
+  const relErrCount=events.filter(e=>e.cat==='err').length;
+  const relBadgeEl=document.getElementById('relTabBadge');
+  if(relBadgeEl){ if(relErrCount){relBadgeEl.textContent=relErrCount;relBadgeEl.style.display='';} else {relBadgeEl.style.display='none';} }
   state.day=null;
   state.tlEnd=null;
   render();
@@ -526,9 +926,14 @@ function fmtTime(d){return d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'
 
 function render(){
   // counts per category (unfiltered by cat, filtered by search+day)
-  const base = events.filter(e=>
-    (!state.day||e.dayKey===state.day) &&
-    (!state.q || (e.p+' '+e.m+' '+e.s).toLowerCase().includes(state.q)));
+  const matchQ=e=>!state.q || ((e.p||'')+' '+e.m+' '+e.s+' '+e.e+(e.kind==='shutdown'?' unexpected shutdown '+e.shut.cause:'')).toLowerCase().includes(state.q);
+  const matchSrc=e=>!state.src || e.src===state.src || e.src==='both';
+  const base = events.filter(e=>(!state.day||e.dayKey===state.day) && matchQ(e) && matchSrc(e));
+  document.querySelectorAll('.chip[data-src]').forEach(c=>{
+    const v=c.dataset.src||null;
+    c.classList.toggle('on',state.src===v);
+    const n=c.querySelector('.n'); if(n)n.textContent=events.filter(e=>(!state.day||e.dayKey===state.day)&&matchQ(e)&&(!v||e.src===v||e.src==='both')).length;
+  });
   document.querySelectorAll('.chip[data-cat]').forEach(c=>{
     const cat=c.dataset.cat;
     c.querySelector('.n').textContent=base.filter(e=>e.cat===cat).length;
@@ -551,7 +956,7 @@ function render(){
   const byDay={};
   allDays.forEach(k=>byDay[k]={err:0,warn:0,rest:0});
   events.forEach(e=>{
-    if(state.q && !(e.p+' '+e.m+' '+e.s).toLowerCase().includes(state.q)) return;
+    if(!matchQ(e)||!matchSrc(e)) return;
     const b=byDay[e.dayKey]; if(!b) return;
     if(e.cat==='err')b.err++; else if(e.cat==='warn')b.warn++; else b.rest++;
   });
@@ -564,7 +969,7 @@ function render(){
     const b=byDay[k], tot=b.err+b.warn+b.rest;
     const bar=document.createElement('div');
     bar.className='bar'+(state.day===k?' active':'')+((b.err+b.warn)===0?' clean':'');
-    bar.title=fmtDay(k)+' \u00b7 '+tot+' event'+(tot===1?'':'s')+(b.err?' ('+b.err+' critical)':'');
+    bar.title=fmtDay(k)+' \u00b7 '+tot+' event'+(tot===1?'':'s')+(b.err?' ('+b.err+' error)':'');
     if(!tot){const s=document.createElement('div');s.className='seg-ok';s.style.height='3px';s.style.opacity='.45';bar.appendChild(s);}
     const h=x=>Math.round(x/max*64);
     if(b.rest){const s=document.createElement('div');s.className='seg-ok';s.style.height=Math.max(tot?3:0,h(b.rest))+'px';bar.appendChild(s);}
@@ -583,8 +988,8 @@ function render(){
   }
 
   const cd=document.getElementById('clearDay');
-  cd.style.display=state.day?'inline':'none';
-  cd.textContent=state.day?('✕ '+fmtDay(state.day)):'';
+  cd.style.display=state.day?'flex':'none';
+  cd.innerHTML=state.day?(fmtDay(state.day)+'<span class="material-symbols-outlined" style="font-size:18px">close</span>'):'';
 
   // list grouped by day
   const list=document.getElementById('list');
@@ -594,36 +999,73 @@ function render(){
     if(!dayGroups.has(e.dayKey))dayGroups.set(e.dayKey,{err:[],warn:[],info:[]});
     dayGroups.get(e.dayKey)[e.cat].push(e);
   });
-  const ICONS={err:'\u274C\uFE0E',warn:'\u26A0\uFE0E',info:'\u2139\uFE0E'};
   dayGroups.forEach((groups,dayKey)=>{
+    const dayTotal=groups.err.length+groups.warn.length+groups.info.length;
     const h=document.createElement('div');h.className='day-head';
-    h.textContent=fmtDay(dayKey);
+    h.innerHTML='<span>'+fmtDay(dayKey)+'</span><span class="n">'+dayTotal+' event'+(dayTotal===1?'':'s')+'</span><span class="ln"></span>';
     list.appendChild(h);
     ['err','warn','info'].forEach(cat=>{
       const evs=groups[cat];
       if(!evs.length)return;
       const sh=document.createElement('div');sh.className='sev-head sev-'+cat;
-      sh.textContent=ICONS[cat]+' '+CATNAMES[cat]+(evs.length>1?' ('+evs.length+')':'');
+      sh.innerHTML=esc(CATNAMES[cat])+(evs.length>1?' <span class="n">'+evs.length+'</span>':'');
       list.appendChild(sh);
+      const crashKey=m=>(m||'')
+        .replace(/Faulting process id:.*$/m,'')
+        .replace(/Faulting application start time:.*$/m,'')
+        .replace(/Report Id:.*$/m,'')
+        .replace(/Faulting package-relative application ID:.*$/m,'')
+        .trim();
+      const groupsByKey=new Map();
       evs.forEach(e=>{
-        const row=document.createElement('div');row.className='row';
-        row.innerHTML='<span class="time mono">'+fmtTime(e.d)+'</span>'+
+        const key=e.kind==='shutdown'?'shut|'+e.d.getTime():(e.src+'|'+(e.p||'')+'|'+e.s+'|'+crashKey(e.m));
+        if(!groupsByKey.has(key))groupsByKey.set(key,[]);
+        groupsByKey.get(key).push(e);
+      });
+      [...groupsByKey.values()].forEach(dupes=>{
+        const e=dupes[0];
+        const row=document.createElement('div');row.className='row cat-'+e.cat;
+        const open=false; // collapsed by default for an at-a-glance list; click a row for detail
+        const times=dupes.map(x=>fmtTime(x.d));
+        const shut=e.kind==='shutdown'?e.shut:null;
+        let title=esc(e.p||'(unnamed)');
+        if(!shut&&e.src==='sys'&&e.bc&&String(e.bc)!=='0')title+=' <span style="color:var(--err)">\u00b7 Bugcheck 0x'+esc(parseInt(e.bc).toString(16).toUpperCase())+'</span>';
+        const n=dupes.length>1?dupes.length:(+e.cnt>1?+e.cnt:0);
+        if(n)title+=' <span style="color:var(--faint);font-weight:400">\u00d7'+n+'</span>';
+        const meta=shut?'':esc(e.s)+' \u00b7 '+esc(e.e);
+        row.innerHTML='<span class="time mono">'+times[0]+'</span>'+
           '<span class="dot d-'+e.cat+'"></span>'+
-          '<span class="title">'+esc(e.p||'(unnamed)')+'<span class="src">'+summary(e)+'</span></span>'+
-          '<div class="msg mono">'+esc(e.m)+'</div>';
-        row.onclick=(e)=>{ if(e.target.closest('.msg')||hasTextSelection())return; row.classList.toggle('open'); };
-        row.querySelector('.msg').onclick=e=>e.stopPropagation();
+          '<div style="flex:1;min-width:0"><div class="title">'+title+'</div><div class="src">'+summary(e)+'</div></div>'+
+          '<span class="src-tag src-'+e.src+'">'+esc(SRC_LABEL[e.src])+'</span>'+
+          (meta?'<span class="evt-meta mono">'+meta+'</span>':'')+
+          '<span class="material-symbols-outlined evt-chevron">'+(open?'expand_less':'expand_more')+'</span>'+
+          (shut?shutFactsHtml(shut):'')+
+          '<div class="msg mono">'+esc(e.m)+(dupes.length>1?'\n\nAlso at: '+times.slice(1).join(', '):'')+'</div>';
+        if(open)row.classList.add('open');
+        row.onclick=(ev)=>{ if(ev.target.closest('.msg')||hasTextSelection())return; row.classList.toggle('open'); row.querySelector('.evt-chevron').textContent=row.classList.contains('open')?'expand_less':'expand_more'; };
+        row.querySelector('.msg').onclick=ev=>ev.stopPropagation();
         list.appendChild(row);
       });
     });
   });
   document.getElementById('empty').style.display=shown.length?'none':'block';
+
+  const relSubEl=document.getElementById('relSub');
+  if(relSubEl&&events.length){
+    relSubEl.textContent=events.length+' event'+(events.length===1?'':'s')+' from reliability history and the System log \u00b7 '+fmtDay(events[events.length-1].dayKey)+' \u2013 '+fmtDay(events[0].dayKey);
+  }
 }
 function summary(e){
+  if(e.kind==='shutdown')return esc(e.shut.bcLabel?'Blue screen \u00b7 '+e.shut.bcLabel:e.shut.cause);
+  if(e.src==='sys'){
+    if(/WHEA/i.test(e.s))return 'Hardware error reported by the CPU/chipset';
+    if(e.e==='4101')return 'Display driver stopped responding and recovered';
+    return e.cat==='err'?'System error':e.cat==='warn'?'System warning':'System event';
+  }
   if(e.cat==='err'){
     if(e.s==='Application Error')return 'Stopped working';
     if(e.s==='EventLog')return 'Windows was not properly shut down';
-    return 'Critical event';
+    return 'Error event';
   }
   // EventIdentifier (like SourceName) is a fixed internal code, never localized, so branching on
   // it instead of matching English words in the message keeps these labels correct regardless of
@@ -644,18 +1086,8 @@ function fmtFree(gb){return gb>=1000?(gb/1000).toFixed(1)+'TB':gb.toFixed(1)+'GB
 // Hero tile icons - reused verbatim from the matching sidebar tab icon wherever one exists
 // (GPU, Storage, Memory), so a tile visually promises "click me to see more" honestly. CPU,
 // Motherboard and System have no dedicated tab of their own, so they get their own icon.
-const ICON_CPU='<svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2" ry="2"/><rect x="9" y="9" width="6" height="6"/><line x1="9" y1="1" x2="9" y2="4"/><line x1="15" y1="1" x2="15" y2="4"/><line x1="9" y1="20" x2="9" y2="23"/><line x1="15" y1="20" x2="15" y2="23"/><line x1="20" y1="9" x2="23" y2="9"/><line x1="20" y1="14" x2="23" y2="14"/><line x1="1" y1="9" x2="4" y2="9"/><line x1="1" y1="14" x2="4" y2="14"/></svg>';
-const ICON_GPU='<svg viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="11" rx="2"/><circle cx="8" cy="11.5" r="2"/><circle cx="15" cy="11.5" r="2"/><line x1="5" y1="17" x2="5" y2="20"/><line x1="9" y1="17" x2="9" y2="20"/><line x1="21" y1="9" x2="23" y2="9"/><line x1="21" y1="13" x2="23" y2="13"/></svg>';
-const ICON_RAM='<svg viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"/><rect x="2" y="14" width="20" height="8" rx="2" ry="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg>';
-const ICON_STORAGE='<svg viewBox="0 0 24 24"><line x1="22" y1="12" x2="2" y2="12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/><line x1="6" y1="16" x2="6.01" y2="16"/><line x1="10" y1="16" x2="10.01" y2="16"/></svg>';
-const ICON_MOBO='<svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>';
-const ICON_OS='<svg viewBox="0 0 24 24"><rect x="3" y="3" width="8" height="8" rx="1"/><rect x="13" y="3" width="8" height="8" rx="1"/><rect x="3" y="13" width="8" height="8" rx="1"/><rect x="13" y="13" width="8" height="8" rx="1"/></svg>';
-const ICON_INFO='<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>';
-const ICON_SPEAKER='<svg viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>';
-const ICON_MIC='<svg viewBox="0 0 24 24"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>';
-const ICON_CAMERA='<svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>';
-const ICON_USB='<svg viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>';
-const ICON_ALERT='<svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>';
+
+
 // Guards accordion-row toggles against text selection. Checking only whether the click
 // *landed* inside .msg isn't enough - drag-selecting a long/wrapped message often ends with
 // the mouse released just outside its box, which used to collapse the row mid-selection and
@@ -668,10 +1100,24 @@ document.querySelectorAll('.chip[data-cat]').forEach(c=>c.onclick=()=>{
   state.cats.has(cat)?state.cats.delete(cat):state.cats.add(cat);
   render();
 });
+document.querySelectorAll('.chip[data-src]').forEach(c=>c.onclick=()=>{
+  state.src=c.dataset.src||null;
+  render();
+});
 document.getElementById('clearDay').onclick=()=>{state.day=null;render();};
 document.getElementById('tlPrev').onclick=()=>{state.tlEnd=Math.max(TL_WIN-1,state.tlEnd-TL_WIN);render();};
 document.getElementById('tlNext').onclick=()=>{state.tlEnd=state.tlEnd+TL_WIN;render();};
 document.getElementById('search').oninput=e=>{state.q=e.target.value.toLowerCase();render();};
+const copyRelBtn=document.getElementById('copyRelBtn');
+if(copyRelBtn)copyRelBtn.onclick=()=>{
+  const rows=[...document.querySelectorAll('#list .row')].map(r=>r.textContent.replace(/\s*\n\s*/g,' ').trim());
+  const txt=rows.join('\n');
+  const done=()=>{const old=copyRelBtn.innerHTML;copyRelBtn.innerHTML='<span class="material-symbols-outlined" style="font-size:18px">check</span>Copied';setTimeout(()=>{copyRelBtn.innerHTML=old;},1500);};
+  if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(txt).then(done).catch(()=>{});
+  else{const ta=document.createElement('textarea');ta.value=txt;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);done();}
+};
+const printRelBtn=document.getElementById('printRelBtn');
+if(printRelBtn)printRelBtn.onclick=()=>window.print();
 
 // CSV loading (drop or picker) for future exports
 function parseCSV(text){
@@ -696,7 +1142,7 @@ function parseCSV(text){
 }
 function handleFile(f){
   const rd=new FileReader();
-  rd.onload=()=>{try{load(parseCSV(rd.result));}catch(err){alert('Could not parse that CSV: '+err.message);}};
+  rd.onload=()=>{try{load(parseCSV(rd.result));syncNavGroups(false);}catch(err){alert('Could not parse that CSV: '+err.message);}};
   rd.readAsText(f);
 }
 document.querySelector('#drop input').onchange=e=>e.target.files[0]&&handleFile(e.target.files[0]);
@@ -731,60 +1177,81 @@ function splitOnce(text,re){
 }
 function renderSpecs(){
   const sp=parseSpecs(SPECS);
-  let dh='';
-  if(sp.drives&&sp.drives.length){
-    // A simple, at-a-glance used/free bar per drive letter - the same information the detailed
-    // Disk layout section below gives per-partition, but laid out the way Windows' own "This PC"
-    // view does, since scanning a used/free bar per drive is far faster than reading numbers out
-    // of a partition table.
-    // Map each drive letter to the physical disk number it lives on, so the Overview card can
-    // show "Disk 0" etc alongside the letter without the reader needing to cross-reference the
-    // Disk layout section below.
-    const letterToDisk={};
-    DISKLAYOUT.forEach(dk=>{(dk.partitions||[]).forEach(p=>{if(p.letter)letterToDisk[p.letter]=dk.disk;});});
-    // Same SMART lookup the Disk layout section below uses, built early so drives with a failing
-    // physical disk can be flagged red up here too, not just further down the page.
-    const smartByDiskEarly={};
-    SMART.forEach(d=>{smartByDiskEarly[String(d.disk)]=d;});
-    dh+='<div class="spec-section"><h2>Overview</h2><div class="drive-grid">';
-    const drivesSorted=[...sp.drives].sort((a,b)=>(a['Drive Label']||'').localeCompare(b['Drive Label']||''));
+  const v=document.getElementById('drivesView');
+  if(!(sp.drives&&sp.drives.length) && !DISKLAYOUT.length && !SMART.length){
+    v.innerHTML='<div class="dp-head"><div class="dp-crumb"><span class="crumb">Hardware <span class="material-symbols-outlined" style="font-size:16px">chevron_right</span> <b>Storage</b></span></div>'+
+      '<div class="dp-title-row"><div><div class="dp-title">Storage</div></div></div></div>'+
+      '<div class="dp-content"><div class="disk-card"><div class="dp-empty">No storage data embedded.</div></div></div>';
+    return;
+  }
+
+  const letterToDisk={};
+  DISKLAYOUT.forEach(dk=>{(dk.partitions||[]).forEach(p=>{if(p.letter)letterToDisk[p.letter]=dk.disk;});});
+  const smartByDisk={};
+  SMART.forEach(d=>{smartByDisk[String(d.disk)]=d;});
+  const TYPE_COLOR={'EFI System Partition':'#5C7AA6','Recovery':'var(--warn)','Recovery (MBR)':'var(--warn)','Microsoft Reserved':'#8C6FA6','Data':'var(--info-c)','System':'var(--dim)','Unallocated':'var(--panel)'};
+
+  const drivesWithSize=(sp.drives||[]).filter(dr=>+dr['Total Size (GB)']>0);
+  const totalAllGB=drivesWithSize.reduce((a,dr)=>a+(+dr['Total Size (GB)']||0),0);
+  const freeAllGB=drivesWithSize.reduce((a,dr)=>a+(+dr['Free Space (GB)']||0),0);
+  const diskCount=DISKLAYOUT.length||SMART.length;
+  const storageTitle='Storage'+(totalAllGB?' '+fmtSize(totalAllGB)+' across '+diskCount+' disk'+(diskCount===1?'':'s'):'');
+  const subParts=[drivesWithSize.length?drivesWithSize.length+' volume'+(drivesWithSize.length===1?'':'s'):'',totalAllGB?fmtFree(freeAllGB)+' free of '+fmtSize(totalAllGB):''].filter(Boolean);
+
+  let anyLow=false,anyBad=false;
+  drivesWithSize.forEach(dr=>{
+    const totalGB=+dr['Total Size (GB)']||0, freeGB=+dr['Free Space (GB)']||0;
+    const freePct=dr['Percentage Free (%)']!=null?Math.round(+dr['Percentage Free (%)']):Math.round(freeGB/totalGB*100);
+    if(freePct<10)anyLow=true;
+  });
+  let anyCrc=false;
+  SMART.forEach(d=>{ if(smartProbs(d).length)anyBad=true; else if(smartCrcProbs(d).length)anyCrc=true; });
+  const statusCls=anyBad?'err':((anyLow||anyCrc)?'warn':'ok');
+  const warnCountHere=(anyLow?1:0)+(anyBad?1:0)+(anyCrc?1:0);
+  const statusText=anyBad?'SMART warning on this component':(anyCrc&&!anyLow)?'CRC errors on a drive':((anyLow||anyCrc)?warnCountHere+' warning'+(warnCountHere>1?'s':'')+' on this component':'No problems found');
+  const drivesBadgeEl=document.getElementById('drivesTabBadge');
+  if(drivesBadgeEl){ if(warnCountHere){drivesBadgeEl.textContent=warnCountHere;drivesBadgeEl.className='tab-badge'+(anyBad?'':' warn');drivesBadgeEl.style.display='';} else {drivesBadgeEl.style.display='none';} }
+
+  let h='<div class="dp-head"><div class="dp-crumb"><span class="crumb">Hardware <span class="material-symbols-outlined" style="font-size:16px">chevron_right</span> <b>Storage</b></span>'+
+    '<div class="dp-actions"><div class="m3-btn" id="copyStorageBtn"><span class="material-symbols-outlined" style="font-size:18px">content_copy</span>Copy</div></div></div>'+
+    '<div class="dp-title-row"><div><div class="dp-title">'+esc(storageTitle)+'</div><div class="dp-sub">'+esc(subParts.join(' \u00b7 '))+'</div></div>'+
+    '<div class="dp-status '+statusCls+'"><span class="status-dot"></span>'+esc(statusText)+'</div></div></div>';
+
+  h+='<div class="dp-content">';
+
+  if(drivesWithSize.length){
+    h+='<div><div class="dp-section-label">Volumes</div><div class="vol-grid">';
+    const drivesSorted=[...drivesWithSize].sort((a,b)=>(a['Drive Label']||'').localeCompare(b['Drive Label']||''));
     drivesSorted.forEach(dr=>{
-      const totalGB=+dr['Total Size (GB)']||0;
-      const freeGB=+dr['Free Space (GB)']||0;
-      if(!totalGB)return;
+      const totalGB=+dr['Total Size (GB)']||0, freeGB=+dr['Free Space (GB)']||0;
       const usedPct=Math.min(100,Math.round((totalGB-freeGB)/totalGB*100));
       const freePct=dr['Percentage Free (%)']!=null?Math.round(+dr['Percentage Free (%)']):Math.round(freeGB/totalGB*100);
       const low=freePct<10;
       const diskNum=letterToDisk[dr['Drive Label']];
-      const smEarly=diskNum!=null?smartByDiskEarly[String(diskNum)]:null;
-      const critEarly=smEarly?smartProbs(smEarly):[];
-      const crcEarly=smEarly?smartCrcProbs(smEarly):[];
-      const bad=critEarly.length>0;
-      const warnOnly=!bad&&crcEarly.length>0;
-      const rawName=dr['Drive Name'];
-      const driveName=(rawName&&rawName!=='No Name Found')?rawName:'Local Disk';
-      dh+='<div class="drive'+(bad?' smart-bad':(warnOnly?' smart-warn':''))+'"'+(diskNum!=null?' style="cursor:pointer" onclick="highlightDisk(\''+esc(diskNum)+'\')"':'')+'><h3>'+esc(driveName)+' ('+esc(dr['Drive Label']||'?')+')</h3>'+
-        '<div class="sub" style="margin:2px 0 12px">'+fmtSize(totalGB)+'</div>'+
-        '<div class="meter'+(low?' low':'')+'" style="margin:10px 0 8px"><div style="width:'+usedPct+'%"></div></div>'+
-        '<div class="sub" style="margin-bottom:0">'+fmtFree(freeGB)+' free <span style="color:'+(low?'var(--warn)':'var(--faint)')+'">('+freePct+'%)</span></div>'+
-        (bad?'<div style="color:var(--err);font-size:13px;margin-top:6px">\u26a0 SMART warning on this disk</div>'
-         :warnOnly?'<div style="color:var(--warn);font-size:13px;margin-top:6px">\u26a0 CRC errors on this disk</div>':'')+
+      const sm=diskNum!=null?smartByDisk[String(diskNum)]:null;
+      const bad=sm?smartProbs(sm).length>0:false;
+      const crcWarn=!bad&&sm?smartCrcProbs(sm).length>0:false;
+      const winName=(dr['Drive Name']&&dr['Drive Name']!=='No Name Found')?dr['Drive Name']:'Local Disk';
+      let chip='';
+      if(bad)chip='<span class="vol-chip err"><span class="material-symbols-outlined">error</span>SMART issue</span>';
+      else if(crcWarn)chip='<span class="vol-chip warn"><span class="material-symbols-outlined">warning</span>CRC errors</span>';
+      else if(low)chip='<span class="vol-chip warn"><span class="material-symbols-outlined">warning</span>'+freePct+'% free</span>';
+      else if(sm&&sm.health)chip='<span class="vol-chip ok">'+esc(sm.health)+'</span>';
+      h+='<div class="vol-card'+(bad?' vol-card-err':(low||crcWarn)?' vol-card-warn':'')+'"'+(diskNum!=null?' onclick="highlightDisk(\''+esc(diskNum)+'\')"':'')+'>'+
+        '<div class="vol-top"><div class="vol-letter">'+esc(winName)+' ('+esc(dr['Drive Label']||'?')+')</div>'+
+        '<div class="vol-sub">'+(diskNum!=null?'Disk '+esc(diskNum):'')+(sm&&sm.bus?' \u00b7 '+esc(sm.bus):'')+'</div>'+chip+'</div>'+
+        '<div class="vol-bar-track"><div class="vol-bar-fill'+(bad?' err':low?' warn':'')+'" style="width:'+usedPct+'%"></div></div>'+
+        '<div class="vol-foot"><span style="color:'+(low?'var(--warn)':'var(--dim)')+'">'+fmtFree(freeGB)+' free</span><span style="color:var(--faint)">of '+fmtSize(totalGB)+'</span></div>'+
         '</div>';
     });
-    dh+='</div></div>';
+    h+='</div></div>';
   }
+
   if(DISKLAYOUT.length||SMART.length){
-    const smartByDisk={};
-    SMART.forEach(d=>{smartByDisk[String(d.disk)]=d;});
     const usedSmartIds={};
     const disksSorted=[...DISKLAYOUT].sort((a,b)=>(+a.disk)-(+b.disk));
-    dh+='<div class="spec-section"><h2>Disk layout</h2>';
-    const TYPE_COLOR={'EFI System Partition':'var(--info)','Recovery':'var(--warn)','Recovery (MBR)':'var(--warn)','Microsoft Reserved':'var(--faint)','Data':'var(--ok)','System':'var(--dim)','Unallocated':'var(--panel)'};
+    h+='<div><div class="dp-section-label">Disk Layout</div>';
     disksSorted.forEach(dk=>{
-      // Scale against the disk's actual capacity, not the sum of its partitions - otherwise a disk
-      // that's mostly unallocated (e.g. an old drive's small partition carried over onto a much
-      // bigger replacement without ever being extended) renders as a "full" bar with no visual sign
-      // that most of the physical drive isn't even partitioned yet.
       const partSum=dk.partitions.reduce((a,p)=>a+p.sizeGB,0);
       const total=dk.sizeGB||partSum||1;
       const unallocGB=Math.max(0,total-partSum);
@@ -797,33 +1264,48 @@ function renderSpecs(){
       const warnOnly=!bad&&crcProbs.length>0;
       const clickable=!!sm;
       const healthLabel=(sm&&sm.health&&!(bad&&/^healthy$/i.test(sm.health)))?sm.health+(sm.op&&sm.op!=='OK'&&sm.op!==sm.health?' ('+sm.op+')':''):'';
-      const letters=parts.filter(p=>p.letter).map(p=>p.letter).join(', ');
-      dh+='<div class="drive'+(bad?' smart-bad':(warnOnly?' smart-warn':''))+'" id="diskBlock-'+esc(dk.disk)+'" style="margin-bottom:14px'+(clickable?';cursor:pointer':'')+'"'+(clickable?' onclick="openSmartModal(\''+esc(dk.disk)+'\')"':'')+'>';
-      dh+='<h3>Disk '+esc(dk.disk)+(letters?' ('+esc(letters)+')':'')+(sm&&sm.name?' - <span style="color:var(--dim);font-weight:400">'+esc(sm.name)+'</span>':'')+'</h3>';
-      dh+='<div class="sub">'+fmtSize(dk.sizeGB)+(sm&&sm.bus?' \u00b7 '+esc(sm.bus):'')+
-        (healthLabel?' \u00b7 <span style="color:'+(bad?'var(--err)':'var(--ok)')+'">'+esc(healthLabel)+'</span>':'')+'</div>'+
-        (bad?'<div style="color:var(--err);font-size:13.5px;margin-bottom:6px">\u26a0 SMART warning &mdash; click for details</div>'
-          :warnOnly?'<div style="color:var(--warn);font-size:13.5px;margin-bottom:6px">\u26a0 CRC errors &mdash; click for details</div>'
-          :(clickable?'<div style="color:var(--faint);font-size:13px;margin-bottom:6px">Click for drive health details</div>':''));
-      dh+='<div style="display:flex;height:22px;border-radius:6px;overflow:hidden;margin:10px 0;background:var(--panel2)">';
-      parts.forEach(p=>{
-        const pct=Math.max(1.5,(p.sizeGB/total*100));
+      h+='<div class="disk-card'+(bad?' vol-card-err':warnOnly?' vol-card-warn':'')+'" id="diskBlock-'+esc(dk.disk)+'">';
+      h+='<div class="disk-top"><div class="disk-name">Disk '+esc(dk.disk)+'</div>'+
+        (sm&&sm.name?'<div class="disk-model">'+esc(sm.name)+'</div>':'')+
+        (sm&&sm.bus?'<span class="vol-chip plain">'+esc(sm.bus)+'</span>':'')+
+        (healthLabel?'<span class="vol-chip '+(bad?'err':warnOnly?'warn':'ok')+'">SMART: '+esc(healthLabel)+'</span>':'')+
+        '<div class="disk-size">'+fmtSize(dk.sizeGB)+'</div>'+
+        (clickable?'<span class="material-symbols-outlined disk-expand" onclick="openSmartModal(\''+esc(dk.disk)+'\')">open_in_full</span>':'')+
+        '</div>';
+      h+='<div class="disk-bar">';
+      // A small minimum width keeps a tiny EFI/MSR sliver visible, but clamping several of them
+      // up without giving something back means the segments can add up to well over 100% and
+      // spill the bar past the edge of the card - rescale everything back down to fit exactly.
+      const rawPcts=parts.map(p=>Math.max(1.5,(p.sizeGB/total*100)));
+      const pctSum=rawPcts.reduce((a,b)=>a+b,0);
+      const scale=pctSum>100?100/pctSum:1;
+      parts.forEach((p,pi)=>{
+        const pctW=rawPcts[pi]*scale;
         const col=TYPE_COLOR[p.type]||'var(--dim)';
-        const style=p.type==='Unallocated'?'width:'+pct+'%;background:repeating-linear-gradient(135deg,var(--panel2),var(--panel2) 4px,var(--line) 4px,var(--line) 8px);border-right:1px solid var(--panel)':'width:'+pct+'%;background:'+col+';border-right:1px solid var(--panel)';
+        const isUnalloc=p.type==='Unallocated';
+        const style=isUnalloc?'flex:0 0 '+pctW+'%;background:repeating-linear-gradient(135deg,var(--panel2),var(--panel2) 4px,var(--line) 4px,var(--line) 8px);border:1px dashed var(--faint);box-sizing:border-box;display:flex;align-items:center;justify-content:center'
+          :'flex:0 0 '+pctW+'%;background:'+col+';display:flex;align-items:center;padding:0 14px;gap:10px;overflow:hidden';
         const tip=esc(p.type)+(p.letter?' ('+esc(p.letter)+')':'')+' \u00b7 '+p.sizeGB.toFixed(1)+' GB';
-        dh+='<div onmouseenter="showPartTip(event,\''+tip.replace(/'/g,"\\'")+'\')" onmousemove="positionPartTip(event)" onmouseleave="hidePartTip()" style="cursor:default;'+style+'"></div>';
+        const label=isUnalloc?(pctW>10?'<span style="font:400 13px/18px Roboto;color:var(--faint)">Unallocated \u00b7 '+fmtSize(p.sizeGB)+'</span>':'')
+          :(pctW>12?'<span style="font:500 14px/20px Roboto;color:#D1E4FF">'+esc(p.letter||'')+'</span><span style="font:400 13px/18px Roboto;color:#A0CAFD">'+esc(p.type)+' \u00b7 '+fmtSize(p.sizeGB)+'</span>':'');
+        h+='<div style="'+style+'" onmouseenter="showPartTip(event,\''+tip.replace(/'/g,"\\'")+'\')" onmousemove="positionPartTip(event)" onmouseleave="hidePartTip()">'+label+'</div>';
       });
-      dh+='</div><dl class="kv smart-kv">';
-      parts.forEach(p=>{
-        const swatch=p.type==='Unallocated'?'background:repeating-linear-gradient(135deg,var(--panel2),var(--panel2) 2px,var(--line) 2px,var(--line) 4px)':'background:'+(TYPE_COLOR[p.type]||'var(--dim)');
-        dh+='<dt><span style="display:inline-block;width:9px;height:9px;border-radius:2px;'+swatch+';margin-right:6px"></span>'+esc(p.type)+(p.letter?' ('+esc(p.letter)+')':'')+'</dt><dd></dd>';
-      });
-      dh+='</dl></div>';
+      h+='</div>';
+      h+='<div class="disk-legend">'+parts.map(p=>{
+        const isUnalloc=p.type==='Unallocated';
+        const swatch=isUnalloc?'background:repeating-linear-gradient(135deg,var(--panel2),var(--panel2) 2px,var(--line) 2px,var(--line) 4px)':'background:'+(TYPE_COLOR[p.type]||'var(--dim)');
+        return '<span class="sw"><span class="dot" style="'+swatch+'"></span>'+esc(p.type)+(p.letter?' ('+esc(p.letter)+')':'')+' \u00b7 '+fmtSize(p.sizeGB)+'</span>';
+      }).join('')+'</div>';
+      if(unallocGB>0.5){
+        const pctUnalloc=Math.round(unallocGB/total*100);
+        h+='<div class="dp-banner" onclick="return goFaq(\'unallocated-space\')"><span class="material-symbols-outlined">warning</span>'+
+          '<div class="dp-banner-text">'+fmtSize(unallocGB)+' ('+pctUnalloc+'%) is not assigned to any partition \u2014 commonly left behind after cloning to a larger drive.</div>'+
+          '<span class="dp-banner-link">Unallocated disk space \u2192</span></div>';
+      } else if(bad||warnOnly){
+        h+='<div style="color:'+(bad?'var(--err)':'var(--warn)')+';font:400 13.5px/19px Roboto;cursor:pointer" onclick="openSmartModal(\''+esc(dk.disk)+'\')">\u26a0 '+(bad?'SMART warning':'CRC errors')+' &mdash; click for details</div>';
+      }
+      h+='</div>';
     });
-    // Some systems number disks differently between Get-PhysicalDisk (used for SMART/CrystalDiskInfo-
-    // style data) and Get-Disk (used for the partition layout above) - e.g. NVMe drives behind certain
-    // controllers. When that happens a real, healthy drive can be entirely absent from the layout view
-    // above even though it's reported fine in SMART. Show it here instead of silently dropping it.
     SMART.forEach(sm=>{
       if(usedSmartIds[String(sm.disk)])return;
       const crit=smartProbs(sm);
@@ -831,98 +1313,225 @@ function renderSpecs(){
       const bad=crit.length>0;
       const warnOnly=!bad&&crcProbs.length>0;
       const healthLabel=(sm.health&&!(bad&&/^healthy$/i.test(sm.health)))?sm.health+(sm.op&&sm.op!=='OK'&&sm.op!==sm.health?' ('+sm.op+')':''):'';
-      dh+='<div class="drive'+(bad?' smart-bad':(warnOnly?' smart-warn':''))+'" id="diskBlock-'+esc(sm.disk)+'" style="margin-bottom:14px;cursor:pointer" onclick="openSmartModal(\''+esc(sm.disk)+'\')">';
-      dh+='<h3>Disk '+esc(sm.disk)+(sm.name?' - <span style="color:var(--dim);font-weight:400">'+esc(sm.name)+'</span>':'')+'</h3>';
-      dh+='<div class="sub">'+(sm.bus?esc(sm.bus):'')+
-        (healthLabel?' \u00b7 <span style="color:'+(bad?'var(--err)':'var(--ok)')+'">'+esc(healthLabel)+'</span>':'')+'</div>'+
-        (bad?'<div style="color:var(--err);font-size:13.5px;margin-bottom:6px">\u26a0 SMART warning &mdash; click for details</div>'
-          :warnOnly?'<div style="color:var(--warn);font-size:13.5px;margin-bottom:6px">\u26a0 CRC errors &mdash; click for details</div>'
-          :'<div style="color:var(--faint);font-size:13px;margin-bottom:6px">Click for drive health details</div>')+
-        '<div style="color:var(--faint);font-size:12.5px">No partition layout available for this drive (disk numbering mismatch between data sources)</div>';
-      dh+='</div>';
+      h+='<div class="disk-card'+(bad?' vol-card-err':warnOnly?' vol-card-warn':'')+'" id="diskBlock-'+esc(sm.disk)+'">'+
+        '<div class="disk-top"><div class="disk-name">Disk '+esc(sm.disk)+'</div>'+
+        (sm.name?'<div class="disk-model">'+esc(sm.name)+'</div>':'')+
+        (sm.bus?'<span class="vol-chip plain">'+esc(sm.bus)+'</span>':'')+
+        (healthLabel?'<span class="vol-chip '+(bad?'err':warnOnly?'warn':'ok')+'">SMART: '+esc(healthLabel)+'</span>':'')+
+        '<span class="material-symbols-outlined disk-expand" onclick="openSmartModal(\''+esc(sm.disk)+'\')">open_in_full</span></div>'+
+        (bad?'<div style="color:var(--err);font-size:13.5px;cursor:pointer" onclick="openSmartModal(\''+esc(sm.disk)+'\')">\u26a0 SMART warning \u2014 click for details</div>'
+          :warnOnly?'<div style="color:var(--warn);font-size:13.5px;cursor:pointer" onclick="openSmartModal(\''+esc(sm.disk)+'\')">\u26a0 CRC errors \u2014 click for details</div>':'')+
+        '<div class="disk-mismatch-note">No partition layout available for this drive (disk numbering mismatch between data sources)</div>'+
+        '</div>';
     });
-    dh+='</div>';
+    h+='</div>';
+
     const alerts=[];
     SMART.forEach(d=>{
       const probs=smartProbs(d);
       const crc=smartCrcProbs(d);
-      if(probs.length)alerts.push('<li><span class="r" style="color:var(--err)">Disk '+esc(d.disk)+' ('+esc(d.name)+'): '+esc(probs.join(', '))+'</span></li>');
-      if(crc.length)alerts.push('<li><span class="y" style="color:var(--warn)">Disk '+esc(d.disk)+' ('+esc(d.name)+'): '+esc(crc.join(', '))+'</span></li>');
+      if(probs.length)alerts.push('<div class="dp-flag-row" style="background:var(--err-container);color:var(--err)"><span class="material-symbols-outlined">error</span>Disk '+esc(d.disk)+' ('+esc(d.name)+'): '+esc(probs.join(', '))+'</div>');
+      if(crc.length)alerts.push('<div class="dp-flag-row">Disk '+esc(d.disk)+' ('+esc(d.name)+'): '+esc(crc.join(', '))+'</div>');
     });
-    DIRTY.forEach(v=>alerts.push('<li><span style="color:var(--warn)">Volume '+esc(v)+' has its dirty bit set</span></li>'));
-    dh+='<div class="spec-section" style="margin-top:26px"><h2>SMART data</h2>'+
-      (alerts.length?'<ul class="notes">'+alerts.join('')+'</ul>'
-       :'<div style="color:var(--ok)">\u2713 No SMART issues found. All disks report Healthy with no uncorrected errors.</div>')+'</div>';
+    DIRTY.forEach(dv=>alerts.push('<div class="dp-flag-row">Volume '+esc(dv)+' has its dirty bit set</div>'));
+    h+='<div><div class="dp-section-label">SMART data</div>'+
+      (alerts.length?'<div style="display:flex;flex-direction:column;gap:8px">'+alerts.join('')+'</div>'
+       :'<div class="disk-card" style="color:var(--ok)">\u2713 No SMART issues found. All disks report Healthy with no uncorrected errors.</div>')+'</div>';
   }
-  document.getElementById('drivesView').innerHTML=dh||'<div class="spec-section"><h2>Storage</h2><div style="color:var(--faint)">No storage data embedded.</div></div>';
+
+  h+='</div>';
+  v.innerHTML=h;
+  const copyBtn=document.getElementById('copyStorageBtn');
+  if(copyBtn)copyBtn.onclick=()=>{
+    const txt=v.textContent.replace(/\s*\n\s*/g,'\n').trim();
+    const done=()=>{const old=copyBtn.innerHTML;copyBtn.innerHTML='<span class="material-symbols-outlined" style="font-size:18px">check</span>Copied';setTimeout(()=>{copyBtn.innerHTML=old;},1500);};
+    if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(txt).then(done).catch(()=>{});
+    else{const ta=document.createElement('textarea');ta.value=txt;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);done();}
+  };
 }
-const PS_={q:'',page:1,key:'mem',dir:-1}, PG_={q:'',page:1,key:'name',dir:1};
+const PS_={q:'',page:1,key:'mem',dir:-1}, PG_={q:'',page:1,key:'date',dir:-1,flagFilter:'any'};
 let PROGS_ALL=[];
 function renderProcesses(){
   const v=document.getElementById('processesView');
   if(!PROCS.length){
-    v.innerHTML='<div class="spec-section"><h2>Running Processes</h2><div style="color:var(--faint)">No process data embedded.</div></div>';
+    v.innerHTML='<div class="dp-head"><div class="dp-crumb"><span class="crumb">Software <span class="material-symbols-outlined" style="font-size:16px">chevron_right</span> <b>Running Processes</b></span></div>'+
+      '<div class="dp-title-row"><div><div class="dp-title">Running processes</div></div></div></div>'+
+      '<div class="dp-content"><div class="dp-card"><div class="dp-empty">No process data embedded.</div></div></div>';
     return;
   }
-  v.innerHTML='<div class="spec-section"><h2>Running processes ('+PROCS.length+')</h2>'+
-    '<input id="procSearch" type="text" placeholder="Search\u2026">'+
-    '<div class="proc-head">'+
-    '<span class="sorth" data-key="name">Process<span class="arrow"></span></span>'+
-    '<span class="sorth" data-key="cnt">Instances<span class="arrow"></span></span>'+
-    '<span class="sorth" data-key="mem">Memory<span class="arrow"></span></span></div>'+
-    '<div id="procList"></div><div class="pager" id="procPager"></div></div>';
+  const totalInstances=PROCS.reduce((a,p)=>a+(+p.cnt||0),0);
+  const totalMemMB=PROCS.reduce((a,p)=>a+(+p.mem||0),0);
+  const totalMemGB=totalMemMB/1024;
+
+  let h='<div class="dp-head"><div class="dp-crumb"><span class="crumb">Software <span class="material-symbols-outlined" style="font-size:16px">chevron_right</span> <b>Running Processes</b></span></div>'+
+    '<div class="dp-title-row"><div><div class="dp-title">Running processes</div><div class="dp-sub">'+PROCS.length+' distinct process name'+(PROCS.length===1?'':'s')+' \u00b7 '+totalInstances+' instance'+(totalInstances===1?'':'s')+' \u00b7 '+(totalMemGB>=1?totalMemGB.toFixed(1)+' GB':Math.round(totalMemMB)+' MB')+' working set at capture</div></div></div></div>';
+
+  h+='<div class="list-controls">'+
+    '<div class="list-search"><span class="material-symbols-outlined">search</span><input id="procSearch" type="text" placeholder="Search process name"></div>'+
+    '</div>';
+
+  h+='<div class="list-wrap">'+
+    '<div class="list-head" style="grid-template-columns:1fr 140px 140px">'+
+      '<div class="list-head-col sortable" data-key="name">Process<span class="material-symbols-outlined" id="procSortIconName"></span></div>'+
+      '<div class="list-head-col sortable" data-key="cnt">Instances<span class="material-symbols-outlined" id="procSortIconCnt"></span></div>'+
+      '<div class="list-head-col sortable" data-key="mem">Memory<span class="material-symbols-outlined" id="procSortIconMem"></span></div>'+
+    '</div>'+
+    '<div class="list-body" id="procList"></div>'+
+    '</div>'+
+    '<div class="list-pager" id="procPager"></div>';
+
+  v.innerHTML=h;
   const pf=document.getElementById('procSearch');
   if(pf)pf.oninput=e=>{PS_.q=e.target.value.toLowerCase();PS_.page=1;renderProcList();};
-  v.querySelectorAll('.sorth').forEach(hd=>hd.onclick=()=>{
+  v.querySelectorAll('.list-head-col.sortable').forEach(hd=>hd.onclick=()=>{
     const k=hd.dataset.key;
     if(PS_.key===k)PS_.dir=-PS_.dir; else {PS_.key=k;PS_.dir=k==='name'?1:-1;}
     PS_.page=1;renderProcList();
   });
   renderProcList();
 }
+function flagForProgram(name){
+  for(const f of SOFT_FLAGS){ if(f.re.test(name)) return f; }
+  return null;
+}
 function renderAppsList(programs){
   PROGS_ALL=programs||[];
   const v=document.getElementById('appsView');
-  v.innerHTML=PROGS_ALL.length?
-    '<div class="spec-section"><h2>Installed programs ('+PROGS_ALL.length+')</h2>'+
-    '<input id="progSearch" type="text" placeholder="Search\u2026">'+
-    '<div class="prog-head">'+
-    '<span class="sorth" data-key="name">Program<span class="arrow"></span></span>'+
-    '<span class="sorth" data-key="date">Installed<span class="arrow"></span></span></div>'+
-    '<div id="progList"></div><div class="pager" id="progPager"></div></div>'
-    :'<div class="spec-section"><h2>Installed Apps</h2><div style="color:var(--faint)">No data embedded.</div></div>';
+  const appsBadgeEl=document.getElementById('appsTabBadge');
+  if(!PROGS_ALL.length){
+    v.innerHTML='<div class="dp-head"><div class="dp-crumb"><span class="crumb">Software <span class="material-symbols-outlined" style="font-size:16px">chevron_right</span> <b>Installed Programs</b></span></div>'+
+      '<div class="dp-title-row"><div><div class="dp-title">Installed programs</div></div></div></div>'+
+      '<div class="dp-content"><div class="dp-card"><div class="dp-empty">No program data embedded.</div></div></div>';
+    if(appsBadgeEl)appsBadgeEl.style.display='none';
+    return;
+  }
+  const foundSoft=getSoftwareFlags(PROGS_ALL);
+  const flaggedCount=PROGS_ALL.filter(p=>flagForProgram(p.name)).length;
+  const GROUP_ORDER=['bloat','periph','oc','ac','audio','remote','fan','net','wallpaper','shell','cheat'];
+  // Open on the notable-software view (anything matching a flag group); fall back to the full list
+  // when nothing is flagged so the page never opens empty.
+  if(!flaggedCount&&PG_.flagFilter==='any')PG_.flagFilter=null;
+
+  if(appsBadgeEl){ if(foundSoft.cheat&&foundSoft.cheat.size){appsBadgeEl.textContent=foundSoft.cheat.size;appsBadgeEl.className='tab-badge';appsBadgeEl.style.display='';}
+    else if(flaggedCount){appsBadgeEl.textContent=flaggedCount;appsBadgeEl.className='tab-badge warn';appsBadgeEl.style.display='';}
+    else appsBadgeEl.style.display='none'; }
+
+  let h='<div class="dp-head"><div class="dp-crumb"><span class="crumb">Software <span class="material-symbols-outlined" style="font-size:16px">chevron_right</span> <b>Installed Programs</b></span>'+
+    '<div class="dp-actions"><div class="m3-btn" id="copyAppsBtn"><span class="material-symbols-outlined" style="font-size:18px">content_copy</span>Copy</div></div></div>'+
+    '<div class="dp-title-row"><div><div class="dp-title">Installed programs</div><div class="dp-sub">'+PROGS_ALL.length+' program'+(PROGS_ALL.length===1?'':'s')+' from the uninstall registry'+(flaggedCount?' \u00b7 '+flaggedCount+' matched a known-software flag':'')+'</div></div></div></div>';
+
+  h+='<div class="list-flagband"><div class="list-flagband-inner">'+
+    '<div class="list-flagband-label"><div class="l1">Flag groups found</div><div class="l2">Filter the list</div></div>'+
+    '<div style="flex:1;min-width:0;display:flex;flex-wrap:wrap;gap:8px">'+
+    '<span class="flagpill'+(flaggedCount?'':' zero')+'" data-grp="any">Notable software <span class="n">'+flaggedCount+'</span></span>'+
+    '<span class="flagpill" data-grp="all">All programs <span class="n">'+PROGS_ALL.length+'</span></span>'+
+    '<span class="flag-sep"></span>'+
+    GROUP_ORDER.map(grp=>{
+      const n=foundSoft[grp]?foundSoft[grp].size:0;
+      return '<span class="flagpill'+(n?'':' zero')+'" data-grp="'+grp+'">'+esc(SOFT_GROUP_LABEL[grp])+' <span class="n">'+n+'</span></span>';
+    }).join('')+
+    '</div></div></div>';
+
+  h+='<div class="list-controls">'+
+    '<div class="list-search"><span class="material-symbols-outlined">search</span><input id="progSearch" type="text" placeholder="Search program name"></div>'+
+    '<div class="list-sort" id="progSortToggle"><span class="material-symbols-outlined">calendar_month</span><span id="progSortLabel">Newest first</span></div>'+
+    '</div>';
+
+  h+='<div class="list-wrap">'+
+    '<div class="list-head" style="grid-template-columns:1fr 200px 190px">'+
+      '<div class="list-head-col sortable" data-key="name">Program<span class="material-symbols-outlined" id="progSortIconName"></span></div>'+
+      '<div class="list-head-col sortable" data-key="date">Install date<span class="material-symbols-outlined" id="progSortIconDate"></span></div>'+
+      '<div class="list-head-col sortable" data-key="flag">Flag group<span class="material-symbols-outlined" id="progSortIconFlag"></span></div>'+
+    '</div>'+
+    '<div class="list-body" id="progList"></div>'+
+    '</div>'+
+    '<div class="list-pager" id="progPager"></div>';
+
+  v.innerHTML=h;
   const ps=document.getElementById('progSearch');
   if(ps)ps.oninput=e=>{PG_.q=e.target.value.toLowerCase();PG_.page=1;renderProgList();};
-  v.querySelectorAll('.sorth').forEach(hd=>hd.onclick=()=>{
+  v.querySelectorAll('.list-head-col.sortable').forEach(hd=>hd.onclick=()=>{
     const k=hd.dataset.key;
-    if(PG_.key===k)PG_.dir=-PG_.dir; else {PG_.key=k;PG_.dir=k==='name'?1:-1;}
+    if(PG_.key===k)PG_.dir=-PG_.dir; else {PG_.key=k;PG_.dir=k==='date'?-1:1;}
     PG_.page=1;renderProgList();
   });
+  v.querySelectorAll('.flagpill:not(.zero)').forEach(p=>p.onclick=()=>{
+    const g=p.dataset.grp;
+    const home=flaggedCount?'any':null;
+    PG_.flagFilter=g==='all'?null:g==='any'?'any':(PG_.flagFilter===g?home:g);
+    PG_.page=1;renderProgList();
+  });
+  const sortToggle=document.getElementById('progSortToggle');
+  if(sortToggle)sortToggle.onclick=()=>{ PG_.key='date'; PG_.dir=-PG_.dir; PG_.page=1; renderProgList(); };
+  const copyBtn=document.getElementById('copyAppsBtn');
+  if(copyBtn)copyBtn.onclick=()=>{
+    const txt=PROGS_ALL.map(p=>p.name+(p.date?' ('+p.date+')':'')).join('\n');
+    const done=()=>{const old=copyBtn.innerHTML;copyBtn.innerHTML='<span class="material-symbols-outlined" style="font-size:18px">check</span>Copied';setTimeout(()=>{copyBtn.innerHTML=old;},1500);};
+    if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(txt).then(done).catch(()=>{});
+    else{const ta=document.createElement('textarea');ta.value=txt;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);done();}
+  };
   renderProgList();
+}
+function listPager(el,page,pages,total,onGo,pageSize){
+  if(!el)return;
+  const sz=pageSize||60;
+  const shownFrom=total?((page-1)*sz+1):0;
+  const shownTo=Math.min(page*sz,total);
+  let h='<div class="list-pager-count">Showing '+shownFrom+'\u2013'+shownTo+' of '+total+'</div>';
+  if(pages>1){
+    h+='<div class="list-pager-nums">';
+    h+='<button class="list-pager-btn" data-go="prev" '+(page<=1?'disabled':'')+'><span class="material-symbols-outlined">chevron_left</span></button>';
+    const lo=Math.max(1,page-2), hi=Math.min(pages,page+2);
+    for(let i=lo;i<=hi;i++)h+='<button class="list-pager-num'+(i===page?' on':'')+'" data-page="'+i+'">'+i+'</button>';
+    h+='<button class="list-pager-btn" data-go="next" '+(page>=pages?'disabled':'')+'><span class="material-symbols-outlined">chevron_right</span></button>';
+    h+='</div>';
+  }
+  el.innerHTML=h;
+  el.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>onGo(b.dataset.go==='prev'?-1:1));
+  el.querySelectorAll('[data-page]').forEach(b=>b.onclick=()=>onGo(0,+b.dataset.page));
 }
 const WH_={page:1};
 function renderUpdates(){
   const v=document.getElementById('updatesView');
-  let h='';
   const w=WINUPDATE;
-  if(w){
-    h+='<div class="spec-section"><h2>Windows Update status</h2><dl class="kv">';
-    h+='<dt>Pending Reboot?</dt><dd style="color:'+(w.pendingReboot?'var(--warn)':'var(--ok)')+'">'+(w.pendingReboot?'Yes':'No')+'</dd>';
-    if(w.serviceStatus)h+='<dt>Windows Update service</dt><dd style="color:'+(w.serviceStartType==='Disabled'?'var(--warn)':'var(--ok)')+'">'+esc(w.serviceStatus)+(w.serviceStartType?' <span style="color:var(--faint)">('+esc(w.serviceStartType)+')</span>':'')+'</dd>';
-    h+='</dl></div>';
+  const failCount=WUHISTORY.filter(u=>u.result==='Failed'||u.result==='Cancelled').length;
+  if(!w&&!WUHISTORY.length&&!HOTFIXES.length){
+    v.innerHTML='<div class="dp-head"><div class="dp-crumb"><span class="crumb">Software <span class="material-symbols-outlined" style="font-size:16px">chevron_right</span> <b>Windows Updates</b></span></div>'+
+      '<div class="dp-title-row"><div><div class="dp-title">Windows updates</div></div></div></div>'+
+      '<div class="dp-content"><div class="dp-card"><div class="dp-empty">No update data embedded.</div></div></div>';
+    return;
+  }
+  const lastInstall=HOTFIXES.length?HOTFIXES.slice().sort((a,b)=>(b.date||'').localeCompare(a.date||''))[0]:null;
+  const verdictWarn=failCount>0;
+  const verdictInfo=!verdictWarn&&w&&w.pendingReboot;
+  const updatesBadgeEl=document.getElementById('updatesTabBadge');
+  if(updatesBadgeEl){ if(failCount){updatesBadgeEl.textContent=failCount;updatesBadgeEl.style.display='';} else {updatesBadgeEl.style.display='none';} }
+
+  let h='<div class="dp-head"><div class="dp-crumb"><span class="crumb">Software <span class="material-symbols-outlined" style="font-size:16px">chevron_right</span> <b>Windows Updates</b></span></div>'+
+    '<div class="dp-title-row"><div><div class="dp-title">Windows updates</div>'+
+    (lastInstall?'<div class="dp-sub">Last installed '+esc(lastInstall.date)+(failCount?' \u00b7 '+failCount+' recent attempt'+(failCount===1?'':'s')+' failed':'')+'</div>':'')+
+    '</div></div></div>';
+
+  h+='<div class="list-flagband"><div class="list-flagband-inner">'+
+    '<span class="material-symbols-outlined" style="font-size:32px;color:'+(verdictWarn?'var(--warn)':verdictInfo?'var(--info)':'var(--ok)')+'">'+(verdictWarn?'warning':verdictInfo?'info':'check_circle')+'</span>'+
+    '<div style="min-width:0">'+
+    '<div style="font:500 16px/22px Roboto">'+(verdictWarn?failCount+' update'+(failCount===1?'':'s')+' did not complete successfully':verdictInfo?'A restart is pending to finish installing updates':'Windows is up to date')+'</div>'+
+    (w&&w.serviceStatus?'<div class="dp-card-note" style="margin:2px 0 0">Windows Update service: '+esc(w.serviceStatus)+(w.serviceStartType?' ('+esc(w.serviceStartType)+')':'')+'</div>':'')+
+    '</div></div></div>';
+
+  h+='<div class="dp-body" style="padding-top:0;grid-template-columns:1fr">';
+  if(HOTFIXES.length){
+    h+='<div class="dp-card"><div class="dp-card-head"><div class="dp-card-title">Installed updates</div><span class="dp-card-count">'+HOTFIXES.length+'</span></div>'+
+      '<div style="margin:4px 0 12px"><div class="list-search" style="height:40px"><span class="material-symbols-outlined" style="font-size:18px">search</span><input id="hfSearch" type="text" placeholder="Filter updates"></div></div>'+
+      '<dl class="dp-kv" id="hfList"></dl><div class="list-pager" id="hfPager"></div></div>';
   }
   if(WUHISTORY.length){
-    const failCount=WUHISTORY.filter(u=>u.result==='Failed'||u.result==='Cancelled').length;
-    h+='<div class="spec-section"><h2>Recent update history ('+WUHISTORY.length+')</h2>';
-    if(failCount)h+='<div style="color:var(--warn);font-size:14px;margin-bottom:12px">'+failCount+' update'+(failCount>1?'s':'')+' did not complete successfully</div>';
-    h+='<dl class="kv" id="wuHistList"></dl><div class="pager" id="wuHistPager"></div></div>';
+    h+='<div class="dp-card"><div class="dp-card-head"><div class="dp-card-title">Update history</div><span class="dp-card-count">'+WUHISTORY.length+'</span></div>'+
+      '<dl class="dp-kv" id="wuHistList"></dl><div class="list-pager" id="wuHistPager"></div></div>';
   }
-  if(HOTFIXES.length){
-    h+='<div class="spec-section"><h2>Installed updates ('+HOTFIXES.length+')</h2>'+
-      '<input id="hfSearch" type="text" placeholder="Filter updates\u2026">'+
-      '<dl class="kv" id="hfList"></dl><div class="pager" id="hfPager"></div></div>';
-  }
-  v.innerHTML=h||'<div class="spec-section"><h2>Windows Updates</h2><div style="color:var(--faint)">No update data embedded.</div></div>';
+  h+='</div>';
+
+  v.innerHTML=h;
   const hf=document.getElementById('hfSearch');
   if(hf)hf.oninput=e=>{HF_.q=e.target.value.toLowerCase();HF_.page=1;renderHfList();};
   renderHfList();
@@ -930,21 +1539,21 @@ function renderUpdates(){
 }
 function renderWuHistList(){
   const el=document.getElementById('wuHistList');if(!el)return;
-  const SZ=15,pages=Math.max(1,Math.ceil(WUHISTORY.length/SZ));
+  const SZ=8,pages=Math.max(1,Math.ceil(WUHISTORY.length/SZ));
   if(WH_.page>pages)WH_.page=pages;
   const slice=WUHISTORY.slice((WH_.page-1)*SZ,WH_.page*SZ);
   el.innerHTML=slice.map(u=>{
     const col=u.result==='Succeeded'?'var(--ok)':(u.result==='Failed'||u.result==='Cancelled')?'var(--err)':'var(--warn)';
     return '<dt>'+esc(u.date)+'</dt><dd>'+esc(u.title)+' <span style="color:'+col+'">('+esc(u.result)+')</span></dd>';
   }).join('')||'<dd style="color:var(--faint)">No update history.</dd>';
-  pager(document.getElementById('wuHistPager'),WH_.page,pages,WUHISTORY.length,slice.length,g=>{WH_.page+=g;renderWuHistList();});
+  listPager(document.getElementById('wuHistPager'),WH_.page,pages,WUHISTORY.length,(delta,jumpTo)=>{WH_.page=jumpTo?jumpTo:WH_.page+delta;renderWuHistList();},SZ);
 }
 const FAQ_DATA=[
 {id:'app-crashes',q:"Application Crashes",a:"This counts how many times a program on your PC has crashed and forced Windows to close it, based on the "+tabLink('rel','Windows Reliability History')+".<br><br>Occasional crashes are normal, especially in games or browsers. A rising number, especially if they're all the same program or all mention the same driver file, usually points to that specific program, a graphics driver, or a plugin/mod rather than Windows itself.",tools:["WhoCrashed","Display Driver Uninstaller (DDU)"]},
 {id:'unexpected-shutdown',q:"Unexpected Shutdowns",a:"Windows didn't shut down properly last time, meaning it never received the normal 'the user is turning off the PC' signal. This can be caused by:<ul style='margin:8px 0 8px 20px;padding:0'><li>a full system crash (a 'blue screen')</li><li>a power cut</li><li>overheating (thermal shutdown)</li><li>someone holding the power button</li><li>the PC freezing and being force-restarted</li></ul>If a specific bugcheck code is shown, that's the technical reason Windows gave. It can point toward whether this is a hardware, driver, or Windows problem. Most bugcheck codes are Google-able and have common fixes.<br><br>When Windows detects the power button was physically held down for 4+ seconds, it records that moment separately from the shutdown itself - that's shown as 'Power button held down' with the exact time, which usually means the PC was unresponsive and had to be force-closed rather than crashing cleanly with a bugcheck.",tools:["WhoCrashed","OCCT","MemTest86","Display Driver Uninstaller (DDU)"]},
 {id:'memory-dump',q:"Memory Dump",a:"When Windows crashes badly, a 'blue screen' happens. Windows tries to save a snapshot of exactly what the computer was doing at that moment to a file called a memory dump.<br><br>Memory dump(s) are included in the zip this tool creates. If you have them, you can share the zip file with us and we'll try to debug for you. Memory dumps are one of the most useful pieces of evidence for figuring out precisely what caused a crash.<br><br>If there are no memory dumps in the zip file but you've been experiencing crashes, shutdowns, or freezing, that means Windows wasn't able to create one. This can (but not always) indicate a hardware problem over a software one. Windows will usually try to generate a memory dump when the system crashes.",tools:["WhoCrashed"]},
 {id:'whea',q:"Fatal Hardware Error (WHEA)",a:"WHEA is Windows' hardware error reporting system. A fatal WHEA error means a core piece of hardware, usually the CPU, memory controller, or a PCIe device, reported a serious problem Windows couldn't recover from, and the machine likely crashed or rebooted as a result.<br><br>This is a strong indication that something is physically wrong or unstable, often an overclock, degraded hardware, or insufficient voltage, rather than a software issue.",tools:["OCCT","MemTest86","HWiNFO"]},
-{id:'disk-smart',q:"Storage / SMART Warnings",a:"Your drives (SSD, NVMe, hard drive) constantly track their own health statistics using something called SMART data. This data lists specific problems the drive itself has self-reported, such as:<ul style='margin:8px 0 8px 20px;padding:0'><li>reallocated sectors (damaged areas it's had to work around)</li><li>pending or uncorrectable sectors (data that couldn't be read reliably)</li></ul>If a drive predicts its own failure, it's important that you back up anything important from it immediately. Drive failures are often random and unpredictable.<br><br>A high <b>UltraDMA CRC error</b> count is shown separately as a warning rather than a critical issue - it's usually a loose or failing cable or connection, not the drive itself dying, and is often fixed by reseating or replacing the cable.",tools:["CrystalDiskInfo"]},
+{id:'disk-smart',q:"Storage / SMART Warnings",a:"Your drives (SSD, NVMe, hard drive) constantly track their own health statistics using something called SMART data. This data lists specific problems the drive itself has self-reported, such as:<ul style='margin:8px 0 8px 20px;padding:0'><li>reallocated sectors (damaged areas it's had to work around)</li><li>pending or uncorrectable sectors (data that couldn't be read reliably)</li></ul>If a drive predicts its own failure, it's important that you back up anything important from it immediately. Drive failures are often random and unpredictable.<br><br>A high <b>UltraDMA CRC error</b> count is shown separately as a warning rather than an error - it's usually a loose or failing cable or connection, not the drive itself dying, and is often fixed by reseating or replacing the cable.",tools:["CrystalDiskInfo"]},
 {id:'dirty-bit',q:"Dirty Bit",a:"This means Windows flagged a drive as not having been cleanly unmounted, usually caused by the same unexpected shutdown or crash reported elsewhere in this report. It's a marker for Windows to check that drive's filesystem for errors next time it gets the chance.<br><br>On its own it isn't necessarily a sign of a failing drive, and is used as an indication that something might be wrong.",tools:[]},
 {id:'device-manager-errors',q:"Device Manager Errors",a:"Windows found a piece of hardware but couldn't properly load a driver for it, or the device itself reported a problem. This usually means a missing, outdated, or corrupted driver. Occasionally it's a genuine hardware fault.",tools:["AMD Drivers & Support","NVIDIA Drivers & Support","Intel Drivers & Support"]},
 {id:'mbr-secureboot',q:"MBR Partitioning",a:"Windows drives use one of two partitioning styles: MBR or the newer GPT. Secure Boot, a feature that helps stop malware loading before Windows starts, requires GPT.<br><br>If the main drive (the one with Windows installed on it) is MBR, Secure Boot can't be turned on without converting the drive or doing a clean reinstall of Windows, which is a bigger job and best not attempted without guidance.",tools:[]},
@@ -958,6 +1567,8 @@ const FAQ_DATA=[
 {id:'pending-reboot',q:"Pending Reboot",a:"Windows or an update has made changes that only take full effect after a restart, and it's currently waiting on one. Until then the system can behave oddly and further updates may queue up behind it.<br><br>A normal restart resolves this.",tools:[]},
 {id:'wu-service',q:"Windows Update Service",a:"The background service that lets Windows check for and install updates is disabled. Normally it's set to start on demand (so it's often shown as 'Stopped' when idle - that's expected and not a problem), but 'Disabled' means it can't start at all, so Windows won't be able to update until it's turned back on.",tools:[]},
 {id:'wu-failed',q:"Failed Windows Updates",a:"One or more recent update attempts failed partway through rather than installing cleanly. This can happen for lots of reasons: a bad download, low disk space, corrupted update files, or a conflict with other software.<br><br>It can sometimes leave a PC feeling unstable or repeatedly nagging about the same update.",tools:["Windows 11 Download"]},
+{id:'cores-vs-threads',q:"Cores vs Threads",a:"A CPU core is a physical processing unit - more cores generally means more work can genuinely happen at the same time. Threads (via Intel Hyper-Threading or AMD SMT) let each core handle two instruction streams instead of one, which improves throughput in well-threaded workloads but doesn't double real performance the way an extra physical core would.<br><br>An '8C/16T' CPU has 8 physical cores presenting 16 logical processors to Windows. Task Manager and this report both count threads (logical processors) unless stated otherwise.",tools:[]},
+{id:'cpu-virtualization',q:"CPU Virtualisation (VT-x / AMD-V)",a:"This is hardware-level support for running virtual machines efficiently, built into the CPU itself. It needs to be enabled in the BIOS/UEFI (often labelled Intel VT-x, AMD-V, or SVM Mode) before Windows features that rely on it - Hyper-V, WSL2, Android emulators, VirtualBox/VMware with hardware acceleration - will work.<br><br>Enabling it is not overclocking and carries no risk. If a VM or emulator refuses to start with an error mentioning virtualization, this is almost always the cause.",tools:[]},
 {id:'ram-speed',q:"RAM Speed (XMP/EXPO)",a:"Your memory (RAM) is capable of running faster than it currently is. This almost always means that a feature called XMP (Intel) or EXPO (AMD) isn't enabled.<br><br>XMP/EXPO is a one-click profile in the BIOS that allows your RAM to run at its advertised speed. When it's disabled, your RAM will default to a lower speed. Enabling it isn't overclocking, and isn't dangerous. We'd recommend enabling it, which can be done through your BIOS. If you're unsure how to do that, you can ask one of our advisors for more help.<br><br><i>Note: some systems can struggle to run RAM at its full advertised speed for various reasons, which is why it isn't enabled by default. When this happens, it can sometimes help to disable it, to prevent system instability or crashes.</i><br><br>This isn't dangerous either way, but running below the rated speed does mean the RAM isn't performing the way it was bought to.",tools:["CPU-Z"]},
 {id:'pagefile-manual',q:"Page File Manually Managed",a:"Windows normally handles the page file (a portion of a drive used as overflow when physical RAM fills up) itself, growing and shrinking it as needed. Someone has turned off 'Automatically manage paging file size for all drives', meaning it's set to a fixed size (or a custom drive) by hand instead.<br><br>This isn't inherently a problem, but it's a common source of trouble if the size chosen is too small for the workload, or if it was set on a drive that's since become full or was removed/replaced. A page file that's too small can cause 'out of memory' errors or crashes even when the drive has plenty of free space otherwise.<br><br>If there isn't a specific reason it was changed (some people do this deliberately to save SSD writes, or as an old 'performance tweak' that no longer really applies on modern systems), switching it back to automatic under System Properties &gt; Advanced &gt; Performance Settings &gt; Advanced &gt; Virtual Memory is usually the simplest fix.",tools:[]},
 {id:'pagefile-disabled',q:"No Page File Configured",a:"There is no page file on this PC at all - every drive is set to 'No paging file' rather than a size. This is more serious than a manually-sized page file, and isn't recommended even on a system with a lot of RAM.<br><br>Without a page file, Windows has nowhere to overflow to once physical RAM fills up, so instead of slowing down it can crash, refuse to launch programs, or throw 'out of memory' errors well before RAM actually looks full (some of it is reserved and can't be reallocated the way a page file's space can). It also prevents Windows from writing a memory dump when the system crashes, which removes a key diagnostic tool for tracking down the cause of any crash.<br><br>The fix is the same either way: System Properties &gt; Advanced &gt; Performance Settings &gt; Advanced &gt; Virtual Memory, then either switch back to 'Automatically manage paging file size for all drives', or manually set a page file on at least one drive.",tools:[]},
@@ -975,7 +1586,10 @@ const FAQ_DATA=[
 {id:'cbs-corruption',q:"Unresolved Component Corruption (CBS.log)",a:"CBS.log records Windows' component servicing activity, including any system file repairs. A 'Cannot repair member' entry means a corrupted system file was found during a check (from Windows Update, an in-place upgrade, or a manual sfc/DISM run) that couldn't be automatically fixed.<br><br>This can cause update failures, missing features, or general instability depending on what's affected. Running <span class=\"mono\">sfc /scannow</span> followed by <span class=\"mono\">DISM /Online /Cleanup-Image /RestoreHealth</span> is the standard next step; if DISM can't find a good copy of the file locally it will need a network connection or Windows installation media to pull one from.",tools:["sfc /scannow","DISM"]},
 {id:'livekernelevent',q:"LiveKernelEvent",a:"Windows' record of a serious problem severe enough to be crash-like, but that the system managed to recover from without a full restart, most often tied to a graphics driver failing and recovering.<br><br>Frequent LiveKernelEvents point to the same kinds of causes as display driver timeouts.",tools:["Display Driver Uninstaller (DDU)","FurMark","HWiNFO"]},
 {id:'wifi-signal',q:"Weak Wi-Fi Signal",a:"The wireless connection's signal strength was weak at the moment this report was generated. A weak signal can cause slow speeds, dropped connections, and higher ping in games, and is usually down to distance from the router, walls/obstructions, or interference from other devices.",tools:[]},
-{id:'gigabit-slow',q:"Gigabit Adapter Running Below Rated Speed",a:"This network adapter supports Gigabit Ethernet (1000 Mbps) but is currently connected at a much lower speed, most often 100 Mbps.<br><br>This is a very common symptom of a damaged or low-quality cable, a loose connection, or a faulty port on either end - Gigabit needs all 4 wire pairs in the cable to be good, while 100 Mbps only needs 2, so a cable can work perfectly well at the lower speed while silently capping the connection. Try a known-good cable (ideally Cat5e or better) and a different port on the router/switch first.",tools:[]},
+{id:'half-duplex',q:"Network Adapter at Half Duplex",a:"Half duplex means the connection can only send or receive at any one moment, not both at once. Modern Ethernet should always negotiate full duplex, so seeing half duplex almost always points to a damaged cable, a faulty port, or a speed/duplex setting that's been forced manually in the adapter's properties instead of left on Auto Negotiation. Expect slow, stuttery transfers and high ping until it's fixed.",tools:[]},
+{id:'wifi-link-rate',q:"Low Wi-Fi Link Rate",a:"The link rate is the speed the PC and router have agreed to talk at over Wi-Fi. A modern Wi-Fi 5/6/7 connection normally runs at hundreds of Mbps; a rate this low means the connection has fallen back to a slow mode, usually because of distance, walls, interference, or a crowded channel. It caps real-world speed well below what your internet plan may offer.",tools:[]},
+{id:'wifi-band',q:"Wi-Fi on 2.4 GHz",a:"This PC is connected on the 2.4 GHz band even though its Wi-Fi adapter supports 5 GHz. 2.4 GHz reaches further but is much slower and far more crowded (neighbours' networks, Bluetooth, microwaves). If the router is reasonably close, connecting to its 5 GHz network (often a separate name ending in '5G') usually gives a big speed and latency improvement.",tools:[]},
+{id:'gigabit-slow',q:"Network Adapter Running Below Rated Speed",a:"This network adapter supports a faster speed than it's currently connected at - for example a Gigabit port running at 100 Mbps, or a 2.5 Gbps port running at 1 Gbps.<br><br>If the router or switch on the other end also supports the faster speed, this is a very common symptom of a damaged or low-quality cable, a loose connection, or a faulty port. Gigabit and faster need all 4 wire pairs in the cable to be good, while 100 Mbps only needs 2. If the other end simply doesn't support the faster speed (many routers are Gigabit-only), a 2.5 Gbps port running at 1 Gbps is expected and nothing to fix.",tools:[]},
 {id:'commit-charge',q:"Commit Charge",a:"This measures how much memory (RAM plus the page file combined) the system had committed to running programs at the moment this report was generated.<br><br>Running close to the limit can cause slowdowns, stuttering, or 'out of memory' errors, and often points to either too little RAM for the workload or a page file set too small.",tools:["HWiNFO"]},
 {id:'software-anticheat',q:"Anti-Cheat / Kernel Drivers",a:"Anti-cheat systems like Vanguard, Easy Anti-Cheat, and BattlEye run at a very deep level in Windows (a 'kernel driver') to detect cheating in games. That deep access makes them a common (though not the only) suspect when troubleshooting crashes tied to a specific game.<br><br>This is a factual note that it's installed, not a claim that it's causing a problem.",tools:[]},
 {id:'software-overclock',q:"Overclocking / Monitoring Tools",a:"Tools like MSI Afterburner, RTSS, Intel XTU, and Ryzen Master can adjust CPU/GPU clock speeds, voltages, and power limits beyond default settings. If a system is unstable, an aggressive overclock applied through one of these is a common and easy-to-test cause.",tools:["OCCT"]},
@@ -1029,7 +1643,11 @@ function goFaq(id){
 }
 function goTab(tabId){
   const btn=[...document.querySelectorAll(".tab")].find(t=>t.dataset.tab===tabId);
-  if(btn)btn.click();
+  if(btn){
+    const grp=btn.closest('.nav-group');
+    if(grp)grp.classList.remove('collapsed');
+    btn.click();
+  }
   return false;
 }
 function goTool(name){
@@ -1077,17 +1695,36 @@ function dataLink(tabId,faqId,html){
 function renderExtensions(){
   const v=document.getElementById('extensionsView');
   if(!SECURITY||!SECURITY.extensions||!SECURITY.extensions.length){
-    v.innerHTML='<div class="spec-section"><h2>Browser Extensions</h2><div style="color:var(--faint)">No browser extension data embedded.</div></div>';
+    v.innerHTML='<div class="dp-head"><div class="dp-crumb"><span class="crumb">Software <span class="material-symbols-outlined" style="font-size:16px">chevron_right</span> <b>Browser Extensions</b></span></div>'+
+      '<div class="dp-title-row"><div><div class="dp-title">Browser extensions</div></div></div></div>'+
+      '<div class="dp-content"><div class="dp-card"><div class="dp-empty">No browser extension data embedded. Many machines genuinely have none installed.</div></div></div>';
     return;
   }
   const byBrowser={};
-  SECURITY.extensions.forEach(e=>{(byBrowser[e.browser]=byBrowser[e.browser]||[]).push(e.name);});
-  let h='<div class="spec-section"><h2>Browser extensions ('+SECURITY.extensions.length+')</h2><div class="drive-grid">';
+  SECURITY.extensions.forEach(e=>{
+    (byBrowser[e.browser]=byBrowser[e.browser]||[]).push(e);
+  });
+  const browserCount=Object.keys(byBrowser).length;
+
+  let h='<div class="dp-head"><div class="dp-crumb"><span class="crumb">Software <span class="material-symbols-outlined" style="font-size:16px">chevron_right</span> <b>Browser Extensions</b></span></div>'+
+    '<div class="dp-title-row"><div><div class="dp-title">Browser extensions</div><div class="dp-sub">'+SECURITY.extensions.length+' enabled extension'+(SECURITY.extensions.length===1?'':'s')+' across '+browserCount+' browser'+(browserCount===1?'':'s')+'</div></div></div></div>';
+
+  h+='<div class="dp-content"><div class="vol-grid">';
   Object.keys(byBrowser).sort().forEach(b=>{
-    const names=[...new Set(byBrowser[b])].sort((a,c)=>a.localeCompare(c,undefined,{sensitivity:'base'}));
-    h+='<div class="drive"><h3>'+esc(b)+'</h3>'+
-      '<div class="sub">'+names.length+' extension'+(names.length>1?'s':'')+'</div>'+
-      '<div style="color:var(--dim);font-size:14px;line-height:1.8">'+names.map(esc).join('<br>')+'</div></div>';
+    const items=byBrowser[b];
+    const profiles=[...new Set(items.map(e=>e.profile).filter(Boolean))].sort();
+    const names=[...new Set(items.map(e=>e.name))].sort((a,c)=>a.localeCompare(c,undefined,{sensitivity:'base'}));
+    h+='<div class="dp-card"><div class="dp-card-head"><div class="dp-card-title" style="font-size:16px">'+esc(b)+'</div></div>'+
+      '<div class="dp-card-note" style="margin-bottom:12px">'+names.length+' extension'+(names.length===1?'':'s')+(profiles.length?' \u00b7 '+esc(profiles.join(', ')):'')+'</div>'+
+      '<div style="display:flex;flex-direction:column;gap:2px">'+
+      names.map(n=>{
+        const inProfiles=profiles.length>1?[...new Set(items.filter(e=>e.name===n).map(e=>e.profile))]:[];
+        return '<div style="padding:7px 0;border-bottom:1px solid var(--line);font:400 14px/20px Roboto;color:var(--dim);display:flex;justify-content:space-between;gap:12px">'+
+          '<span style="overflow-wrap:anywhere">'+esc(n)+'</span>'+
+          (inProfiles.length>1&&inProfiles.length<profiles.length?'<span style="color:var(--faint);flex:none">'+esc(inProfiles.join(', '))+'</span>':'')+
+          '</div>';
+      }).join('')+
+      '</div></div>';
   });
   h+='</div></div>';
   v.innerHTML=h;
@@ -1108,38 +1745,59 @@ function renderProcList(){
   const SZ=50,pages=Math.max(1,Math.ceil(rows.length/SZ));
   if(PS_.page>pages)PS_.page=pages;
   const slice=rows.slice((PS_.page-1)*SZ,PS_.page*SZ);
-  el.innerHTML=slice.map(p=>'<div class="proc-row"><span>'+esc(p.name)+'</span><span>'+esc(String(p.cnt))+'</span><span class="mono">'+esc(String(p.mem))+' MB</span></div>').join('')||'<div style="color:var(--faint);padding:10px 4px">No matches.</div>';
-  document.querySelectorAll('#processesView .sorth').forEach(hd=>{
-    hd.querySelector('.arrow').textContent=hd.dataset.key===PS_.key?(PS_.dir>0?' \u25b2':' \u25bc'):'';
+  el.innerHTML=slice.map(p=>'<div class="list-row" style="grid-template-columns:1fr 140px 140px"><div class="c1">'+esc(p.name)+'</div><div class="c2">'+esc(String(p.cnt))+'</div><div class="c2 mono">'+esc(String(p.mem))+' MB</div></div>').join('')||'<div class="list-empty-row">No processes match.</div>';
+  document.querySelectorAll('#processesView .list-head-col.sortable').forEach(hd=>hd.classList.toggle('active',hd.dataset.key===PS_.key));
+  ['name','cnt','mem'].forEach(key=>{
+    const icon=document.getElementById('procSortIcon'+(key==='name'?'Name':key==='cnt'?'Cnt':'Mem'));
+    if(icon)icon.textContent=PS_.key===key?(PS_.dir>0?'arrow_upward':'arrow_downward'):'unfold_more';
   });
-  pager(document.getElementById('procPager'),PS_.page,pages,rows.length,slice.length,g=>{PS_.page+=g;renderProcList();});
+  listPager(document.getElementById('procPager'),PS_.page,pages,rows.length,(delta,jumpTo)=>{PS_.page=jumpTo?jumpTo:PS_.page+delta;renderProcList();},SZ);
 }
 function renderProgList(){
   const el=document.getElementById('progList');if(!el)return;
   let rows=PROGS_ALL.filter(p=>!PG_.q||p.name.toLowerCase().includes(PG_.q));
+  if(PG_.flagFilter==='any')rows=rows.filter(p=>flagForProgram(p.name));
+  else if(PG_.flagFilter)rows=rows.filter(p=>{const f=flagForProgram(p.name);return f&&f.grp===PG_.flagFilter;});
   const k=PG_.key,d=PG_.dir;
   // Install dates are stored as 'MM/dd/yyyy' strings (or blank when Windows never recorded one),
   // so sorting by date needs them parsed into a comparable timestamp rather than sorted as text.
   const parseInstallDate=s=>{const m=s&&s.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);return m?Date.UTC(+m[3],+m[1]-1,+m[2]):0;};
-  rows=rows.slice().sort((a,b)=>k==='date'?d*(parseInstallDate(a.date)-parseInstallDate(b.date)):d*a.name.localeCompare(b.name,undefined,{sensitivity:'base'}));
+  const flagLabelFor=p=>{const f=flagForProgram(p.name);return f?(SOFT_GROUP_LABEL[f.grp]||f.grp):'';};
+  rows=rows.slice().sort((a,b)=>{
+    if(k==='date')return d*(parseInstallDate(a.date)-parseInstallDate(b.date));
+    if(k==='flag')return d*flagLabelFor(a).localeCompare(flagLabelFor(b),undefined,{sensitivity:'base'})||a.name.localeCompare(b.name,undefined,{sensitivity:'base'});
+    return d*a.name.localeCompare(b.name,undefined,{sensitivity:'base'});
+  });
   const SZ=60,pages=Math.max(1,Math.ceil(rows.length/SZ));
   if(PG_.page>pages)PG_.page=pages;
   const slice=rows.slice((PG_.page-1)*SZ,PG_.page*SZ);
-  el.innerHTML=slice.map(p=>'<div class="prog-row"><span>'+esc(p.name)+'</span><span>'+esc(p.date||'\u2014')+'</span></div>').join('')||'<div style="color:var(--faint)">No matches.</div>';
-  document.querySelectorAll('#appsView .sorth').forEach(hd=>{
-    hd.querySelector('.arrow').textContent=hd.dataset.key===PG_.key?(PG_.dir>0?' \u25b2':' \u25bc'):'';
+  el.innerHTML=slice.map(p=>{
+    const f=flagForProgram(p.name);
+    return '<div class="list-row" style="grid-template-columns:1fr 200px 190px"><div class="c1">'+esc(p.name)+'</div>'+
+      '<div class="c2'+(p.date?'':' faint')+'">'+esc(p.date||'\u2014')+'</div>'+
+      '<div>'+(f?'<span class="list-tag" style="background:'+(SOFT_GROUP_COLOR[f.grp]?SOFT_GROUP_COLOR[f.grp].bg:'#272A2F')+';color:'+(SOFT_GROUP_COLOR[f.grp]?SOFT_GROUP_COLOR[f.grp].fg:'var(--dim)')+';border:none">'+esc(SOFT_GROUP_LABEL[f.grp]||f.grp)+'</span>':'')+'</div></div>';
+  }).join('')||'<div class="list-empty-row">No programs match.</div>';
+  ['name','date','flag'].forEach(key=>{
+    const icon=document.getElementById('progSortIcon'+(key==='name'?'Name':key==='date'?'Date':'Flag'));
+    if(icon)icon.textContent=PG_.key===key?(PG_.dir>0?'arrow_upward':'arrow_downward'):'unfold_more';
   });
-  pager(document.getElementById('progPager'),PG_.page,pages,rows.length,slice.length,g=>{PG_.page+=g;renderProgList();});
+  document.querySelectorAll('#appsView .list-head-col.sortable').forEach(hd=>hd.classList.toggle('active',hd.dataset.key===PG_.key));
+  document.querySelectorAll('#appsView .flagpill').forEach(p=>p.classList.toggle('on',p.dataset.grp==='all'?!PG_.flagFilter:PG_.flagFilter===p.dataset.grp));
+  const sortLabel=document.getElementById('progSortLabel');
+  if(sortLabel)sortLabel.textContent=PG_.key==='date'?(PG_.dir<0?'Newest first':'Oldest first'):(PG_.dir>0?'A to Z':'Z to A');
+  listPager(document.getElementById('progPager'),PG_.page,pages,rows.length,(delta,jumpTo)=>{
+    PG_.page=jumpTo?jumpTo:PG_.page+delta;renderProgList();
+  });
 }
 const HF_={q:'',page:1};
 function renderHfList(){
   const el=document.getElementById('hfList');if(!el)return;
   const rows=HOTFIXES.filter(h=>!HF_.q||(h.id+' '+h.desc).toLowerCase().includes(HF_.q));
-  const SZ=15,pages=Math.max(1,Math.ceil(rows.length/SZ));
+  const SZ=8,pages=Math.max(1,Math.ceil(rows.length/SZ));
   if(HF_.page>pages)HF_.page=pages;
   const slice=rows.slice((HF_.page-1)*SZ,HF_.page*SZ);
   el.innerHTML=slice.map(h=>'<dt>'+esc(h.date||'')+'</dt><dd>'+esc(h.id)+(h.desc?' <span style="color:var(--faint)">'+esc(h.desc)+'</span>':'')+'</dd>').join('')||'<dd style="color:var(--faint)">No matches.</dd>';
-  pager(document.getElementById('hfPager'),HF_.page,pages,rows.length,slice.length,g=>{HF_.page+=g;renderHfList();});
+  listPager(document.getElementById('hfPager'),HF_.page,pages,rows.length,(delta,jumpTo)=>{HF_.page=jumpTo?jumpTo:HF_.page+delta;renderHfList();},SZ);
 }
 function smartProbs(d){
   const probs=[];
@@ -1154,7 +1812,7 @@ function smartProbs(d){
 }
 // UltraDMA CRC errors are usually a cable/connection problem (a loose or marginal SATA cable,
 // a bad port), not the drive's own media failing, so they're tracked separately from the
-// critical failure-signal attributes above and shown as a warning rather than a red flag.
+// error-signal attributes above and shown as a warning rather than a red flag.
 function smartCrcProbs(d){
   const probs=[];
   if(+d.crc>0)probs.push(d.crc+' UltraDMA CRC errors (often a loose or failing cable)');
@@ -1165,10 +1823,11 @@ function smartCrcProbs(d){
 // immediate, on-theme readout of each partition's size.
 // Clicking a drive card in the Overview jumps to and briefly highlights the matching physical
 // disk down in Disk layout, so the reader doesn't have to hunt for which disk a drive letter is on.
-function highlightDisk(diskNum){
-  const el=document.getElementById('diskBlock-'+diskNum);
+function highlightModule(i){flashEl(document.getElementById('ramModule-'+i));}
+function highlightDisk(diskNum){flashEl(document.getElementById('diskBlock-'+diskNum));}
+function flashEl(el){
   if(!el)return;
-  document.querySelectorAll('.drive.highlight-flash').forEach(x=>x.classList.remove('highlight-flash'));
+  document.querySelectorAll('.highlight-flash').forEach(x=>x.classList.remove('highlight-flash'));
   el.scrollIntoView({behavior:'smooth',block:'center'});
   void el.offsetWidth;
   el.classList.add('highlight-flash');
@@ -1289,112 +1948,10 @@ function realSpec(v){
   if(/^(system manufacturer|system product name|to be filled by o\.e\.m\.?|default string|not applicable|unknown|n\/a)$/i.test(v.trim()))return '';
   return v;
 }
-function renderSummary(){
-  const sp=parseSpecs(SPECS);
-  // pairs/el are now unused - everything that used to populate this curated list moved into the
-  // hero tiles above; #specsContent (via renderSpecs, further down) is the remaining "everything
-  // else" detail (TPM, Secure Boot, Page File, etc.) that never belonged in the hero.
-  // Most of what used to live here (name, manufacturer/model, OS, uptime, CPU, GPU, motherboard,
-  // BIOS date, memory) now lives in the hero tiles above instead - kept as plain variables here
-  // since the hero-building code further down still needs them, just without a second pairs.push
-  // duplicating what the tiles already show.
-  const sysMfr=realSpec(specVal(sp.info,'Manufacturer')), sysModel=realSpec(specVal(sp.info,'Model'));
-  // On DIY/homebuilt PCs, Win32_ComputerSystemProduct's "Model" is often just the motherboard's
-  // own part number restated (e.g. "MS-7C96") - already shown in full on the Motherboard tile.
-  // Only treat it as adding something when it doesn't just repeat that.
-  const mbForDedupe=specVal(sp.info,'Motherboard')||'';
-  const sysModelIsDupe=sysModel && mbForDedupe.toLowerCase().includes(sysModel.toLowerCase());
-  // Same DIY signature on the manufacturer side: with no real system OEM, Windows reports the
-  // motherboard vendor's own legal name here (e.g. "Micro-Star International Co., Ltd.") instead
-  // of an actual system brand. Comparing directly against Motherboard Manufacturer catches this
-  // without needing a hardcoded list of vendor names - a genuine OEM (Dell, HP, Lenovo) never
-  // matches its own motherboard supplier's name here, so this stays specific to DIY builds.
-  const mbMfrForDedupe=specVal(sp.info,'Motherboard Manufacturer')||'';
-  const sysMfrIsMobo=sysMfr&&mbMfrForDedupe&&sysMfr.trim().toLowerCase()===mbMfrForDedupe.trim().toLowerCase();
-  const os=specVal(sp.info,'OS'), build=specVal(sp.info,'Build'), up=specVal(sp.info,'System Uptime');
-  const WINVER={ '26200':'25H2','26100':'24H2','22631':'23H2','22621':'22H2','22000':'21H2','19045':'22H2','19044':'21H2' };
-  const cpu=specVal(sp.info,'CPU Name');
-  const mb=specVal(sp.info,'Motherboard'), mbMfr=specVal(sp.info,'Motherboard Manufacturer');
-  const bdate=specVal(sp.info,'BIOS Date');
-  const bver=specVal(sp.info,'BIOS Version');
-  // SourceName is a fixed internal identifier and stays in English regardless of the system's
-  // display language - unlike the message text, which is fully localized. Counting by source
-  // alone (rather than also requiring the English phrase "faulting application" in the message)
-  // means this stays accurate on non-English Windows installs instead of silently reading 0.
-  const crashes=events.filter(e=>e.cat==='err'&&e.s==='Application Error').length;
-  const shutdowns=events.filter(e=>e.s==='EventLog').length;
-  // Prefer the speed embedded in the part number over Win32_PhysicalMemory.Speed when it's
-  // higher - Speed often just reflects the JEDEC default the stick is currently running at,
-  // not what it's actually rated for, which silently hides an XMP/EXPO-off situation.
-  const effRated=m=>Math.max(+m.rated||0,+m.pnSpeed||0)||'';
-  const notes=[];
-  notes.push(crashes?dataLink('rel','app-crashes','<span class="r"><b>'+crashes+'</b> Application crash'+(crashes>1?'es':'')+'</span>'):'<span class="g">No application crashes</span>');
-  // Unexpected shutdowns: reliability history (6008-derived) and Kernel-Power 41 record the
-  // same incident. Report one merged line, using the larger count if they disagree.
-  const kp41ev=SYSEVT.filter(r=>String(r.id)==='41');
-  const shutdownCount=Math.max(shutdowns,kp41ev.length);
-  if(shutdownCount){
-    notes.push(dataLink('shutdowns','unexpected-shutdown','<span class="r"><b>'+shutdownCount+'</b> Unexpected shutdown'+(shutdownCount>1?'s':'')+'</span>'));
-  }else{
-    notes.push('<span class="g">No unexpected shutdowns</span>');
-  }
-  if(DUMPS.length)notes.push(dataLink('dumps','memory-dump','<span class="y"><b>'+DUMPS.length+'</b> Memory dump'+(DUMPS.length>1?'s':'')+' collected</span> <span style="color:var(--faint)">(in zip)</span>'));
-  const wheaFatal=SYSEVT.filter(r=>/WHEA/i.test(r.prov)&&['18','46'].includes(String(r.id))).length;
-  if(wheaFatal)notes.push(dataLink('sys','whea','<span class="r"><b>'+wheaFatal+'</b> Fatal hardware error'+(wheaFatal>1?'s':'')+' (WHEA)</span>'));
-  SMART.forEach(d=>{
-    const probs=smartProbs(d);
-    const crc=smartCrcProbs(d);
-    if(probs.length)notes.push(dataLink('drives','disk-smart','<span class="r">Disk '+esc(d.disk)+' ('+esc(d.name)+'): '+esc(probs.join(', '))+'</span>'));
-    if(crc.length)notes.push(dataLink('drives','disk-smart','<span class="y">Disk '+esc(d.disk)+' ('+esc(d.name)+'): '+esc(crc.join(', '))+'</span>'));
-  });
-  DIRTY.forEach(v=>notes.push(dataLink('drives','dirty-bit','<span class="y">Volume '+esc(v)+' has its dirty bit set</span>')));
-  if(DEVERR.length){
-    const devNames=DEVERR.map(e=>e.name);
-    const shown=devNames.slice(0,3).join(', ')+(devNames.length>3?' +'+(devNames.length-3)+' more':'');
-    notes.push(anchorLink('summary','devErrSection','device-manager-errors','<span class="y"><b>'+DEVERR.length+'</b> device'+(DEVERR.length>1?'s':'')+' showing errors in Device Manager</span> <span style="color:var(--faint)">('+esc(shown)+')</span>'));
-  }
-  const sysDisk=DISKLAYOUT.find(dk=>dk.partitions.some(p=>p.letter==='C:'));
-  if(sysDisk&&sysDisk.style&&sysDisk.style.toUpperCase()==='MBR')notes.push(dataLink('drives','mbr-secureboot','<span class="y">System disk uses MBR partitioning (Secure Boot requires GPT)</span>'));
-  const sysDiskBus=sysDisk?(SMART.find(d=>String(d.disk)===String(sysDisk.disk))||{}).bus:null;
-  if(sysDiskBus&&!/nvme/i.test(sysDiskBus)&&SMART.some(d=>/nvme/i.test(d.bus||''))){
-    notes.push(dataLink('drives','windows-on-slower-drive','<span class="y">Windows is on '+esc(sysDiskBus)+', not the faster NVMe drive also in this PC</span>'));
-  }
-  // Large unallocated space usually means a partition never got extended after moving to a bigger
-  // drive - very common after an in-place "keep files" install carries an old, smaller partition
-  // layout onto a new, larger replacement drive without resizing anything.
-  DISKLAYOUT.forEach(dk=>{
-    const partSum=dk.partitions.reduce((a,p)=>a+p.sizeGB,0);
-    const unallocGB=Math.max(0,(dk.sizeGB||0)-partSum);
-    if(unallocGB>20&&dk.sizeGB&&unallocGB/dk.sizeGB>0.1){
-      const pct=Math.round(unallocGB/dk.sizeGB*100);
-      notes.push(dataLink('drives','unallocated-space','<span class="y">Disk '+esc(dk.disk)+' has '+Math.round(unallocGB)+' GB ('+pct+'%) of unallocated space not assigned to any partition</span>'));
-    }
-  });
-  // Low free space on any drive letter, not just the system drive - a nearly-full data/games
-  // drive can be just as disruptive (install failures, save-game corruption, browser cache
-  // errors) as a nearly-full C:, and this was previously only visible by digging into the
-  // Drives tab rather than shown anywhere upfront.
-  (sp.drives||[]).forEach(dr=>{
-    const totalGB=+dr['Total Size (GB)'],freeGB=+dr['Free Space (GB)'];
-    if(!totalGB)return;
-    const freePct=dr['Percentage Free (%)']!=null?+dr['Percentage Free (%)']:(freeGB/totalGB*100);
-    if(freePct<10){
-      notes.push(dataLink('drives','low-disk-space','<span class="y">Drive '+esc(dr['Drive Label']||'?')+' has only '+Math.round(freePct)+'% free space ('+freeGB.toFixed(1)+' GB) &mdash; performance can suffer when a drive runs this low</span>'));
-    }
-  });
-  if(WINUPDATE&&WINUPDATE.pendingReboot)notes.push(dataLink('updates','pending-reboot','<span class="y">System has a pending reboot (Windows Update or servicing)</span>'));
-  if(WINUPDATE&&WINUPDATE.serviceStartType==='Disabled')notes.push(dataLink('updates','wu-service','<span class="y">Windows Update service is disabled</span>'));
-  const wuFails=WUHISTORY.filter(u=>u.result==='Failed'||u.result==='Cancelled').length;
-  if(wuFails)notes.push(dataLink('updates','wu-failed','<span class="y"><b>'+wuFails+'</b> Windows Update'+(wuFails>1?'s':'')+' did not complete successfully</span>'));
-  if(RAM.length){
-    const slow=RAM.filter(m=>effRated(m)&&m.conf&&+m.conf<+effRated(m));
-    if(slow.length)notes.push(dataLink('memory','ram-speed','<span class="y">RAM configured at '+esc(slow[0].conf)+' MT/s, rated '+esc(effRated(slow[0]))+' MT/s</span>'));
-  }
-  const pgfileState=specVal(sp.info,'Page File Managed');
-  if(pgfileState==='Disabled')notes.push(dataLink('memory','pagefile-disabled','<span class="r">No page file is configured &mdash; this is set to \'No paging file\' on every drive</span>'));
-  else if(pgfileState==='Manual')notes.push(dataLink('memory','pagefile-manual','<span class="y">Page file is manually managed (automatic management is turned off)</span>'));
-  // Known software flags: anti-cheat/kernel drivers, OC & monitoring tools, RGB/peripheral suites, bloatware/PUPs
-  const SOFT_FLAGS=[
+// Known software flags: anti-cheat/kernel drivers, OC & monitoring tools, RGB/peripheral suites, bloatware/PUPs.
+// Shared by the Summary/Diagnostic Summary notes and the Installed Programs page's flag groups,
+// so both surfaces agree on exactly the same detection list.
+const SOFT_FLAGS=[
     {re:/riot vanguard/i,        label:'Riot Vanguard',              grp:'ac'},
     {re:/easy anti-?cheat/i,     label:'Easy Anti-Cheat',            grp:'ac'},
     {re:/battleye/i,             label:'BattlEye',                   grp:'ac'},
@@ -1460,10 +2017,6 @@ function renderSummary(){
     {re:/zoho assist/i,          label:'Zoho Assist',                grp:'remote'},
     {re:/chrome remote desktop/i,label:'Chrome Remote Desktop',      grp:'remote'},
     {re:/parsec/i,                label:'Parsec',                    grp:'remote'},
-    // Roblox/game exploit executors - frequently bundled with malware, routinely
-    // quarantined or flagged by antivirus/anti-cheat, and a common cause of game bans.
-    // Worth calling out even factually, since it explains a lot of "random" AV
-    // detections, crashes, or account bans people bring to tech support.
     {re:/jjsploit/i,              label:'JJSploit',                   grp:'cheat'},
     {re:/synapse ?x/i,            label:'Synapse X',                  grp:'cheat'},
     {re:/\bkrnl\b/i,              label:'Krnl',                       grp:'cheat'},
@@ -1479,8 +2032,6 @@ function renderSummary(){
     {re:/hydrogen executor/i,     label:'Hydrogen',                   grp:'cheat'},
     {re:/cheat engine/i,          label:'Cheat Engine',               grp:'cheat'},
     {re:/wemod/i,                 label:'WeMod',                      grp:'cheat'},
-    // Dedicated fan-curve controllers - see the multi-app conflict check below, which
-    // also folds in the multi-purpose RGB hubs (iCUE, CAM, etc.) that control fans too.
     {re:/l-?connect/i,            label:'Lian Li L-Connect',          grp:'fan'},
     {re:/^fan ?control$/i,        label:'FanControl',                 grp:'fan'},
     {re:/speedfan/i,              label:'SpeedFan',                   grp:'fan'},
@@ -1490,11 +2041,128 @@ function renderSummary(){
     {re:/tt rgb plus/i,           label:'Thermaltake TT RGB Plus',    grp:'fan'},
     {re:/ek loop connect/i,       label:'EK Loop Connect',            grp:'fan'},
     {re:/gigabyte.*(smart ?fan|\bsiv\b)/i, label:'Gigabyte SIV/Smart Fan', grp:'fan'},
-  ];
+];
+const FAN_CAPABLE_PERIPH=['Corsair iCUE','NZXT CAM','MSI Dragon Center','ASUS Armoury Crate'];
+const SOFT_FAQ={ac:'software-anticheat',oc:'software-overclock',periph:'software-rgb',audio:'software-audio',net:'software-network',bloat:'software-bloatware',shell:'software-shell',cheat:'software-cheat',fan:'software-fancontrol',wallpaper:'software-wallpaperengine',remote:'software-remote'};
+const SOFT_GROUP_LABEL={bloat:'Bloatware / PUPs',periph:'RGB / peripheral suites',oc:'OC & monitoring',ac:'Anti-cheat drivers',audio:'Audio & overlays',remote:'Remote access',fan:'Fan controllers',net:'Network tools',wallpaper:'Wallpaper Engine',shell:'Shell customisation',cheat:'Game exploit tools'};
+const SOFT_GROUP_COLOR={
+  ac:{bg:'#0E3A5F',fg:'#9ECBFF'}, oc:{bg:'#0B3B36',fg:'#6FE0CB'}, periph:{bg:'#3A2A5C',fg:'#D3B8FA'},
+  bloat:{bg:'#332703',fg:'#FFDF9B'}, audio:{bg:'#4A2338',fg:'#FFAFD1'}, remote:{bg:'#0B3A42',fg:'#7FE0EE'},
+  fan:{bg:'#0F2A16',fg:'#8BD17C'}, net:{bg:'#2A2E5C',fg:'#B7BCFF'}, wallpaper:{bg:'#4A3010',fg:'#FFB870'},
+  shell:{bg:'#2A3542',fg:'#A9C2D9'}, cheat:{bg:'#93000A',fg:'#FFDAD6'},
+};
+function getSoftwareFlags(programs){
   const foundSoft={};
-  PROGRAMS.forEach(p=>{
+  (programs||[]).forEach(p=>{
     SOFT_FLAGS.forEach(f=>{ if(f.re.test(p.name)){ (foundSoft[f.grp]=foundSoft[f.grp]||new Set()).add(f.label); } });
   });
+  return foundSoft;
+}
+
+function renderSummary(){
+  const sp=parseSpecs(SPECS);
+  // pairs/el are now unused - everything that used to populate this curated list moved into the
+  // hero tiles above; #specsContent (via renderSpecs, further down) is the remaining "everything
+  // else" detail (TPM, Secure Boot, Page File, etc.) that never belonged in the hero.
+  // Most of what used to live here (name, manufacturer/model, OS, uptime, CPU, GPU, motherboard,
+  // BIOS date, memory) now lives in the hero tiles above instead - kept as plain variables here
+  // since the hero-building code further down still needs them, just without a second pairs.push
+  // duplicating what the tiles already show.
+  const sysMfr=realSpec(specVal(sp.info,'Manufacturer')), sysModel=realSpec(specVal(sp.info,'Model'));
+  // On DIY/homebuilt PCs, Win32_ComputerSystemProduct's "Model" is often just the motherboard's
+  // own part number restated (e.g. "MS-7C96") - already shown in full on the Motherboard tile.
+  // Only treat it as adding something when it doesn't just repeat that.
+  const mbForDedupe=specVal(sp.info,'Motherboard')||'';
+  const sysModelIsDupe=sysModel && mbForDedupe.toLowerCase().includes(sysModel.toLowerCase());
+  // Same DIY signature on the manufacturer side: with no real system OEM, Windows reports the
+  // motherboard vendor's own legal name here (e.g. "Micro-Star International Co., Ltd.") instead
+  // of an actual system brand. Comparing directly against Motherboard Manufacturer catches this
+  // without needing a hardcoded list of vendor names - a genuine OEM (Dell, HP, Lenovo) never
+  // matches its own motherboard supplier's name here, so this stays specific to DIY builds.
+  const mbMfrForDedupe=specVal(sp.info,'Motherboard Manufacturer')||'';
+  const sysMfrIsMobo=sysMfr&&mbMfrForDedupe&&sysMfr.trim().toLowerCase()===mbMfrForDedupe.trim().toLowerCase();
+  const os=specVal(sp.info,'OS'), build=specVal(sp.info,'Build'), up=specVal(sp.info,'System Uptime');
+  const WINVER={ '26200':'25H2','26100':'24H2','22631':'23H2','22621':'22H2','22000':'21H2','19045':'22H2','19044':'21H2' };
+  const cpu=specVal(sp.info,'CPU Name');
+  const mb=specVal(sp.info,'Motherboard'), mbMfr=specVal(sp.info,'Motherboard Manufacturer');
+  const bdate=specVal(sp.info,'BIOS Date');
+  const bver=specVal(sp.info,'BIOS Version');
+  // SourceName is a fixed internal identifier and stays in English regardless of the system's
+  // display language - unlike the message text, which is fully localized. Counting by source
+  // alone (rather than also requiring the English phrase "faulting application" in the message)
+  // means this stays accurate on non-English Windows installs instead of silently reading 0.
+  const crashes=relEvents.filter(e=>e.cat==='err'&&e.s==='Application Error').length;
+  const shutdowns=getShutdowns().length;
+  // Prefer the speed embedded in the part number over Win32_PhysicalMemory.Speed when it's
+  // higher - Speed often just reflects the JEDEC default the stick is currently running at,
+  // not what it's actually rated for, which silently hides an XMP/EXPO-off situation.
+  const effRated=m=>Math.max(+m.rated||0,+m.pnSpeed||0)||'';
+  const notes=[];
+  notes.push(crashes?dataLink('rel','app-crashes','<span class="r"><b>'+crashes+'</b> Application crash'+(crashes>1?'es':'')+'</span>'):'<span class="g">No application crashes</span>');
+  // Unexpected shutdowns: reliability history (6008-derived) and Kernel-Power 41 record the
+  // same incident. Report one merged line, using the larger count if they disagree.
+  const shutdownCount=shutdowns;
+  if(shutdownCount){
+    notes.push(dataLink('rel','unexpected-shutdown','<span class="r"><b>'+shutdownCount+'</b> Unexpected shutdown'+(shutdownCount>1?'s':'')+'</span>'));
+  }else{
+    notes.push('<span class="g">No unexpected shutdowns</span>');
+  }
+  if(DUMPS.length)notes.push(dataLink('dumps','memory-dump','<span class="y"><b>'+DUMPS.length+'</b> Memory dump'+(DUMPS.length>1?'s':'')+' collected</span> <span style="color:var(--faint)">(in zip)</span>'));
+  const wheaFatal=SYSEVT.filter(r=>/WHEA/i.test(r.prov)&&['18','46'].includes(String(r.id))).length;
+  if(wheaFatal)notes.push(dataLink('rel','whea','<span class="r"><b>'+wheaFatal+'</b> Fatal hardware error'+(wheaFatal>1?'s':'')+' (WHEA)</span>'));
+  SMART.forEach(d=>{
+    const probs=smartProbs(d);
+    const crc=smartCrcProbs(d);
+    if(probs.length)notes.push(dataLink('drives','disk-smart','<span class="r">Disk '+esc(d.disk)+' ('+esc(d.name)+'): '+esc(probs.join(', '))+'</span>'));
+    if(crc.length)notes.push(dataLink('drives','disk-smart','<span class="y">Disk '+esc(d.disk)+' ('+esc(d.name)+'): '+esc(crc.join(', '))+'</span>'));
+  });
+  DIRTY.forEach(v=>notes.push(dataLink('drives','dirty-bit','<span class="y">Volume '+esc(v)+' has its dirty bit set</span>')));
+  if(DEVERR.length){
+    const devNames=DEVERR.map(e=>e.name);
+    const shown=devNames.slice(0,3).join(', ')+(devNames.length>3?' +'+(devNames.length-3)+' more':'');
+    notes.push(anchorLink('summary','devErrSection','device-manager-errors','<span class="y"><b>'+DEVERR.length+'</b> device'+(DEVERR.length>1?'s':'')+' showing errors in Device Manager</span> <span style="color:var(--faint)">('+esc(shown)+')</span>'));
+  }
+  const sysDisk=DISKLAYOUT.find(dk=>dk.partitions.some(p=>p.letter==='C:'));
+  if(sysDisk&&sysDisk.style&&sysDisk.style.toUpperCase()==='MBR')notes.push(dataLink('drives','mbr-secureboot','<span class="y">System disk uses MBR partitioning (Secure Boot requires GPT)</span>'));
+  const sysDiskBus=sysDisk?(SMART.find(d=>String(d.disk)===String(sysDisk.disk))||{}).bus:null;
+  if(sysDiskBus&&!/nvme/i.test(sysDiskBus)&&SMART.some(d=>/nvme/i.test(d.bus||''))){
+    notes.push(dataLink('drives','windows-on-slower-drive','<span class="y">Windows is on '+esc(sysDiskBus)+', not the faster NVMe drive also in this PC</span>'));
+  }
+  // Large unallocated space usually means a partition never got extended after moving to a bigger
+  // drive - very common after an in-place "keep files" install carries an old, smaller partition
+  // layout onto a new, larger replacement drive without resizing anything.
+  DISKLAYOUT.forEach(dk=>{
+    const partSum=dk.partitions.reduce((a,p)=>a+p.sizeGB,0);
+    const unallocGB=Math.max(0,(dk.sizeGB||0)-partSum);
+    if(unallocGB>20&&dk.sizeGB&&unallocGB/dk.sizeGB>0.1){
+      const pct=Math.round(unallocGB/dk.sizeGB*100);
+      notes.push(dataLink('drives','unallocated-space','<span class="y">Disk '+esc(dk.disk)+' has '+Math.round(unallocGB)+' GB ('+pct+'%) of unallocated space not assigned to any partition</span>'));
+    }
+  });
+  // Low free space on any drive letter, not just the system drive - a nearly-full data/games
+  // drive can be just as disruptive (install failures, save-game corruption, browser cache
+  // errors) as a nearly-full C:, and this was previously only visible by digging into the
+  // Drives tab rather than shown anywhere upfront.
+  (sp.drives||[]).forEach(dr=>{
+    const totalGB=+dr['Total Size (GB)'],freeGB=+dr['Free Space (GB)'];
+    if(!totalGB)return;
+    const freePct=dr['Percentage Free (%)']!=null?+dr['Percentage Free (%)']:(freeGB/totalGB*100);
+    if(freePct<10){
+      notes.push(dataLink('drives','low-disk-space','<span class="y">Drive '+esc(dr['Drive Label']||'?')+' has only '+Math.round(freePct)+'% free space ('+freeGB.toFixed(1)+' GB) &mdash; performance can suffer when a drive runs this low</span>'));
+    }
+  });
+  if(WINUPDATE&&WINUPDATE.pendingReboot)notes.push(dataLink('updates','pending-reboot','System has a pending reboot (Windows Update or servicing)'));
+  if(WINUPDATE&&WINUPDATE.serviceStartType==='Disabled')notes.push(dataLink('updates','wu-service','<span class="y">Windows Update service is disabled</span>'));
+  const wuFails=WUHISTORY.filter(u=>u.result==='Failed'||u.result==='Cancelled').length;
+  if(wuFails)notes.push(dataLink('updates','wu-failed','<span class="y"><b>'+wuFails+'</b> Windows Update'+(wuFails>1?'s':'')+' did not complete successfully</span>'));
+  if(RAM.length){
+    const slow=RAM.filter(m=>effRated(m)&&m.conf&&+m.conf<+effRated(m));
+    if(slow.length)notes.push(dataLink('memory','ram-speed','<span class="y">RAM configured at '+esc(slow[0].conf)+' MT/s, rated '+esc(effRated(slow[0]))+' MT/s</span>'));
+  }
+  const pgfileState=specVal(sp.info,'Page File Managed');
+  if(pgfileState==='Disabled')notes.push(dataLink('memory','pagefile-disabled','<span class="r">No page file is configured &mdash; this is set to \'No paging file\' on every drive</span>'));
+  else if(pgfileState==='Manual')notes.push(dataLink('memory','pagefile-manual','<span class="y">Page file is manually managed (automatic management is turned off)</span>'));
+  const foundSoft=getSoftwareFlags(PROGRAMS);
   const softNotes=[];
   if(SECURITY&&SECURITY.avProducts&&SECURITY.avProducts.length){
     const avList=SECURITY.avProducts.filter(a=>a.enabled).map(a=>a.name);
@@ -1511,7 +2179,6 @@ function renderSummary(){
   }
   Object.keys(foundSoft).forEach(grp=>{
     const items=[...foundSoft[grp]].sort().join(', ');
-    const SOFT_FAQ={ac:'software-anticheat',oc:'software-overclock',periph:'software-rgb',audio:'software-audio',net:'software-network',bloat:'software-bloatware',shell:'software-shell',cheat:'software-cheat',fan:'software-fancontrol',wallpaper:'software-wallpaperengine',remote:'software-remote'};
     const GRP_COLOR={cheat:'r'};
     softNotes.push(dataLink('apps',SOFT_FAQ[grp]||'','<span class="'+(GRP_COLOR[grp]||'')+'">'+esc(items)+'</span>'));
   });
@@ -1544,22 +2211,14 @@ function renderSummary(){
   const tdrEvents=SYSEVT.filter(r=>String(r.id)==='4101'||gpuDrvRe.test(r.prov)||gpuDrvRe.test(r.msg||''));
   if(tdrEvents.length){
     const drv=[...new Set(tdrEvents.map(r=>{const m2=(r.prov+' '+(r.msg||'')).match(gpuDrvRe);return m2?m2[0].toLowerCase():null;}).filter(Boolean))];
-    notes.push(dataLink('sys','gpu-tdr','<span class="r"><b>'+tdrEvents.length+'</b> display driver timeout/reset event'+(tdrEvents.length>1?'s':'')+(drv.length?' ('+esc(drv.join(', '))+')':'')+'</span>'));
+    notes.push(dataLink('rel','gpu-tdr','<span class="r"><b>'+tdrEvents.length+'</b> display driver timeout/reset event'+(tdrEvents.length>1?'s':'')+(drv.length?' ('+esc(drv.join(', '))+')':'')+'</span>'));
   }
   // SourceName is 'LiveKernelEvent' for these reliability records - a fixed internal identifier,
   // never localized - so matching it directly is safer than matching the word "LiveKernelEvent"
   // inside the (potentially translated) message text.
   const lke=RAW.filter(r=>r.s==='LiveKernelEvent').length;
   if(lke)notes.push(dataLink('rel','livekernelevent','<span class="r"><b>'+lke+'</b> LiveKernelEvent record'+(lke>1?'s':'')+' in reliability history</span>'));
-  if(NET&&NET.wifi&&NET.wifi.signal){
-    const sig=parseInt(NET.wifi.signal)||0;
-    if(sig&&sig<50)notes.push(dataLink('net','wifi-signal','<span class="y">Wi-Fi signal at '+sig+'%'+(NET.wifi.band?' on '+esc(NET.wifi.band):'')+'</span>'));
-  }
-  if(NET&&NET.adapters){
-    NET.adapters.filter(a=>a.gigabitBelowRated).forEach(a=>{
-      notes.push(dataLink('net','gigabit-slow','<span class="y">'+esc(a.name)+' is Gigabit-capable but connected at only '+esc(a.speed)+'</span>'));
-    });
-  }
+  netIssues().forEach(i=>notes.push(dataLink('net',i.faq,'<span class="'+(i.sev==='err'?'r':i.sev==='warn'?'y':'i')+'">'+i.text+'</span>')));
   if(MEMUSE&&MEMUSE.ct&&MEMUSE.cu/MEMUSE.ct>0.9)notes.push(dataLink('memory','commit-charge','<span class="y">Commit charge at '+Math.round(MEMUSE.cu/MEMUSE.ct*100)+'% of limit at time of capture</span>'));
   // Display connected to the integrated GPU while a dedicated GPU sits unused - the classic
   // "wrong slot" cable mistake. Desktops only: laptops normally route the built-in panel
@@ -1588,40 +2247,52 @@ function renderSummary(){
   if(POWERPLAN&&!POWERPLAN.isDefault)notes.push('<span style="color:var(--dim)">Non-default power plan active: '+esc(POWERPLAN.name)+'</span>');
   if(GENFLAGS&&GENFLAGS.tpmDisabled)notes.push(flagLink('tpm','<span style="color:var(--dim)">TPM is present but disabled</span>'));
   if(GENFLAGS&&GENFLAGS.secureBootDisabled)notes.push(dataLink('security','secure-boot','<span style="color:var(--dim)">Secure Boot disabled</span>'));
-  if(CBS&&CBS.unresolvedCount>0)notes.push(dataLink('sys','cbs-corruption','<span class="r"><b>'+CBS.unresolvedCount+'</b> unresolved component corruption entr'+(CBS.unresolvedCount>1?'ies':'y')+' in CBS.log</span>'));
+  if(CBS&&CBS.unresolvedCount>0)notes.push(dataLink('rel','cbs-corruption','<span class="r"><b>'+CBS.unresolvedCount+'</b> unresolved component corruption entr'+(CBS.unresolvedCount>1?'ies':'y')+' in CBS.log</span>'));
   if(up){
     const upDays=parseInt((up.match(/^(\d+)\s*days?/i)||[])[1]||'0',10);
-    if(upDays>=7)notes.push(dataLink('sys','high-uptime','<span class="y">System has been running for <b>'+upDays+'</b> days without a restart</span>'));
+    if(upDays>=7)notes.push(dataLink('rel','high-uptime','<span class="y">System has been running for <b>'+upDays+'</b> days without a restart</span>'));
   }
-  const nEl=document.getElementById('notesBody');
 
   // --- At-a-glance hero: identity strip + spec tiles ---
   // Everything here is a plain fact, nothing flagged or colour-coded - anything worth calling
   // out (RAM under its rated speed, a disk's SMART health, etc.) belongs in General Notes below,
   // not buried in a tile. The status pill is the one exception, and it only ever reflects a
   // count already computed for General Notes, never a new check of its own.
+  let sysTitle='',sysSubParts=[];
   (function(){
     const heroEl=document.getElementById('summaryHero');
     const tiles=[];
     const cpuCT=specVal(sp.info,'CPU Cores/Threads'), cpuGHz=specVal(sp.info,'CPU Speed'), cpuSocket=specVal(sp.info,'CPU Socket');
+    const cpuCache=specVal(sp.info,'CPU L3 Cache')||specVal(sp.info,'CPU L2 Cache');
+    const cpuVirt=specVal(sp.info,'CPU Virtualization');
     if(cpu){
       const ctm=(cpuCT||'').match(/(\d+)C\s*\/\s*(\d+)T/i);
-      tiles.push({cls:'cpu',icon:ICON_CPU,label:'Processor',tab:'cpu',value:cpu.trim(),lines:[
-        ctm?ctm[1]+' cores / '+ctm[2]+' threads':'',
+      tiles.push({cls:'cpu',icon:'memory',label:'Processor',tab:'cpu',value:cpu.trim(),lines:[
+        ctm?'Cores: '+ctm[1]+' cores / '+ctm[2]+' threads':'',
         cpuGHz?'Base speed: '+cpuGHz:'',
-        cpuSocket?'Socket: '+cpuSocket:''
+        cpuCache?'Cache: '+cpuCache:'',
+        cpuSocket?'Socket: '+cpuSocket:'',
+        cpuVirt?'Virtualisation: '+cpuVirt:''
       ].filter(Boolean)});
     }
     if(GPUS.length||DISPLAYS.length){
       const gNames=[...new Set(GPUS.length?GPUS.map(g=>g.name):DISPLAYS.map(d=>d.gpu))];
       const g0=GPUS[0];
-      // friendlyDriver() wraps the friendly number with a parenthetical HTML span showing the raw
-      // driver string, meant for the full GPU tab - the hero tile just wants the plain friendly
-      // number on its own, since that's the "at a glance" version.
-      const driverFriendly=g0&&g0.drv?friendlyDriver(g0.name,g0.drv,g0.radeon).replace(/\s*<span[^>]*>.*<\/span>/,''):'';
-      tiles.push({cls:'gpu',icon:ICON_GPU,label:gNames.length>1?'Graphics ('+gNames.length+')':'Graphics',tab:'gpu',value:gNames[0]||'',lines:[
-        g0&&g0.vram?g0.vram+' GB VRAM':'',
-        driverFriendly?'Driver: '+driverFriendly:''
+      const driverFriendly=g0&&g0.drv?friendlyDriver(g0.name,g0.drv,g0.radeon).replace(/\s*<span[^>]*>\(([^)]*)\)<\/span>/,' ($1)'):'';
+      const isIGPUt=g=>/Intel\(R\)?\s*(UHD|HD|Iris)/i.test(g.name)||/^AMD Radeon(\(TM\))?\s*Graphics$/i.test(g.name.trim());
+      const isDGPUt=g=>/NVIDIA|GeForce|RTX|GTX|Quadro|Radeon\s*(RX|VII|Pro\s*W)/i.test(g.name);
+      const tIgpu=GPUS.find(isIGPUt), tDgpu=GPUS.find(isDGPUt);
+      const secondaryGpu=(tIgpu&&tDgpu)?(g0&&g0.name===tDgpu.name?tIgpu:tDgpu):null;
+      const activeDisplays=DISPLAYS.length;
+      const d0=DISPLAYS[0];
+      const dispRes=d0&&d0.res?d0.res.replace(/\s*x\s*/i,'\u00d7').replace(/\s+/g,''):'';
+      const dispHz=d0&&d0.hz?' @'+d0.hz:'';
+      tiles.push({cls:'gpu',icon:'videogame_asset',label:gNames.length>1?'Graphics ('+gNames.length+')':'Graphics',tab:'gpu',value:gNames[0]||'',lines:[
+        g0&&g0.vram?'VRAM: '+g0.vram+' GB':'',
+        driverFriendly?'Driver: '+driverFriendly:'',
+        activeDisplays?'Displays: '+activeDisplays+' active'+(dispRes?' \u00b7 '+dispRes+dispHz:''):'',
+        secondaryGpu?'Secondary: '+secondaryGpu.name+(secondaryGpu===tIgpu?' (iGPU)':''):'',
+        g0&&g0.driverDate?'Driver date: '+fmtDay(g0.driverDate):''
       ].filter(Boolean)});
     }
     if(RAM.length){
@@ -1634,10 +2305,14 @@ function renderSummary(){
       const ramMfrLabel=ramMfrs.length===1?ramMfrs[0]:'';
       const ramTypes=[...new Set(RAM.map(m=>m.ddrType).filter(Boolean))];
       const ramTypeLabel=ramTypes.length===1?ramTypes[0]:'';
-      tiles.push({cls:'ram',icon:ICON_RAM,label:'Memory',tab:'memory',value:heroRamGB+' GB'+(ramMfrLabel?' '+ramMfrLabel:'')+(ramTypeLabel?' '+ramTypeLabel:''),lines:[
-        heroRamRated?'Rated speed: '+heroRamRated+' MT/s':'',
-        heroRamConf?'Configured speed: '+heroRamConf+' MT/s':'',
-        'Modules: '+RAM.length
+      const ramSlow=RAM.some(m=>effRated(m)&&m.conf&&+m.conf<+effRated(m));
+      tiles.push({cls:'ram',icon:'developer_board',label:'Memory',tab:'memory',value:heroRamGB+' GB'+(ramMfrLabel?' '+ramMfrLabel:'')+(ramTypeLabel?' '+ramTypeLabel:''),
+        badge:ramSlow,
+        lines:[
+        heroRamRated?'Rated: '+heroRamRated+' MT/s':'',
+        heroRamConf?'Configured: '+heroRamConf+' MT/s'+(ramSlow?' \u2014 XMP/EXPO disabled':''):'',
+        'Modules: '+RAM.length,
+        (MEMUSE&&MEMUSE.pt)?'In use: '+MEMUSE.pu.toFixed(1)+' GB ('+Math.round(MEMUSE.pu/MEMUSE.pt*100)+'%)':''
       ].filter(Boolean)});
     }
     if(sp.drives&&sp.drives.length){
@@ -1671,27 +2346,63 @@ function renderSummary(){
       const sysFreeGB=sysLogicalDrive?+sysLogicalDrive['Free Space (GB)']||0:null;
       const sysTotalGB=sysLogicalDrive?+sysLogicalDrive['Total Size (GB)']||0:null;
       const sysFreePct=(sysTotalGB&&sysFreeGB!=null)?Math.round(sysFreeGB/sysTotalGB*100):null;
-      tiles.push({cls:'storage',icon:ICON_STORAGE,label:diskCount>1?'Storage ('+diskCount+' disks)':'Storage',tab:'drives',value:sysDiskLabel||fmtSize(totalGB)+' total',lines:[
+      const letterToDisk={};
+      DISKLAYOUT.forEach(dk=>{(dk.partitions||[]).forEach(p=>{if(p.letter)letterToDisk[p.letter]=dk.disk;});});
+      const smartByDiskEarly={};
+      SMART.forEach(d=>{smartByDiskEarly[String(d.disk)]=d;});
+      const driveBars=[...sp.drives].filter(dr=>+dr['Total Size (GB)']>0).sort((a,b)=>(a['Drive Label']||'').localeCompare(b['Drive Label']||'')).slice(0,4).map(dr=>{
+        const dTotalGB=+dr['Total Size (GB)']||0, dFreeGB=+dr['Free Space (GB)']||0;
+        const dFreePct=dr['Percentage Free (%)']!=null?Math.round(+dr['Percentage Free (%)']):Math.round(dFreeGB/dTotalGB*100);
+        const diskNum=letterToDisk[dr['Drive Label']];
+        const sm=diskNum!=null?smartByDiskEarly[String(diskNum)]:null;
+        const label=[dr['Drive Label'],sm&&sm.bus,sm&&sm.health].filter(Boolean).join(' \u00b7 ');
+        return {label,free:fmtSize(dFreeGB)+' free of '+fmtSize(dTotalGB),pct:100-dFreePct,low:dFreePct<10};
+      });
+      tiles.push({cls:'storage',icon:'hard_drive',label:diskCount>1?'Storage ('+diskCount+' disks)':'Storage',tab:'drives',value:sysDiskLabel||fmtSize(totalGB)+' total',bars:driveBars.length?driveBars:null,lines:[
         sysFreeGB!=null?'Free space: '+fmtSize(sysFreeGB)+(sysFreePct!=null?' ('+sysFreePct+'%)':''):'Free space: '+fmtSize(freeGB)+(freePct!=null?' ('+freePct+'%)':''),
         sysDiskSmart&&sysDiskSmart.bus?sysDiskSmart.bus:''
       ].filter(Boolean)});
     }
     if(mb){
       const mbClean=((mbMfr||'').replace(/ASUSTeK COMPUTER INC\./i,'ASUS').replace(/Micro-Star International.*/i,'MSI').replace(/Gigabyte Technology.*/i,'Gigabyte')+' '+mb).trim();
-      tiles.push({cls:'mobo',icon:ICON_MOBO,label:'Motherboard',tab:'mobo',value:mbClean,lines:[
+      const fastBoot=specVal(sp.info,'Fast Boot State');
+      const activePowerPlan=specVal(sp.info,'Active Power Plan');
+      let bdateAge='',bdateWarn=false;
+      if(bdate){
+        const parsed=new Date(bdate);
+        if(!isNaN(parsed)){
+          const yrs=(Date.now()-parsed)/(365.25*86400000);
+          if(yrs>=1){bdateAge=' \u00b7 '+Math.floor(yrs)+' year'+(Math.floor(yrs)===1?'':'s')+' old';bdateWarn=yrs>=2;}
+        }
+      }
+      tiles.push({cls:'mobo',icon:'dashboard_customize',label:'Motherboard',tab:'mobo',value:mbClean,
+        warnKeys:[bdateWarn?'Date':'',fastBoot==='Enabled'?'Fast startup':''].filter(Boolean),
+        lines:[
         bver?'BIOS: '+bver:'',
-        bdate?'Date: '+bdate.replace(/\s+\d{1,2}:\d{2}(:\d{2})?(\s*[AP]M)?$/i,''):''
+        bdate?'Date: '+bdate.replace(/\s+\d{1,2}:\d{2}(:\d{2})?(\s*[AP]M)?$/i,'')+bdateAge:'',
+        fastBoot?'Fast startup: '+fastBoot:'',
+        activePowerPlan?'Power plan: '+activePowerPlan:''
       ].filter(Boolean)});
     }
     if(os){
       const bMajor=build?build.split('.')[0]:'';
       const fv=WINVER[bMajor];
       const installDate=specVal(sp.info,'Windows Install Date');
-      tiles.push({cls:'os',icon:ICON_OS,label:'Windows',tab:'summary',value:os.replace('Microsoft ',''),lines:[
+      const lastUpdate=WUHISTORY.length?(WUHISTORY.find(u=>u.result==='Succeeded')||WUHISTORY[0]):null;
+      const pgSize=specVal(sp.info,'Page File Size'), pgManaged=specVal(sp.info,'Page File Managed');
+      const pgMB=pgSize?parseFloat(pgSize):null;
+      const pgGBStr=(pgMB&&!isNaN(pgMB))?((Math.round(pgMB/1024*10)/10).toString().replace(/\.0$/,'')+' GB'):'';
+      const pgLabel=pgManaged==='Automatic'?'System managed':pgManaged==='Manual'?'Manual':pgManaged==='Disabled'?'Disabled':pgManaged;
+      const pgLine=pgLabel?pgLabel+(pgGBStr?' \u00b7 '+pgGBStr:''):'';
+      tiles.push({cls:'os',icon:'desktop_windows',label:'Windows',tab:'summary',value:os.replace('Microsoft ',''),
+        warnKeys:[pgManaged==='Disabled'?'Page file':''].filter(Boolean),
+        lines:[
         fv?'Version: '+fv:'',
         build?'Build: '+build:'',
         up?'System uptime: '+up.replace(/ days?/,'d').replace(/ hours?/,'h').replace(/ minutes?/,'m').replace(/,/g,''):'',
-        installDate?'Installed on: '+installDate:''
+        installDate?'Installed on: '+installDate:'',
+        pgLine?'Page file: '+pgLine:'',
+        lastUpdate?'Last update: '+lastUpdate.date:''
       ].filter(Boolean)});
     }
     if(!tiles.length){heroEl.innerHTML='';return;}
@@ -1699,11 +2410,11 @@ function renderSummary(){
     const critCount=notes.filter(n=>/class="r"/.test(n)).length;
     const warnCount=notes.filter(n=>/class="y"/.test(n)).length;
     const totalFlags=critCount+warnCount;
-    const pillCls=totalFlags===0?'ok':(critCount>0?'err':'warn');
-    const pillParts=[];
-    if(critCount)pillParts.push(critCount+' Critical');
-    if(warnCount)pillParts.push(warnCount+' Warning'+(warnCount>1?'s':''));
-    const pillText=totalFlags===0?'All clear':pillParts.join(', ');
+    const chipCls=totalFlags===0?'ok':(critCount>0?'err':'warn');
+    const chipParts=[];
+    if(critCount)chipParts.push(critCount+' Error'+(critCount>1?'s':''));
+    if(warnCount)chipParts.push(warnCount+' Warning'+(warnCount>1?'s':''));
+    const chipText=totalFlags===0?'All clear':chipParts.join(', ');
 
     // Never fall back to the hostname (System Name) here - people commonly name their PC after
     // themselves (e.g. a literal "Rory-PC"), so showing it risks leaking a real name into a
@@ -1714,214 +2425,357 @@ function renderSummary(){
     // entity name (e.g. "Micro-Star International Co., Ltd.") sitting alone as the PC's title.
     const titleParts=(sysMfrIsMobo&&sysModelIsDupe)?[]:[sysMfr,(sysModel&&!sysModelIsDupe)?sysModel:''].filter(Boolean);
     const title=titleParts.length?titleParts.join(' '):(sysMfrIsMobo?'Custom-built PC':'System Manufacturer, System Product Name');
+    const subParts=[mb,os&&os.replace('Microsoft ',''),up?'up '+up.replace(/ days?/,'d').replace(/ hours?/,'h').replace(/ minutes?/,'m').replace(/,/g,''):'',GEN?'scanned '+GEN:''].filter(Boolean);
+    sysTitle=title; sysSubParts=subParts;
 
-    let h='<div class="identity"><div class="identity-left">'+
-      '<div class="identity-icon">'+ICON_INFO+'</div>'+
-      '<div class="identity-text"><div class="identity-title">'+esc(title)+'</div>'+
-      '</div></div>'+
-      '<div class="status-pill '+pillCls+'"><span class="status-dot"></span>'+esc(pillText)+'</div></div>';
+    document.getElementById('summaryTitle').textContent=title;
+    document.getElementById('summarySub').textContent=subParts.join(' \u00b7 ');
+    const chipEl=document.getElementById('summaryChip');
+    chipEl.className=chipCls;
+    document.getElementById('summaryChipText').textContent=chipText;
 
-    h+='<div class="tile-grid">';
+    // Reuse the same notes the Diagnostic Summary page categorises by tab, so a tile only lights
+    // up amber/red when that module has an actual flagged issue somewhere else in the report -
+    // one source of truth instead of re-deriving each module's warning condition a second time.
+    const tabSeverity={};
+    notes.forEach(n=>{
+      const m=n.match(/goTab\('([a-z]+)'\)/);
+      if(!m||m[1]==='summary')return;
+      const sev=/class="r"/.test(n)?'err':/class="y"/.test(n)?'warn':null;
+      if(!sev)return;
+      if(!tabSeverity[m[1]]||(tabSeverity[m[1]]==='warn'&&sev==='err'))tabSeverity[m[1]]=sev;
+    });
+
+    let h='<div class="tile-grid">';
     tiles.forEach(t=>{
-      h+='<div class="tile c-'+t.cls+'" onclick="return goTab(\''+t.tab+'\')"><div class="tile-head"><div class="tile-icon">'+t.icon+'</div><div class="tile-label">'+esc(t.label)+'</div></div>'+
-        '<div class="tile-value">'+esc(t.value)+'</div>'+
-        t.lines.map(l=>'<div class="tile-line">'+esc(l)+'</div>').join('')+
-        (t.link?'<div class="tile-line"><a href="'+t.link.url+'" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="color:var(--info)">'+esc(t.link.text)+'</a></div>':'')+
-        '</div>';
+      const sev=tabSeverity[t.tab];
+      h+='<div class="tile'+(sev?' tile-'+sev:'')+'" onclick="return goTab(\''+t.tab+'\')"><div class="tile-head">'+
+        '<div class="tile-icon"><span class="material-symbols-outlined">'+t.icon+'</span></div>'+
+        '<div class="tile-titles"><div class="tile-label">'+esc(t.label)+'</div><div class="tile-value">'+esc(t.value)+'</div></div>'+
+        (sev?'<span class="tile-warnbadge tile-warnbadge-'+sev+'"><span class="material-symbols-outlined">'+(sev==='err'?'error':'warning')+'</span></span>'
+          :'<span class="tile-chevron material-symbols-outlined">chevron_right</span>')+
+        '</div><div class="tile-div"></div>';
+      if(t.bars){
+        h+='<div class="tile-bars">'+t.bars.map(b=>
+          '<div class="tile-bar-row"><div class="tile-bar-label"><span>'+esc(b.label)+'</span><span'+(b.low?' class="tile-warn-text"':'')+'>'+esc(b.free)+'</span></div>'+
+          '<div class="tile-bar-track"><div class="tile-bar-fill'+(b.low?' low':'')+'" style="width:'+Math.min(100,Math.max(2,b.pct))+'%"></div></div></div>'
+        ).join('')+'</div>';
+      }else{
+        h+='<dl class="tile-kv">'+t.lines.map(l=>{
+          const ci=l.indexOf(': ');
+          const dt=ci>-1?l.slice(0,ci):'';
+          const dd=ci>-1?l.slice(ci+2):l;
+          const warnRow=(t.badge&&dt==='Configured')||(t.warnKeys&&t.warnKeys.includes(dt));
+          return '<dt>'+esc(dt)+'</dt><dd'+(warnRow?' class="tile-warn-text"':'')+'>'+esc(dd)+'</dd>';
+        }).join('')+
+        (t.link?'<dt></dt><dd><a href="'+t.link.url+'" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="color:var(--info)">'+esc(t.link.text)+'</a></dd>':'')+
+        '</dl>';
+      }
+      h+='</div>';
     });
     h+='</div>';
     heroEl.innerHTML=h;
+
+    const copyBtn=document.getElementById('copySpecsBtn');
+    if(copyBtn)copyBtn.onclick=()=>{
+      const lines=[title,...tiles.map(t=>t.label+': '+t.value)];
+      const txt=lines.join('\n');
+      const done=()=>{const old=copyBtn.innerHTML;copyBtn.innerHTML='<span class="material-symbols-outlined" style="font-size:18px">check</span>Copied';setTimeout(()=>{copyBtn.innerHTML=old;},1500);};
+      if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(txt).then(done).catch(()=>{});
+      else{const ta=document.createElement('textarea');ta.value=txt;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);done();}
+    };
   })();
 
-  const NOTE_GROUPS=[
-    {label:'Critical',   items:notes.filter(n=>/class="r"/.test(n))},
-    {label:'Warnings',   items:notes.filter(n=>/class="y"/.test(n))},
-    {label:'Notable software', items:softNotes},
-    {label:'Informational', items:notes.filter(n=>!/class="[ry]"/.test(n)&&!/class="g"/.test(n))},
-    {label:'All good',   items:notes.filter(n=>/class="g"/.test(n))},
+  const critItems=notes.filter(n=>/class="r"/.test(n));
+  const warnItems=notes.filter(n=>/class="y"/.test(n));
+  const infoItems=notes.filter(n=>!/class="[ry]"/.test(n)&&!/class="g"/.test(n));
+  const DIAG_TAB_LABEL={cpu:'Processor',gpu:'Graphics',memory:'Memory',drives:'Storage',mobo:'Motherboard',net:'Network',devices:'Devices',security:'Security',apps:'Software',updates:'Updates',sys:'Events',shutdowns:'Events',rel:'Events',summary:'Operating system'};
+  const diagCategory=html=>{const m=html.match(/goTab\('([a-z]+)'\)/);return m?{label:DIAG_TAB_LABEL[m[1]]||'',tabId:m[1]}:null;};
+  const DIAG_GROUPS=[
+    {key:'crit',label:'Error',cls:'crit',icon:'error',items:critItems},
+    {key:'warn',label:'Warnings',cls:'warn',icon:'warning',items:warnItems},
+    {key:'info',label:'Information',cls:'',icon:'info',items:infoItems},
+    {key:'soft',label:'Notable software',cls:'',icon:'apps',items:softNotes},
   ];
-  let notesHtml='';
-  NOTE_GROUPS.forEach(g=>{
-    if(!g.items.length)return;
-    notesHtml+='<div class="notes-group"><div class="notes-head">'+g.label+'</div><ul class="notes">'+g.items.map(n=>'<li>'+n+'</li>').join('')+'</ul></div>';
-  });
-  nEl.innerHTML=notesHtml;
-}
-function sysCat(lvl){return lvl<=2?'err':lvl===3?'warn':'info';}
-function renderSys(){
-  const v=document.getElementById('sysView');
-  let h='';
-  if(!SYSEVT.length){
-    h+='<div class="sys-ok">\u2713 No notable system events found in the collection window.</div>';
-    v.innerHTML=h;return;
+  const diagTotalCount=DIAG_GROUPS.reduce((a,g)=>a+g.items.length,0);
+  document.getElementById('diagSub').textContent=diagTotalCount+' note'+(diagTotalCount===1?'':'s')+' \u00b7 '+sysTitle+(sysSubParts.length?' \u00b7 '+sysSubParts.join(' \u00b7 '):'');
+  const badgeCount=critItems.length+warnItems.length;
+  const diagBadgeEl=document.getElementById('diagTabBadge');
+  if(diagBadgeEl){ if(badgeCount){diagBadgeEl.textContent=badgeCount;diagBadgeEl.style.display='';} else {diagBadgeEl.style.display='none';} }
+
+  document.getElementById('diagStats').innerHTML=DIAG_GROUPS.map(g=>
+    '<div class="diag-stat '+g.cls+'" data-key="'+g.key+'"><span class="material-symbols-outlined">'+g.icon+'</span>'+
+    '<div><div class="diag-stat-n">'+g.items.length+'</div><div class="diag-stat-l">'+esc(g.label)+'</div></div></div>'
+  ).join('');
+
+  let diagFilter=null;
+  function renderDiagBody(){
+    const q=(document.getElementById('diagSearch').value||'').toLowerCase();
+    const body=document.getElementById('diagBody');
+    let h='';
+    DIAG_GROUPS.forEach(g=>{
+      if(diagFilter&&diagFilter!==g.key)return;
+      let items=g.items;
+      if(q)items=items.filter(n=>n.toLowerCase().replace(/<[^>]+>/g,' ').includes(q));
+      if(!items.length)return;
+      h+='<div class="diag-group-head"><span class="diag-group-label '+g.cls+'">'+esc(g.label)+'</span><span class="diag-group-count">'+items.length+' note'+(items.length===1?'':'s')+'</span><span class="diag-group-line"></span></div>';
+      // Errors share one red panel rather than each row carrying its own.
+      if(g.key==='crit')h+='<div class="diag-crit-box">';
+      items.forEach(n=>{
+        const cat=diagCategory(n);
+        h+='<div class="diag-row"><div class="diag-row-main">'+n+'</div>'+
+          (cat&&cat.label?'<span class="diag-chip" onclick="return goTab(\''+cat.tabId+'\')">'+esc(cat.label)+'</span>':'')+'</div>';
+      });
+      if(g.key==='crit')h+='</div>';
+    });
+    if(!h)h='<div style="color:var(--faint);padding:32px 4px">No notes match.</div>';
+    body.innerHTML=h;
   }
-  const evs=SYSEVT.map(r=>({...r,dt:parseDate(r.t)})).filter(r=>r.dt).sort((a,b)=>b.dt-a.dt);
-  let lastDay=null;
-  evs.forEach(e=>{
-    const dk=e.dt.toISOString().slice(0,10);
-    if(dk!==lastDay){lastDay=dk;h+='<div class="day-head">'+fmtDay(dk)+'</div>';}
-    const cat=sysCat(e.lvl);
-    let title=esc(e.prov)+' '+esc(e.id);
-    if(e.bc&&e.bc!=='0')title+=' <span class="r" style="color:var(--err)">\u00b7 Bugcheck 0x'+esc(parseInt(e.bc).toString(16).toUpperCase())+'</span>';
-    if(e.cnt)title+=' \u00d7'+e.cnt;
-    const overheatNote=String(e.id)==='41'?' <span style="color:var(--faint)">(this can also include overheating)</span>':'';
-    h+='<div class="row"><span class="time mono">'+fmtTime(e.dt)+'</span>'+
-      '<span class="dot d-'+cat+'"></span>'+
-      '<span class="title">'+title+'</span>'+
-      '<div class="msg mono">'+esc(e.msg||'')+overheatNote+'</div></div>';
+  renderDiagBody();
+  document.getElementById('diagSearch').oninput=renderDiagBody;
+  document.querySelectorAll('.diag-stat').forEach(el=>el.onclick=()=>{
+    diagFilter=(diagFilter===el.dataset.key)?null:el.dataset.key;
+    document.querySelectorAll('.diag-stat').forEach(x=>x.classList.toggle('on',x.dataset.key===diagFilter));
+    renderDiagBody();
   });
-  v.innerHTML=h;
-  v.querySelectorAll('.row').forEach(r=>r.onclick=(e)=>{ if(e.target.closest('.msg')||hasTextSelection())return; r.classList.toggle('open'); });
-  v.querySelectorAll('.row .msg').forEach(m=>m.onclick=e=>e.stopPropagation());
+  const copyNotesBtn=document.getElementById('copyNotesBtn');
+  if(copyNotesBtn)copyNotesBtn.onclick=()=>{
+    const txt=DIAG_GROUPS.flatMap(g=>g.items.map(n=>n.replace(/<[^>]+>/g,''))).join('\n');
+    const done=()=>{const old=copyNotesBtn.innerHTML;copyNotesBtn.innerHTML='<span class="material-symbols-outlined" style="font-size:18px">check</span>Copied';setTimeout(()=>{copyNotesBtn.innerHTML=old;},1500);};
+    if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(txt).then(done).catch(()=>{});
+    else{const ta=document.createElement('textarea');ta.value=txt;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);done();}
+  };
 }
-function renderShutdowns(){
-  const v=document.getElementById('shutdownsView');
+// 6008's message holds the real crash time ("The previous system shutdown at 8:53:04 AM on 9/24/2026 was
+// unexpected"); the event itself is only logged on the next boot. Strip U+200E marks Windows puts
+// around the date parts. Localised messages won't match - caller falls back to the logged time.
+function parse6008(msg){
+  const m=String(msg||'').replace(/[\u200e\u200f]/g,'')
+    .match(/(\d{1,2}):(\d{2}):(\d{2})\s*(AM|PM)?.*?(\d{1,2})\/(\d{1,2})\/(\d{4})/i);
+  return m?parseDate(m[5]+'/'+m[6]+'/'+m[7]+' '+m[1]+':'+m[2]+':'+m[3]+(m[4]?' '+m[4]:'')):null;
+}
+// Merges Kernel-Power 41 (System log) with reliability history's 'EventLog' (6008) records - both
+// describe the same incident - and works out what can be said about each one. Shown inline on the
+// matching Reliability History row rather than on a page of its own.
+let SHUTS_=null;
+function getShutdowns(){
+  if(SHUTS_)return SHUTS_;
   const BC_NAMES={ '278':'VIDEO_TDR_FAILURE','279':'VIDEO_TDR_TIMEOUT_DETECTED','281':'VIDEO_SCHEDULER_INTERNAL_ERROR','321':'VIDEO_ENGINE_TIMEOUT_DETECTED','322':'VIDEO_TDR_APPLICATION_BLOCKED' };
-  // Kernel-Power (event 41) carries a bugcheck code when one was recorded; reliability history's
-  // 'EventLog' source marks the same kind of incident but never carries a bugcheck, and can reach
-  // further back than the System log (which is size-capped). Merge both, preferring the bugcheck
-  // when the same incident appears in both.
   const kp41=SYSEVT.filter(r=>String(r.id)==='41').map(r=>{
-    const dt=parseDate(r.t);
     const bc=(r.bc&&String(r.bc)!=='0')?String(r.bc):'';
-    const pbt=r.pbt?parseDate(r.pbt):null;
-    return {d:dt,bc,pbt,src:'Kernel-Power (41)'};
+    return {d:parseDate(r.t),bc,pbt:r.pbt?parseDate(r.pbt):null,kp:true};
   }).filter(x=>x.d);
-  const relOnly=events.filter(e=>e.s==='EventLog').map(e=>({d:e.d,bc:'',pbt:null,src:'Reliability history'}));
-  const all=[...kp41,...relOnly].sort((a,b)=>b.d-a.d);
+  const rel=relEvents.filter(e=>e.s==='EventLog').map(e=>({d:e.d,crash:parse6008(e.m),bc:'',pbt:null,rel:true}));
+  const sys6008=SYSEVT.filter(r=>String(r.id)==='6008').map(r=>({d:parseDate(r.t),crash:parse6008(r.msg),bc:'',pbt:null,sys:true})).filter(x=>x.d);
   const merged=[];
-  all.forEach(item=>{
+  [...kp41,...rel,...sys6008].sort((a,b)=>b.d-a.d).forEach(item=>{
     const dup=merged.find(m=>Math.abs(m.d-item.d)<2*60*1000);
     if(dup){
       if(!dup.bc&&item.bc)dup.bc=item.bc;
       if(!dup.pbt&&item.pbt)dup.pbt=item.pbt;
-      if(!dup.src.includes(item.src))dup.src+=' + '+item.src;
+      if(!dup.crash&&item.crash)dup.crash=item.crash;
+      dup.kp=dup.kp||item.kp; dup.rel=dup.rel||item.rel; dup.sys=dup.sys||item.sys;
     }else merged.push({...item});
   });
-  if(!merged.length){
-    v.innerHTML='<div class="spec-section"><h2>Unexpected Shutdowns</h2><div class="sys-ok">\u2713 No unexpected shutdowns found.</div></div>';
-    return;
-  }
-  const sorted=[...merged].sort((a,b)=>b.d-a.d);
-  let h='<div class="spec-section"><h2>Unexpected Shutdowns ('+sorted.length+')</h2>';
-  let lastDay=null;
-  sorted.forEach(x=>{
-    const dk=x.d.toISOString().slice(0,10);
-    if(dk!==lastDay){lastDay=dk;h+='<div class="day-head">'+fmtDay(dk)+'</div>';}
-    const bcLabel=x.bc?('0x'+parseInt(x.bc).toString(16).toUpperCase()+(BC_NAMES[x.bc]?' '+BC_NAMES[x.bc]:'')):'';
-    let cat,title;
-    if(bcLabel){cat='err';title='Bugcheck '+esc(bcLabel);}
-    else if(x.pbt){cat='warn';title='Power button held down';}
-    else{cat='info';title='No crash code recorded';}
-    const pbtNote=x.pbt?'Power button held at '+esc(fmtTime(x.pbt))+(x.pbt.toISOString().slice(0,10)!==dk?' on '+esc(fmtDay(x.pbt.toISOString().slice(0,10))):'')+'\n':'';
-    const detail=pbtNote+'Source: '+esc(x.src)+
-      (!bcLabel&&!x.pbt?'\nLikely a power loss, hard reset, or hang.':'');
-    h+='<div class="row"><span class="time mono">'+fmtTime(x.d)+'</span>'+
-      '<span class="dot d-'+cat+'"></span>'+
-      '<span class="title">'+title+'</span>'+
-      '<div class="msg mono">'+detail+'</div></div>';
+  merged.forEach(x=>{
+    x.when=x.crash||x.d;
+    x.bcLabel=x.bc?('0x'+parseInt(x.bc).toString(16).toUpperCase()+(BC_NAMES[x.bc]?' '+BC_NAMES[x.bc]:'')):'';
+    x.cause=x.bcLabel?'Blue screen (Windows crashed with a stop code)':x.pbt?'Forced off by holding the power button':'Power loss, hard reset, or a full system hang';
+    x.dump=DUMPS.find(dm=>{const dd=parseDate(dm.d+':00');return dd&&Math.abs(dd-x.when)<2*60*1000;})||null;
   });
-  h+='</div>';
-  v.innerHTML=h;
-  v.querySelectorAll('.row').forEach(r=>r.onclick=(e)=>{ if(e.target.closest('.msg')||hasTextSelection())return; r.classList.toggle('open'); });
-  v.querySelectorAll('.row .msg').forEach(m=>m.onclick=e=>e.stopPropagation());
+  SHUTS_=merged;
+  return merged;
+}
+function shutFactsHtml(x){
+  const sameDay=(a,b)=>a.toDateString()===b.toDateString();
+  const rows=[];
+  const fullTime=d=>d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  rows.push(['Went down',esc(fullTime(x.when))+' \u00b7 '+esc(fmtDay(x.when.toISOString().slice(0,10)))+(x.crash?'':' <span class="sf-dim">(time Windows logged it after restarting)</span>')]);
+  if(x.crash)rows.push(['Logged',esc(fmtTime(x.d))+(sameDay(x.d,x.when)?'':' on '+esc(fmtDay(x.d.toISOString().slice(0,10))))+' <span class="sf-dim">when Windows next started</span>']);
+  rows.push(['Crash code',x.bcLabel?'<span class="sf-err">'+esc(x.bcLabel)+'</span>':'None recorded']);
+  if(x.pbt)rows.push(['Power button','Held at '+esc(fmtTime(x.pbt))]);
+  rows.push(['Likely cause',esc(x.cause)]);
+  if(x.dump)rows.push(['Memory dump','<a onclick="event.stopPropagation();return goTab(\'dumps\')">'+esc(x.dump.n)+'</a>']);
+  rows.push(['Recorded by',[x.rel?'Reliability history (6008)':'',(x.kp||x.sys)?'System log ('+[x.sys?'6008':'',x.kp?'Kernel-Power 41':''].filter(Boolean).join(', ')+')':''].filter(Boolean).join(' + ')]);
+  return '<div class="shut-facts">'+rows.map(r=>'<div class="sf-k">'+r[0]+'</div><div class="sf-v">'+r[1]+'</div>').join('')+
+    '<div class="sf-k"></div><div class="sf-v"><a onclick="event.stopPropagation();return goFaq(\'unexpected-shutdown\')">What causes unexpected shutdowns \u2192</a></div></div>';
 }
 function renderSecurity(){
   const v=document.getElementById('securityView');
   const sp=parseSpecs(SPECS);
   const tpmStatus=specVal(sp.info,'TPM Status'), tpmVersion=specVal(sp.info,'TPM Version');
   const secureBoot=specVal(sp.info,'Secure Boot State'), uac=specVal(sp.info,'UAC');
-  let h='';
-  if(tpmStatus||secureBoot||uac){
-    h+='<div class="spec-section"><h2>Firmware &amp; account security</h2><dl class="kv">';
-    if(tpmStatus)h+='<dt>'+flagLink('tpm','TPM')+'</dt><dd style="color:'+(tpmStatus==='Enabled'?'var(--ok)':'var(--err)')+'">'+esc(tpmStatus)+(tpmVersion?' <span style="color:var(--dim)">('+esc(tpmVersion)+')</span>':'')+'</dd>';
-    if(secureBoot)h+='<dt>'+flagLink('secure-boot','Secure Boot')+'</dt><dd style="color:'+(secureBoot==='Enabled'?'var(--ok)':'var(--warn)')+'">'+esc(secureBoot)+'</dd>';
-    if(uac)h+='<dt>User Account Control (UAC)</dt><dd style="color:'+(uac==='Enabled'?'var(--ok)':'var(--err)')+'">'+esc(uac)+'</dd>';
-    h+='</dl></div>';
-  }
-  if(!SECURITY){
-    if(!h)v.innerHTML='<div class="spec-section"><h2>Security</h2><div style="color:var(--faint)">No security data embedded.</div></div>';
-    else v.innerHTML=h;
+  const d=SECURITY&&SECURITY.defender;
+
+  if(!SECURITY&&!tpmStatus&&!secureBoot&&!uac){
+    v.innerHTML='<div class="dp-head"><div class="dp-crumb"><span class="crumb">Software <span class="material-symbols-outlined" style="font-size:16px">chevron_right</span> <b>Security</b></span></div>'+
+      '<div class="dp-title-row"><div><div class="dp-title">Security</div></div></div></div>'+
+      '<div class="dp-body" style="grid-template-columns:1fr"><div class="dp-card"><div class="dp-empty">No security data embedded.</div></div></div>';
     return;
   }
-  if(SECURITY.avProducts&&SECURITY.avProducts.length){
-    h+='<div class="spec-section"><h2>Antivirus</h2><dl class="kv">';
-    SECURITY.avProducts.forEach(a=>{
-      h+='<dt>'+esc(a.name)+'</dt><dd style="color:'+(a.enabled?'var(--ok)':'var(--dim)')+'">'+(a.enabled?'Active':'Inactive')+'</dd>';
-    });
-    h+='</dl></div>';
-  }
-  if(SECURITY.firewallProducts&&SECURITY.firewallProducts.length){
-    h+='<div class="spec-section"><h2>Third-party firewall software</h2><dl class="kv">';
-    SECURITY.firewallProducts.forEach(a=>{
-      h+='<dt>'+esc(a.name)+'</dt><dd style="color:'+(a.enabled?'var(--ok)':'var(--dim)')+'">'+(a.enabled?'Active':'Inactive')+'</dd>';
-    });
-    h+='</dl></div>';
-  }
-  const d=SECURITY.defender;
+
+  // --- posture strip: only shown when the underlying data exists ---
+  const posture=[];
   if(d){
-    h+='<div class="spec-section"><h2>Windows Defender</h2><dl class="kv">';
-    h+='<dt>Real-time protection</dt><dd style="color:'+(d.rtp==='True'?'var(--ok)':'var(--err)')+'">'+(d.rtp==='True'?'Enabled':'Disabled')+'</dd>';
-    if(d.lastQuick)h+='<dt>Last quick scan</dt><dd>'+esc(d.lastQuick)+'</dd>';
-    if(d.lastFull)h+='<dt>Last full scan</dt><dd>'+esc(d.lastFull)+'</dd>';
-    if(d.sigAge)h+='<dt>Signature age</dt><dd>'+esc(d.sigAge)+' day'+(d.sigAge==='1'?'':'s')+'</dd>';
-    if(d.sigVersion)h+='<dt>Security intelligence version</dt><dd class="mono">'+esc(d.sigVersion)+'</dd>';
-    h+='</dl></div>';
+    const rtpOn=d.rtp==='True';
+    posture.push({cls:rtpOn?'':'err',icon:rtpOn?'verified_user':'gpp_bad',title:'Real-time protection',sub:rtpOn?'Enabled':'Disabled'});
   }
-  if(SECURITY.firewall&&SECURITY.firewall.length){
-    h+='<div class="spec-section"><h2>Firewall</h2><dl class="kv">';
-    SECURITY.firewall.forEach(f=>{h+='<dt>'+esc(f.profile)+'</dt><dd style="color:'+(f.enabled==='True'?'var(--ok)':'var(--err)')+'">'+(f.enabled==='True'?'Enabled':'Disabled')+'</dd>';});
-    h+='</dl></div>';
+  if(SECURITY&&SECURITY.firewall&&SECURITY.firewall.length){
+    const onCount=SECURITY.firewall.filter(f=>f.enabled==='True').length;
+    const allOn=onCount===SECURITY.firewall.length;
+    posture.push({cls:allOn?'':(onCount>0?'warn':'err'),icon:allOn?'verified_user':'gpp_maybe',title:'Firewall',sub:allOn?'All '+SECURITY.firewall.length+' profiles on':onCount+' of '+SECURITY.firewall.length+' profiles on'});
   }
-  if(SECURITY.rdp||SECURITY.acctType){
-    h+='<div class="spec-section"><h2>Remote Desktop (RDP)</h2><dl class="kv">';
-    if(SECURITY.acctType)h+='<dt>Signed-in account</dt><dd>'+esc(SECURITY.acctType)+'</dd>';
+  if(SECURITY&&SECURITY.rdp){
+    const rdpOn=!!SECURITY.rdp.enabled;
+    posture.push({cls:rdpOn?'warn':'',icon:'desktop_windows',title:'Remote Desktop',sub:rdpOn?'Enabled':'Disabled'});
+  }
+  if(SECURITY&&SECURITY.bitlocker&&SECURITY.bitlocker.length){
+    const onCount=SECURITY.bitlocker.filter(b=>b.status==='On').length;
+    const allOn=onCount===SECURITY.bitlocker.length, allOff=onCount===0;
+    posture.push({cls:allOn?'':'',icon:allOn?'lock':'lock_open',title:'BitLocker',sub:allOn?'On for all volumes':allOff?'Off on all volumes':onCount+' of '+SECURITY.bitlocker.length+' volumes on'});
+  }
+  if(SECURITY&&SECURITY.exclusions&&SECURITY.exclusions.length){
+    const riskyCount=(SECURITY.exclFlags||[]).length;
+    posture.push({cls:riskyCount?'warn':'',icon:riskyCount?'rule_folder':'folder_off',title:'Exclusions',sub:riskyCount?riskyCount+' risky of '+SECURITY.exclusions.length:SECURITY.exclusions.length+' entries, none flagged'});
+  }
+
+  // --- overall status line, top-right of the header ---
+  let critCount=0,warnCount=0;
+  if(d&&d.rtp!=='True')critCount++;
+  if(SECURITY&&SECURITY.rdp&&SECURITY.rdp.enabled){warnCount++; if(SECURITY.rdp.nlaRequired===false)warnCount++;}
+  if(SECURITY&&SECURITY.exclFlags&&SECURITY.exclFlags.length)warnCount++;
+  if(SECURITY&&SECURITY.hostsFlags&&SECURITY.hostsFlags.length)warnCount++;
+  if(SECURITY&&SECURITY.startupFlags&&SECURITY.startupFlags.length)warnCount++;
+  if(SECURITY&&SECURITY.avProducts&&SECURITY.avProducts.filter(a=>a.enabled).length>1)warnCount++;
+  if(tpmStatus&&tpmStatus!=='Enabled')critCount++;
+  if(secureBoot&&secureBoot!=='Enabled')warnCount++;
+  const statusCls=critCount?'err':(warnCount?'warn':'ok');
+  const statusText=critCount?critCount+' error'+(critCount===1?'':'s')+', '+warnCount+' warning'+(warnCount===1?'':'s')+' here':(warnCount?warnCount+' warning'+(warnCount===1?'':'s')+' here':'No problems found');
+  const secBadgeEl=document.getElementById('securityTabBadge');
+  if(secBadgeEl){ const bc=critCount+warnCount; if(bc){secBadgeEl.textContent=bc;secBadgeEl.style.display='';} else {secBadgeEl.style.display='none';} }
+
+  let h='<div class="dp-head"><div class="dp-crumb"><span class="crumb">Software <span class="material-symbols-outlined" style="font-size:16px">chevron_right</span> <b>Security</b></span>'+
+    '<div class="dp-actions"><div class="m3-btn" id="copySecurityBtn"><span class="material-symbols-outlined" style="font-size:18px">content_copy</span>Copy</div></div></div>'+
+    '<div class="dp-title-row"><div><div class="dp-title">Security</div><div class="dp-sub">Protection state, remote access and what has been excluded from scanning</div></div>'+
+    '<div class="dp-status '+statusCls+'"><span class="status-dot"></span>'+esc(statusText)+'</div></div></div>';
+
+  if(posture.length){
+    h+='<div class="dp-posture" style="grid-template-columns:repeat('+posture.length+',1fr)">'+posture.map(p=>
+      '<div class="dp-posture-card '+p.cls+'"><span class="material-symbols-outlined" style="color:'+(p.cls==='err'?'var(--err)':p.cls==='warn'?'var(--warn)':p.cls===''&&(p.icon==='verified_user'||p.icon==='lock')?'var(--ok)':'var(--faint)')+'">'+p.icon+'</span>'+
+      '<div><div class="dp-posture-t">'+esc(p.title)+'</div><div class="dp-posture-s">'+esc(p.sub)+'</div></div></div>'
+    ).join('')+'</div>';
+  }
+
+  const cards=[];
+  if(tpmStatus||secureBoot||uac){
+    let c='<div class="dp-card"><div class="dp-card-head"><div class="dp-card-title">Firmware &amp; account security</div></div><div class="dp-kv">';
+    if(tpmStatus)c+='<dt>'+flagLink('tpm','TPM')+'</dt><dd style="color:'+(tpmStatus==='Enabled'?'var(--ok)':'var(--err)')+'">'+esc(tpmStatus)+(tpmVersion?' <span style="color:var(--faint)">('+esc(tpmVersion)+')</span>':'')+'</dd>';
+    if(secureBoot)c+='<dt>'+flagLink('secure-boot','Secure Boot')+'</dt><dd style="color:'+(secureBoot==='Enabled'?'var(--ok)':'var(--warn)')+'">'+esc(secureBoot)+'</dd>';
+    if(uac)c+='<dt>User Account Control (UAC)</dt><dd style="color:'+(uac==='Enabled'?'var(--ok)':'var(--err)')+'">'+esc(uac)+'</dd>';
+    cards.push(c+'</div></div>');
+  }
+  if(SECURITY&&SECURITY.avProducts&&SECURITY.avProducts.length){
+    let c='<div class="dp-card"><div class="dp-card-head"><div class="dp-card-title">Antivirus</div><span class="dp-card-count">'+SECURITY.avProducts.length+' product'+(SECURITY.avProducts.length===1?'':'s')+'</span></div>';
+    SECURITY.avProducts.forEach(a=>{c+='<div class="dp-row"><div class="dp-row-label">'+esc(a.name)+'</div><div class="dp-row-val" style="color:'+(a.enabled?'var(--ok)':'var(--faint)')+'">'+(a.enabled?'Active':'Inactive')+'</div></div>';});
+    const activeCount=SECURITY.avProducts.filter(a=>a.enabled).length;
+    if(activeCount>1)c+='<div class="dp-banner"><span class="material-symbols-outlined">warning</span><div class="dp-banner-text">Two real-time engines active at once</div></div>';
+    cards.push(c+'</div>');
+  }
+  if(d){
+    let c='<div class="dp-card"><div class="dp-card-head"><div class="dp-card-title">Windows Defender</div></div><div class="dp-kv">';
+    c+='<dt>Real-time protection</dt><dd style="color:'+(d.rtp==='True'?'var(--ok)':'var(--err)')+'">'+(d.rtp==='True'?'Enabled':'Disabled')+'</dd>';
+    if(d.lastQuick)c+='<dt>Last quick scan</dt><dd>'+esc(d.lastQuick)+'</dd>';
+    if(d.lastFull)c+='<dt>Last full scan</dt><dd>'+esc(d.lastFull)+'</dd>';
+    if(d.sigAge)c+='<dt>Signature age</dt><dd>'+esc(d.sigAge)+' day'+(d.sigAge==='1'?'':'s')+'</dd>';
+    if(d.sigVersion)c+='<dt>Security intelligence</dt><dd class="mono">'+esc(d.sigVersion)+'</dd>';
+    cards.push(c+'</div></div>');
+  }
+  if(SECURITY&&SECURITY.firewall&&SECURITY.firewall.length){
+    let c='<div class="dp-card"><div class="dp-card-head"><div class="dp-card-title">Firewall</div></div>';
+    SECURITY.firewall.forEach(f=>{c+='<div class="dp-row"><div class="dp-row-label">'+esc(f.profile)+'</div><div class="dp-row-val" style="color:'+(f.enabled==='True'?'var(--ok)':'var(--err)')+'">'+(f.enabled==='True'?'Enabled':'Disabled')+'</div></div>';});
+    cards.push(c+'</div>');
+  }
+  if(SECURITY&&(SECURITY.rdp||SECURITY.acctType)){
+    let c='<div class="dp-card"><div class="dp-card-head"><div class="dp-card-title">Remote Desktop (RDP)</div></div><div class="dp-kv">';
+    if(SECURITY.acctType)c+='<dt>Signed-in account</dt><dd>'+esc(SECURITY.acctType)+'</dd>';
+    let bannerText='';
     if(SECURITY.rdp){
       const r=SECURITY.rdp;
-      h+='<dt>Status</dt><dd style="color:'+(r.enabled?'var(--warn)':'var(--ok)')+'">'+(r.enabled?'Enabled':'Disabled')+'</dd>';
+      c+='<dt>Status</dt><dd style="color:'+(r.enabled?'var(--warn)':'var(--ok)')+'">'+(r.enabled?'Enabled':'Disabled')+'</dd>';
       if(r.enabled){
-        h+='<dt>Service</dt><dd>'+esc(r.serviceStatus)+'</dd>';
-        if(r.nlaRequired!==null)h+='<dt>Network Level Authentication</dt><dd style="color:'+(r.nlaRequired?'var(--ok)':'var(--err)')+'">'+(r.nlaRequired?'Required':'Not required')+'</dd>';
+        if(r.nlaRequired!==null)c+='<dt>Network Level Authentication</dt><dd style="color:'+(r.nlaRequired?'var(--ok)':'var(--warn)')+'">'+(r.nlaRequired?'Required':'Not required')+'</dd>';
+        if(!r.nlaRequired&&/local admin/i.test(SECURITY.acctType||''))bannerText='Reachable without NLA, on a local admin account';
+        else if(!r.nlaRequired)bannerText='Reachable without Network Level Authentication';
       }
     }
-    h+='</dl></div>';
+    c+='</div>';
+    if(bannerText)c+='<div class="dp-banner"><span class="material-symbols-outlined">warning</span><div class="dp-banner-text">'+esc(bannerText)+'</div></div>';
+    cards.push(c+'</div>');
   }
-  if(SECURITY.bitlocker&&SECURITY.bitlocker.length){
-    h+='<div class="spec-section"><h2>BitLocker</h2><dl class="kv">';
+  if(SECURITY&&SECURITY.bitlocker&&SECURITY.bitlocker.length){
+    let c='<div class="dp-card"><div class="dp-card-head"><div class="dp-card-title">BitLocker</div><span class="dp-card-count">'+SECURITY.bitlocker.length+' volume'+(SECURITY.bitlocker.length===1?'':'s')+'</span></div>';
     SECURITY.bitlocker.forEach(b=>{
       const on=b.status==='On';
-      h+='<dt>'+esc(b.drive||'?')+(b.type?' <span style="color:var(--dim);font-weight:400">('+esc(b.type)+')</span>':'')+'</dt>'+
-        '<dd style="color:'+(on?'var(--ok)':'var(--err)')+'">'+(on?'Enabled':'Disabled')+'</dd>';
+      c+='<div class="dp-row"><div class="dp-row-label">'+esc(b.drive||'?')+(b.type?' <span style="color:var(--faint)">('+esc(b.type)+')</span>':'')+'</div><div class="dp-row-val" style="color:'+(on?'var(--ok)':'var(--faint)')+'">'+(on?'On':'Off')+'</div></div>';
     });
-    h+='</dl></div>';
+    cards.push(c+'</div>');
   }
-  if(SECURITY.threats&&SECURITY.threats.length){
-    h+='<div class="spec-section"><h2>Threat detections ('+SECURITY.threats.length+')</h2><dl class="kv">';
-    SECURITY.threats.forEach(t=>{h+='<dt>'+esc(t.time)+'</dt><dd>'+esc(t.name)+(t.act==='True'?' <span style="color:var(--ok)">(action successful)</span>':' <span style="color:var(--err)">(action failed)</span>')+'</dd>';});
-    h+='</dl></div>';
-  } else if(d) {
-    h+='<div class="spec-section"><h2>Threat detections</h2><div style="color:var(--ok)">\u2713 No threats recorded by Windows Defender.</div></div>';
+  if(SECURITY&&SECURITY.threats&&SECURITY.threats.length){
+    let c='<div class="dp-card"><div class="dp-card-head"><div class="dp-card-title">Threat detections</div><span class="dp-card-count">'+SECURITY.threats.length+'</span></div>';
+    SECURITY.threats.forEach(t=>{c+='<div class="dp-row"><div class="dp-row-label">'+esc(t.name)+' <span style="color:var(--faint)">'+esc(t.time)+'</span></div><div class="dp-row-val" style="color:'+(t.act==='True'?'var(--ok)':'var(--err)')+'">'+(t.act==='True'?'Action successful':'Action failed')+'</div></div>';});
+    cards.push(c+'</div>');
+  } else if(d){
+    cards.push('<div class="dp-card"><div class="dp-card-head"><div class="dp-card-title">Threat detections</div></div><div class="dp-empty" style="color:var(--ok)">\u2713 No threats recorded by Windows Defender.</div></div>');
   }
-  if(SECURITY.exclFlags&&SECURITY.exclFlags.length){
-    h+='<div class="spec-section"><h2>Defender exclusion alerts</h2><ul class="notes">'+SECURITY.exclFlags.map(f=>'<li><span class="y">'+esc(f)+'</span></li>').join('')+'</ul></div>';
+  if(SECURITY&&SECURITY.exclusions&&SECURITY.exclusions.length){
+    const flagged=SECURITY.exclFlags||[];
+    let c='<div class="dp-card"><div class="dp-card-head"><div class="dp-card-title">Defender exclusions</div><span class="dp-card-count">'+SECURITY.exclusions.length+' entr'+(SECURITY.exclusions.length===1?'y':'ies')+'</span></div>';
+    if(flagged.length)c+='<div class="dp-card-note">Anything listed here is not scanned. '+flagged.length+' entr'+(flagged.length===1?'y was':'ies were')+' flagged as risky.</div>';
+    c+='<div style="display:flex;flex-direction:column;gap:8px">';
+    flagged.slice(0,6).forEach(f=>{c+='<div class="dp-flag-row"><span class="material-symbols-outlined">warning</span><span class="mono">'+esc(f)+'</span></div>';});
+    const shown=Math.min(6,flagged.length);
+    const restCount=SECURITY.exclusions.length-shown;
+    if(restCount>0)c+='<div class="dp-plain-row">'+restCount+' more exclusion'+(restCount===1?'':'s')+'</div>';
+    cards.push(c+'</div></div>');
   }
-  if(SECURITY.exclusions&&SECURITY.exclusions.length){
-    h+='<div class="spec-section"><h2>Defender Exclusions ('+SECURITY.exclusions.length+')</h2><div style="color:var(--dim);font-size:14px;line-height:1.8">'+SECURITY.exclusions.map(esc).join('<br>')+'</div></div>';
+  if(typeof (SECURITY&&SECURITY.hostsCustom)==='number'){
+    const flags=SECURITY.hostsFlags||[];
+    let c='<div class="dp-card"><div class="dp-card-head"><div class="dp-card-title">Hosts file</div></div><div class="dp-card-note">'+SECURITY.hostsCustom+' custom entr'+(SECURITY.hostsCustom===1?'y':'ies')+' found'+(flags.length?'.':', none flagged.')+'</div>';
+    if(flags.length){
+      c+='<div style="display:flex;flex-direction:column;gap:8px">';
+      flags.forEach(f=>{c+='<div class="dp-flag-row"><span class="material-symbols-outlined">warning</span><span class="mono">'+esc(f)+'</span></div>';});
+      c+='</div>';
+    }
+    cards.push(c+'</div>');
   }
-  if(SECURITY.hostsFlags&&SECURITY.hostsFlags.length){
-    h+='<div class="spec-section"><h2>Hosts file</h2><div style="color:var(--dim);font-size:14px;margin-bottom:8px">'+SECURITY.hostsCustom+' custom entr'+(SECURITY.hostsCustom===1?'y':'ies')+' found.</div><ul class="notes">'+SECURITY.hostsFlags.map(f=>'<li><span class="y">'+esc(f)+'</span></li>').join('')+'</ul></div>';
-  } else if(typeof SECURITY.hostsCustom==='number'){
-    h+='<div class="spec-section"><h2>Hosts file</h2><div style="color:var(--dim);font-size:14px">'+SECURITY.hostsCustom+' custom entr'+(SECURITY.hostsCustom===1?'y':'ies')+' found, none flagged.</div></div>';
+  if(SECURITY&&SECURITY.startupFlags&&SECURITY.startupFlags.length){
+    let c='<div class="dp-card"><div class="dp-card-head"><div class="dp-card-title">Startup entries flagged</div><span class="dp-card-count">'+SECURITY.startupFlags.length+'</span></div>'+
+      '<div class="dp-card-note">No publisher, or launching from a temporary location.</div><div style="display:flex;flex-direction:column;gap:8px">';
+    SECURITY.startupFlags.forEach(f=>{c+='<div class="dp-plain-row mono">'+esc(f)+'</div>';});
+    cards.push(c+'</div></div>');
   }
-  if(SECURITY.startupFlags&&SECURITY.startupFlags.length){
-    h+='<div class="spec-section"><h2>Startup entries flagged</h2><ul class="notes">'+SECURITY.startupFlags.map(f=>'<li><span class="y">'+esc(f)+'</span></li>').join('')+'</ul></div>';
+  if(SECURITY&&SECURITY.firewallProducts&&SECURITY.firewallProducts.length){
+    let c='<div class="dp-card"><div class="dp-card-head"><div class="dp-card-title">Third-party firewall software</div></div>';
+    SECURITY.firewallProducts.forEach(a=>{c+='<div class="dp-row"><div class="dp-row-label">'+esc(a.name)+'</div><div class="dp-row-val" style="color:'+(a.enabled?'var(--ok)':'var(--faint)')+'">'+(a.enabled?'Active':'Inactive')+'</div></div>';});
+    cards.push(c+'</div>');
   }
-  v.innerHTML=h||'<div class="spec-section"><h2>Security</h2><div style="color:var(--faint)">No security data embedded.</div></div>';
+
+  h+='<div class="dp-body">'+(cards.length?cards.join(''):'<div class="dp-card"><div class="dp-empty">No security data embedded.</div></div>')+'</div>';
+  v.innerHTML=h;
+  const copyBtn=document.getElementById('copySecurityBtn');
+  if(copyBtn)copyBtn.onclick=()=>{
+    const txt=v.textContent.replace(/\s*\n\s*/g,'\n').trim();
+    const done=()=>{const old=copyBtn.innerHTML;copyBtn.innerHTML='<span class="material-symbols-outlined" style="font-size:18px">check</span>Copied';setTimeout(()=>{copyBtn.innerHTML=old;},1500);};
+    if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(txt).then(done).catch(()=>{});
+    else{const ta=document.createElement('textarea');ta.value=txt;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);done();}
+  };
 }
 function renderGPU(){
   const v=document.getElementById('gpuView');
   if(!GPUS.length && !DISPLAYS.length){
-    v.innerHTML='<div class="spec-section"><h2>Graphics</h2><div style="color:var(--faint)">No GPU data embedded.</div></div>';
+    v.innerHTML='<div class="dp-head"><div class="dp-crumb"><span class="crumb">Hardware <span class="material-symbols-outlined" style="font-size:16px">chevron_right</span> <b>Graphics</b></span></div>'+
+      '<div class="dp-title-row"><div><div class="dp-title">Graphics (GPU)</div></div></div></div>'+
+      '<div class="dp-content"><div class="dp-card"><div class="dp-empty">No GPU data embedded.</div></div></div>';
     return;
   }
 
@@ -1962,154 +2816,126 @@ function renderGPU(){
     if(igpuActive&&!dgpuActive)mismatchActive='igpu';
   }
 
-  const svgW=680,margin=20,boxGap=20,rowGap=56;
-  const idealW=280,minW=160;
-  const vramMax=Math.max(1,...GPUS.map(g=>g.vram||0));
+  // Same layout vocabulary as Memory/Storage: title with the headline part, stat tiles, then one
+  // card per adapter and per display. Which GPU drives which display is shown on the cards
+  // ("Driving" / "Connected to") rather than a separate diagram.
+  const basicRe=g=>/root\\basic(display|render)/i.test(g.pnp||'')||/microsoft basic (display|render)/i.test(g.name);
+  const basicGpu=GPUS.find(basicRe);
+  const gpuState=g=>{
+    if(basicRe(g))return {cls:'err',label:'Generic driver'};
+    if(mismatchActive==='igpu'&&g.name===igpu.name)return {cls:'warn',label:'Wrong port'};
+    if(byGpu[g.name]||g.hres>0)return {cls:'ok',label:'Active'};
+    return {cls:'plain',label:'Idle'};
+  };
+  const primary=(dgpu&&GPUS.includes(dgpu))?dgpu:GPUS[0];
+  const drvPlain=g=>g&&g.drv?friendlyDriver(g.name,g.drv,g.radeon||'').replace(/\s*<span[^>]*>.*<\/span>/,''):'';
+  const drvAge=g=>{if(!g||!g.driverDate)return null;const d=new Date(g.driverDate);return isNaN(d)?null:Math.floor((Date.now()-d)/86400000);};
+  const ageTxt=n=>n==null?'':n<31?n+' day'+(n===1?'':'s')+' old':n<365?Math.floor(n/30)+' month'+(Math.floor(n/30)===1?'':'s')+' old':Math.floor(n/365)+' year'+(Math.floor(n/365)===1?'':'s')+' old';
 
-  // Lays out n boxes of a shared width in a single centered horizontal row, shrinking
-  // below idealW only if they wouldn't otherwise fit within the diagram's width.
-  function rowLayout(n){
-    if(!n)return {boxW:idealW,x:[]};
-    const boxW=Math.min(idealW,Math.max(minW,Math.floor((svgW-2*margin-(n-1)*boxGap)/n)));
-    const totalW=n*boxW+(n-1)*boxGap;
-    const startX=margin+(svgW-2*margin-totalW)/2;
-    const x=Array.from({length:n},(_,i)=>startX+i*(boxW+boxGap));
-    return {boxW,x};
-  }
+  const gpuSubParts=[GPUS.length?GPUS.length+' adapter'+(GPUS.length===1?'':'s'):'',displays.length?displays.length+' display'+(displays.length===1?'':'s'):''].filter(Boolean);
+  const issues=(mismatchActive?1:0)+(basicGpu?1:0);
+  const gpuStatusCls=basicGpu?'err':mismatchActive?'warn':'ok';
+  const gpuBadgeEl=document.getElementById('gpuTabBadge');
+  if(gpuBadgeEl){ if(issues){gpuBadgeEl.textContent=issues;gpuBadgeEl.className='tab-badge'+(basicGpu?'':' warn');gpuBadgeEl.style.display='';} else {gpuBadgeEl.style.display='none';} }
+  const gpuStatusText=issues?issues+' warning'+(issues>1?'s':'')+' on this component':'No problems found';
+  const gpuTitle='Graphics (GPU)'+(primary?' '+primary.name.replace(/^NVIDIA\s+/i,'NVIDIA ').trim():'');
 
-  const gpuLayout=rowLayout(GPUS.length);
-  const gpuBoxW=gpuLayout.boxW;
-  const titleMaxW=gpuBoxW-44-14;
-  const gpuInfo=GPUS.map(g=>{
-    const titleLines=wrapText(g.name,titleMaxW,15,{bold:true},2);
-    const titleBlockEnd=23+(titleLines.length-1)*17;
-    const statusY=titleBlockEnd+17;
-    const driverY=statusY+21;
-    const barY=driverY+11;
-    const height=barY+19;
-    return {titleLines,statusY,driverY,barY,height};
-  });
-  const gpuRowY=24;
-  const gpuRowH=gpuInfo.length?Math.max(...gpuInfo.map(i=>i.height)):0;
+  let h='<div class="dp-head"><div class="dp-crumb"><span class="crumb">Hardware <span class="material-symbols-outlined" style="font-size:16px">chevron_right</span> <b>Graphics</b></span>'+
+    '<div class="dp-actions"><div class="m3-btn" id="copyGpuBtn"><span class="material-symbols-outlined" style="font-size:18px">content_copy</span>Copy</div></div></div>'+
+    '<div class="dp-title-row"><div><div class="dp-title">'+esc(gpuTitle)+'</div><div class="dp-sub">'+esc(gpuSubParts.join(' \u00b7 '))+'</div></div>'+
+    '<div class="dp-status '+gpuStatusCls+'"><span class="status-dot"></span>'+esc(gpuStatusText)+'</div></div></div>';
 
-  const monCount=displays.length+unmatchedMons.length;
-  const monLayout=rowLayout(monCount);
-  const monBoxW=monLayout.boxW;
-  const monTitleMaxW=monBoxW-42-14;
-  const MON_H=76;
-  const monRowY=gpuRowY+gpuRowH+rowGap;
-  // Unmatched (EDID-only) monitors share the same row/x-positions as normal ones, just
-  // appended after them, since there's no GPU to group them under.
-  const monX=monLayout.x.slice(0,displays.length);
-  const unmatchedX=monLayout.x.slice(displays.length);
-
-  const svgH=monRowY+MON_H+24;
-
-  let defs='<defs><marker id="gfxDot" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="5" markerHeight="5"><circle cx="5" cy="5" r="4" fill="context-stroke"/></marker></defs>';
-  let svg='<svg width="100%" viewBox="0 0 '+svgW+' '+svgH+'" style="max-width:'+svgW+'px;height:auto;display:block" role="img"><title>GPU to display connections</title>'+defs;
-
-  displays.forEach((d,di)=>{
-    const gi=GPUS.findIndex(g=>g.name===d.gpu);
-    if(gi===-1)return;
-    const x1=gpuLayout.x[gi]+gpuBoxW/2,y1=gpuRowY+gpuInfo[gi].height;
-    const x2=monX[di]+monBoxW/2,y2=monRowY;
-    const isWarn=mismatchActive==='igpu'&&d.gpu===igpu.name;
-    const stroke=isWarn?'var(--warn)':'var(--ok)';
-    svg+='<line x1="'+x1+'" y1="'+y1+'" x2="'+x2+'" y2="'+y2+'" stroke="'+stroke+'" stroke-width="2" marker-end="url(#gfxDot)"/>';
-  });
-  if(mismatchActive==='igpu'){
-    const gi=GPUS.findIndex(g=>g.name===dgpu.name);
-    const x1=gpuLayout.x[gi]+gpuBoxW/2,y1=gpuRowY+gpuInfo[gi].height;
-    const x2=monX[0]+monBoxW/2,y2=monRowY;
-    svg+='<line x1="'+x1+'" y1="'+y1+'" x2="'+x2+'" y2="'+y2+'" stroke="var(--faint)" stroke-width="1.5" stroke-dasharray="4 5" opacity="0.5"/>';
-  }
-
-  GPUS.forEach((g,i)=>{
-    const x=gpuLayout.x[i],y=gpuRowY,info=gpuInfo[i];
-    // dxdiag's per-output display mapping (DISPLAYS/byGpu) is the primary signal, but it can come
-    // back empty on some systems even with a monitor clearly attached and running - fall back to
-    // the GPU's own WMI-reported resolution (hres>0) in that case, same fallback already used for
-    // the equivalent check on the Summary tab, so a healthy connected GPU doesn't show as "Idle".
-    const active=!!byGpu[g.name]||g.hres>0;
-    const isWarnNode=mismatchActive==='igpu'&&g.name===igpu.name;
-    const stroke=isWarnNode?'var(--warn)':(active?'var(--ok)':'var(--line)');
-    const iconColor=isWarnNode?'var(--warn)':(active?'var(--ok)':'var(--faint)');
-    const vramPct=g.vram?Math.min(100,Math.round((g.vram/vramMax)*100)):0;
-    const statusLabel=isWarnNode?'Wrong port':(active?'Active':'Idle');
-    const statusColor=isWarnNode?'var(--warn)':(active?'var(--ok)':'var(--faint)');
-    const friendly=g.drv?friendlyDriver(g.name,g.drv,g.radeon||'').replace(/\s*<span[^>]*>.*<\/span>/,''):'';
-    const driverStr='Driver: '+(friendly||g.drv||'unknown')+(g.driverDate?' ('+fmtDay(g.driverDate)+')':'')+(g.vram?' \u00b7 '+g.vram+' GB VRAM':'');
-    const barW=gpuBoxW-44-60;
-    const titleTspans=info.titleLines.map((line,li)=>'<tspan x="'+(x+44)+'" dy="'+(li===0?0:17)+'">'+line+'</tspan>').join('');
-
-    svg+='<g class="gfx-node">'+
-      '<rect x="'+x+'" y="'+y+'" width="'+gpuBoxW+'" height="'+info.height+'" rx="12" fill="var(--panel2)" stroke="'+stroke+'" stroke-width="1.25"/>'+
-      '<svg x="'+(x+14)+'" y="'+(y+14)+'" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="'+iconColor+'" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="11" rx="2"/><circle cx="8" cy="11.5" r="2"/><circle cx="15" cy="11.5" r="2"/><line x1="5" y1="17" x2="5" y2="20"/><line x1="9" y1="17" x2="9" y2="20"/><line x1="21" y1="9" x2="23" y2="9"/><line x1="21" y1="13" x2="23" y2="13"/></svg>'+
-      '<text font-size="15" font-weight="600" fill="var(--text)" y="'+(y+23)+'">'+titleTspans+'</text>'+
-      '<text x="'+(x+44)+'" y="'+(y+info.statusY)+'" font-size="12.5" font-weight="600" fill="'+statusColor+'">'+statusLabel+'</text>'+
-      '<text class="mono" x="'+(x+44)+'" y="'+(y+info.driverY)+'" font-size="12.5" fill="var(--dim)">'+fitText(driverStr,titleMaxW,12.5,{mono:true})+'</text>'+
-      '<rect x="'+(x+44)+'" y="'+(y+info.barY)+'" width="'+barW+'" height="6" rx="3" fill="var(--panel)"/>'+
-      '<rect x="'+(x+44)+'" y="'+(y+info.barY)+'" width="'+(barW*vramPct/100).toFixed(1)+'" height="6" rx="3" fill="'+iconColor+'" opacity="0.85"/>'+
-      '<text class="mono" x="'+(x+gpuBoxW-14)+'" y="'+(y+info.barY+6)+'" font-size="11.5" fill="var(--faint)" text-anchor="end">'+(g.vram?g.vram+'GB':'?')+'</text>'+
-      '</g>';
-  });
-
-  displays.forEach((d,i)=>{
-    const x=monX[i],y=monRowY;
-    svg+='<g class="gfx-node">'+
-      '<rect x="'+x+'" y="'+y+'" width="'+monBoxW+'" height="'+MON_H+'" rx="12" fill="var(--panel2)" stroke="var(--line)" stroke-width="1.25"/>'+
-      '<svg x="'+(x+14)+'" y="'+(y+12)+'" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--info)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>'+
-      '<text x="'+(x+42)+'" y="'+(y+23)+'" font-size="15" font-weight="600" fill="var(--text)">'+fitText(d.mon||'Display',monTitleMaxW,15,{bold:true})+'</text>'+
-      '<text class="mono" x="'+(x+42)+'" y="'+(y+43)+'" font-size="12" fill="var(--dim)">'+fitText(d.res||'',monTitleMaxW,12,{mono:true})+'</text>'+
-      '<text class="mono" x="'+(x+42)+'" y="'+(y+60)+'" font-size="12" fill="var(--dim)">'+fitText(d.hz||'',monTitleMaxW,12,{mono:true})+'</text>'+
-      '</g>';
-  });
-
-  unmatchedMons.forEach((name,ui)=>{
-    const x=unmatchedX[ui],y=monRowY;
-    svg+='<g class="gfx-node">'+
-      '<rect x="'+x+'" y="'+y+'" width="'+monBoxW+'" height="'+MON_H+'" rx="12" fill="var(--panel2)" stroke="var(--line)" stroke-width="1" stroke-dasharray="4 4" opacity="0.75"/>'+
-      '<svg x="'+(x+14)+'" y="'+(y+12)+'" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--faint)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>'+
-      '<text x="'+(x+42)+'" y="'+(y+23)+'" font-size="14.5" font-weight="600" fill="var(--dim)">'+fitText(name,monTitleMaxW,14.5,{bold:true})+'</text>'+
-      '<text class="mono" x="'+(x+42)+'" y="'+(y+43)+'" font-size="12" fill="var(--faint)">Detected via EDID, GPU unknown</text>'+
-      '</g>';
-  });
-
-  svg+='</svg>';
-
-  let h='<div class="spec-section">'+
-    '<h2 style="margin:0 0 18px">Graphics</h2>'+svg+
-    '<div class="gfx-legend">'+
-    '<span><i style="border-color:var(--ok)"></i>active connection</span>'+
-    '<span><i class="dash" style="border-color:var(--faint)"></i>idle GPU, no display</span>'+
-    '<span><i style="border-color:var(--warn)"></i>active but likely wrong port</span>'+
+  const age=drvAge(primary);
+  const d0=displays[0];
+  h+='<div class="dp-stats">'+
+    '<div class="dp-stat"><div class="dp-stat-l">VRAM</div><div class="dp-stat-v">'+(primary&&primary.vram?primary.vram+'<span class="unit"> GB</span>':'\u2014')+'</div></div>'+
+    '<div class="dp-stat"><div class="dp-stat-l">Driver</div><div class="dp-stat-v"'+(basicGpu?' style="color:var(--err)"':'')+'>'+esc(basicGpu?'Generic':(drvPlain(primary)||'\u2014'))+'</div>'+(primary&&primary.drv&&!basicGpu?'<div class="dp-stat-sub mono">'+esc(primary.drv)+'</div>':'')+'</div>'+
+    '<div class="dp-stat"><div class="dp-stat-l">Driver date</div><div class="dp-stat-v">'+(primary&&primary.driverDate?esc(fmtDay(primary.driverDate)):'\u2014')+'</div>'+(age!=null?'<div class="dp-stat-sub">'+esc(ageTxt(age))+'</div>':'')+'</div>'+
+    '<div class="dp-stat"><div class="dp-stat-l">Displays</div><div class="dp-stat-v">'+(displays.length+unmatchedMons.length)+'</div>'+(d0&&d0.res?'<div class="dp-stat-sub">'+esc(d0.res.replace(/\s*x\s*/i,'\u00d7'))+(d0.hz?' @ '+esc(d0.hz):'')+(displays.length>1?' (primary)':'')+'</div>':'')+'</div>'+
     '</div>';
 
+  h+='<div class="dp-content">';
+  if(basicGpu){
+    h+='<div class="dp-banner err" onclick="return goFaq(\'basic-display-adapter\')" style="margin-top:0"><span class="material-symbols-outlined">error</span>'+
+      '<div class="dp-banner-text">Windows is using the generic Microsoft Basic Display Adapter instead of a real GPU driver</div><span class="dp-banner-link">Explain \u2192</span></div>';
+  }
   if(mismatchActive==='igpu'){
-    h+='<div class="gfx-callout"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--warn)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4"/><path d="M12 17h.01"/><path d="M10.3 3.9L2.4 18a1 1 0 0 0 .9 1.5h17.4a1 1 0 0 0 .9-1.5L13.7 3.9a1 1 0 0 0-1.7 0z"/></svg>'+
-      '<div>Display is connected to the integrated GPU ('+esc(igpu.name)+'), not the dedicated GPU ('+esc(dgpu.name)+'). Move the monitor cable to the graphics card\'s own ports.</div></div>';
+    h+='<div class="dp-banner" onclick="return goFaq(\'wrong-gpu-slot\')" style="margin-top:0"><span class="material-symbols-outlined">warning</span>'+
+      '<div class="dp-banner-text">Display is connected to the integrated GPU ('+esc(igpu.name)+'), not the dedicated '+esc(dgpu.name)+'. Move the monitor cable to the graphics card\u2019s own ports.</div><span class="dp-banner-link">Explain \u2192</span></div>';
   }
 
-  const driverUrls=GPUS.map(g=>({name:g.name,url:gpuDriverUrl(g.name)})).filter(x=>x.url);
-  if(driverUrls.length){
-    h+='<div style="margin-top:14px;display:flex;gap:16px;flex-wrap:wrap">'+
-      driverUrls.map(x=>'<a href="'+x.url+'" target="_blank" rel="noopener" style="color:var(--info);font-size:13.5px">Check '+esc(x.name)+' drivers</a>').join('')+
-      '</div>';
+  if(GPUS.length){
+    h+='<div><div class="dp-section-label">Adapters ('+GPUS.length+')</div><div class="vol-grid">';
+    GPUS.forEach(g=>{
+      const st=gpuState(g);
+      const drives=(byGpu[g.name]||[]).map(d=>d.mon||'Display');
+      const url=gpuDriverUrl(g.name);
+      const a=drvAge(g);
+      h+='<div class="dp-card'+(st.cls==='err'?' vol-card-err':st.cls==='warn'?' vol-card-warn':'')+'"><div class="dp-card-head"><div class="dp-card-title" style="font-size:16px">'+esc(g.name)+'</div>'+
+        '<span class="vol-chip '+st.cls+'">'+esc(st.label)+'</span></div><div class="dp-kv">'+
+        (g.drv?'<dt>Driver</dt><dd>'+friendlyDriver(g.name,g.drv,g.radeon||'')+'</dd>':'')+
+        (g.driverDate?'<dt>Driver date</dt><dd>'+esc(fmtDay(g.driverDate))+(a!=null?' <span style="color:var(--faint)">('+esc(ageTxt(a))+')</span>':'')+'</dd>':'')+
+        (g.vram?'<dt>VRAM</dt><dd>'+esc(g.vram)+' GB</dd>':'')+
+        (g.hres>0?'<dt>Current mode</dt><dd>'+esc(g.hres)+'\u00d7'+esc(g.vres)+(g.hz?' @ '+esc(g.hz)+' Hz':'')+'</dd>':'')+
+        '<dt>Driving</dt><dd>'+(drives.length?esc(drives.join(', ')):'<span style="color:var(--faint)">No display</span>')+'</dd>'+
+        (url?'<dt>Updates</dt><dd><a href="'+url+'" target="_blank" rel="noopener" style="color:var(--info)">Vendor driver page \u2197</a></dd>':'')+
+        '</div></div>';
+    });
+    h+='</div></div>';
+  }
+
+  if(displays.length||unmatchedMons.length){
+    h+='<div><div class="dp-section-label">Displays ('+(displays.length+unmatchedMons.length)+')</div><div class="vol-grid">';
+    displays.forEach(d=>{
+      const conn=((d.mon||'').match(/\((DP|HDMI|DVI|VGA|USB-C|Thunderbolt|eDP|Internal)\)\s*$/i)||[])[1];
+      const name=(d.mon||'Display').replace(/\s*\((DP|HDMI|DVI|VGA|USB-C|Thunderbolt|eDP|Internal)\)\s*$/i,'');
+      const warn=mismatchActive==='igpu'&&d.gpu===igpu.name;
+      h+='<div class="dp-card'+(warn?' vol-card-warn':'')+'"><div class="dp-card-head"><div class="dp-card-title" style="font-size:16px">'+esc(name)+'</div>'+
+        (conn?'<span class="vol-chip plain">'+esc(conn.toUpperCase()==='DP'?'DisplayPort':conn)+'</span>':'')+'</div><div class="dp-kv">'+
+        (d.res?'<dt>Resolution</dt><dd>'+esc(d.res.replace(/\s*x\s*/i,' \u00d7 '))+'</dd>':'')+
+        (d.hz?'<dt>Refresh rate</dt><dd>'+esc(d.hz)+'</dd>':'')+
+        (d.bits?'<dt>Colour depth</dt><dd>'+esc(d.bits)+'-bit</dd>':'')+
+        '<dt>Connected to</dt><dd'+(warn?' style="color:var(--warn)"':'')+'>'+esc(d.gpu)+'</dd>'+
+        '</div></div>';
+    });
+    unmatchedMons.forEach(name=>{
+      h+='<div class="dp-card"><div class="dp-card-head"><div class="dp-card-title" style="font-size:16px">'+esc(name)+'</div></div><div class="dp-kv">'+
+        '<dt>Connected to</dt><dd style="color:var(--faint)">Unknown (detected via EDID only)</dd></div></div>';
+    });
+    h+='</div></div>';
   }
 
   h+='</div>';
   v.innerHTML=h;
+  const copyBtn=document.getElementById('copyGpuBtn');
+  if(copyBtn)copyBtn.onclick=()=>{
+    const txt=v.textContent.replace(/\s*\n\s*/g,'\n').trim();
+    const done=()=>{const old=copyBtn.innerHTML;copyBtn.innerHTML='<span class="material-symbols-outlined" style="font-size:18px">check</span>Copied';setTimeout(()=>{copyBtn.innerHTML=old;},1500);};
+    if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(txt).then(done).catch(()=>{});
+    else{const ta=document.createElement('textarea');ta.value=txt;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);done();}
+  };
 }
 function renderMotherboard(){
   const v=document.getElementById('moboView');
   const sp=parseSpecs(SPECS);
   const mb=specVal(sp.info,'Motherboard'), mbMfr=specVal(sp.info,'Motherboard Manufacturer');
-  if(!mb){v.innerHTML='<div class="spec-section"><h2>Motherboard</h2><div style="color:var(--faint)">No motherboard data embedded.</div></div>';return;}
+  if(!mb){
+    v.innerHTML='<div class="dp-head"><div class="dp-crumb"><span class="crumb">Hardware <span class="material-symbols-outlined" style="font-size:16px">chevron_right</span> <b>Motherboard</b></span></div>'+
+      '<div class="dp-title-row"><div><div class="dp-title">Motherboard</div></div></div></div>'+
+      '<div class="dp-content"><div class="dp-card"><div class="dp-empty">No motherboard data embedded.</div></div></div>';
+    return;
+  }
   const mbClean=((mbMfr||'').replace(/ASUSTeK COMPUTER INC\./i,'ASUS').replace(/Micro-Star International.*/i,'MSI').replace(/Gigabyte Technology.*/i,'Gigabyte')+' '+mb).trim();
   const bver=specVal(sp.info,'BIOS Version');
   const bdate=specVal(sp.info,'BIOS Date');
+  const biosMfr=specVal(sp.info,'BIOS Manufacturer');
+  const firmwareMode=specVal(sp.info,'Firmware Mode');
   const fastBoot=specVal(sp.info,'Fast Boot State');
   const powerPlan=specVal(sp.info,'Active Power Plan');
+  // OEM boards frequently leave the serial number field as an unset placeholder rather than
+  // leaving it blank, so those need filtering out same as an actually-empty value would be.
+  const serialRaw=specVal(sp.info,'Motherboard Serial');
+  const serial=(serialRaw&&!/^(default string|none|to be filled by o\.?e\.?m\.?|not specified|n\/a|0+)$/i.test(serialRaw.trim()))?serialRaw.trim():'';
   // Vendor support sites are single-page apps that get restructured often (MSI's own
   // "/Search?searchKeyword=" link 404s as of 2026, and ASUS's has since moved behind a region
   // prefix) - hard-coding another guessed URL just sets up the next 404. A site-scoped Google
@@ -2120,91 +2946,211 @@ function renderMotherboard(){
   let biosUrl='https://www.google.com/search?q='+encodeURIComponent(mbClean+' bios update download');
   const vendorKey=Object.keys(vendorSite).find(k=>mfrL.includes(k));
   if(vendorKey)biosUrl='https://www.google.com/search?q='+encodeURIComponent('site:'+vendorSite[vendorKey]+' '+mb);
-  let h='<div class="spec-section"><h2>Motherboard</h2><div class="drive-grid"><div class="drive"><h3>'+esc(mbClean)+'</h3><dl class="kv smart-kv">'+
-    (bver?'<dt>BIOS version</dt><dd>'+esc(bver)+'</dd>':'')+
-    (bdate?'<dt>BIOS date</dt><dd>'+esc(bdate.replace(/\s+\d{1,2}:\d{2}(:\d{2})?(\s*[AP]M)?$/i,''))+'</dd>':'')+
-    (fastBoot?'<dt>Fast Boot</dt><dd>'+esc(fastBoot)+'</dd>':'')+
+
+  let bdateAge='',bdateWarn=false;
+  if(bdate){
+    const parsed=new Date(bdate);
+    if(!isNaN(parsed)){
+      const yrs=(Date.now()-parsed)/(365.25*86400000);
+      if(yrs>=1){bdateAge=' \u00b7 '+Math.floor(yrs)+' year'+(Math.floor(yrs)===1?'':'s')+' old';bdateWarn=yrs>=2;}
+    }
+  }
+  const fastBootWarn=fastBoot==='Enabled';
+  const moboWarnCount=(bdateWarn?1:0)+(fastBootWarn?1:0);
+  const statusCls=moboWarnCount?'warn':'ok';
+  const moboBadgeEl=document.getElementById('moboTabBadge');
+  if(moboBadgeEl){ if(moboWarnCount){moboBadgeEl.textContent=moboWarnCount;moboBadgeEl.style.display='';} else {moboBadgeEl.style.display='none';} }
+  const statusText=moboWarnCount?moboWarnCount+' warning'+(moboWarnCount>1?'s':'')+' here':'No problems found';
+
+  let h='<div class="dp-head"><div class="dp-crumb"><span class="crumb">Hardware <span class="material-symbols-outlined" style="font-size:16px">chevron_right</span> <b>Motherboard</b></span>'+
+    '<div class="dp-actions"><div class="m3-btn" id="copyMoboBtn"><span class="material-symbols-outlined" style="font-size:18px">content_copy</span>Copy</div></div></div>'+
+    '<div class="dp-title-row"><div><div class="dp-title">Motherboard '+esc(mbClean)+'</div></div>'+
+    '<div class="dp-status '+statusCls+'"><span class="status-dot"></span>'+esc(statusText)+'</div></div></div>';
+
+  h+='<div class="dp-content"><div class="dp-card"><div class="dp-kv">'+
+    (mb?'<dt>Model</dt><dd>'+esc(mb)+'</dd>':'')+
+    (mbMfr?'<dt>Manufacturer</dt><dd>'+esc(mbMfr)+'</dd>':'')+
+    (serial?'<dt>Serial number</dt><dd class="mono">'+esc(serial)+'</dd>':'')+
+    (bver?'<dt>BIOS version</dt><dd>'+esc(bver)+(biosMfr?' <span style="color:var(--faint)">('+esc(biosMfr)+')</span>':'')+'</dd>':'')+
+    (bdate?'<dt>BIOS date</dt><dd style="color:'+(bdateWarn?'var(--warn)':'var(--dim)')+'">'+esc(bdate.replace(/\s+\d{1,2}:\d{2}(:\d{2})?(\s*[AP]M)?$/i,''))+bdateAge+'</dd>':'')+
+    (firmwareMode?'<dt>Firmware mode</dt><dd>'+esc(firmwareMode)+'</dd>':'')+
+    (fastBoot?'<dt>Fast startup</dt><dd style="color:'+(fastBootWarn?'var(--warn)':'var(--dim)')+'">'+esc(fastBoot)+'</dd>':'')+
     (powerPlan?'<dt>Active power plan</dt><dd>'+esc(powerPlan)+'</dd>':'')+
-    '</dl><div style="margin-top:14px"><a href="'+biosUrl+'" target="_blank" rel="noopener" style="color:var(--info)">Check for BIOS updates</a></div></div></div></div>';
+    '</div>'+
+    '<div class="dp-clickrow" style="margin-top:16px" onclick="window.open(\''+biosUrl+'\',\'_blank\')"><span class="material-symbols-outlined" style="color:var(--info)">system_update</span>'+
+    '<div style="flex:1"><div class="dp-clickrow-t">Check for BIOS updates</div></div><span class="material-symbols-outlined" style="color:var(--faint)">open_in_new</span></div>'+
+    '</div></div>';
+
   v.innerHTML=h;
+  const copyBtn=document.getElementById('copyMoboBtn');
+  if(copyBtn)copyBtn.onclick=()=>{
+    const txt=v.textContent.replace(/\s*\n\s*/g,'\n').trim();
+    const done=()=>{const old=copyBtn.innerHTML;copyBtn.innerHTML='<span class="material-symbols-outlined" style="font-size:18px">check</span>Copied';setTimeout(()=>{copyBtn.innerHTML=old;},1500);};
+    if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(txt).then(done).catch(()=>{});
+    else{const ta=document.createElement('textarea');ta.value=txt;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);done();}
+  };
 }
 function renderCPU(){
   const v=document.getElementById('cpuView');
   const sp=parseSpecs(SPECS);
   const cpuName=specVal(sp.info,'CPU Name');
-  if(!cpuName){v.innerHTML='<div class="spec-section"><h2>Processor</h2><div style="color:var(--faint)">No processor data embedded.</div></div>';return;}
+  if(!cpuName){
+    v.innerHTML='<div class="dp-head"><div class="dp-crumb"><span class="crumb">Hardware <span class="material-symbols-outlined" style="font-size:16px">chevron_right</span> <b>Processor</b></span></div>'+
+      '<div class="dp-title-row"><div><div class="dp-title">Processor</div></div></div></div>'+
+      '<div class="dp-split"><div class="dp-split-main"><div class="dp-card"><div class="dp-empty">No processor data embedded.</div></div></div></div>';
+    return;
+  }
   const ct=specVal(sp.info,'CPU Cores/Threads'), ctm=(ct||'').match(/(\d+)C\s*\/\s*(\d+)T/i);
   const ghz=specVal(sp.info,'CPU Speed');
+  const ghzm=(ghz||'').match(/^([\d.]+)\s*(.*)$/);
   const l2=specVal(sp.info,'CPU L2 Cache'), l3=specVal(sp.info,'CPU L3 Cache');
+  const cacheHeadline=l3||l2, cacheHeadlineLabel=l3?'L3 cache':'L2 cache';
+  const cachem=(cacheHeadline||'').match(/^([\d.]+)\s*(.*)$/);
   const socket=specVal(sp.info,'CPU Socket'), arch=specVal(sp.info,'CPU Architecture');
   const virt=specVal(sp.info,'CPU Virtualization');
-  let h='<div class="spec-section"><h2>Processor</h2><div class="drive-grid"><div class="drive"><h3>'+esc(cpuName.trim())+'</h3><dl class="kv smart-kv">'+
-    (ctm?'<dt>Cores / Threads</dt><dd>'+ctm[1]+' / '+ctm[2]+'</dd>':'')+
-    (ghz?'<dt>Speed</dt><dd>'+esc(ghz)+'</dd>':'')+
-    (socket?'<dt>Socket</dt><dd>'+esc(socket)+'</dd>':'')+
-    (arch?'<dt>Architecture</dt><dd>'+esc(arch)+'</dd>':'')+
-    (l2?'<dt>L2 Cache</dt><dd>'+esc(l2)+'</dd>':'')+
-    (l3?'<dt>L3 Cache</dt><dd>'+esc(l3)+'</dd>':'')+
-    (virt?'<dt>Virtualization (VT-x/AMD-V)</dt><dd style="color:'+(virt==='Enabled'?'var(--ok)':'var(--warn)')+'">'+esc(virt)+'</dd>':'')+
-    '</dl></div></div>';
-  if(virt==='Disabled'){
-    h+='<div style="color:var(--faint);font-size:13.5px;margin-top:14px">Hardware virtualization is present but disabled in firmware - this is the most common reason Hyper-V, WSL2, or an Android/emulator app fails to start. It\'s enabled in the BIOS/UEFI setup, usually under a CPU or Advanced settings page, often labelled Intel VT-x, AMD-V, or SVM Mode.</div>';
-  }
-  h+='</div>';
+  const subParts=[ctm?ctm[1]+' cores / '+ctm[2]+' threads':'',socket?'socket '+socket:'',arch||''].filter(Boolean);
+
+  const cpuBadgeEl=document.getElementById('cpuTabBadge');
+  if(cpuBadgeEl)cpuBadgeEl.style.display='none';
+
+  let h='<div class="dp-head"><div class="dp-crumb"><span class="crumb">Hardware <span class="material-symbols-outlined" style="font-size:16px">chevron_right</span> <b>Processor</b></span>'+
+    '<div class="dp-actions"><div class="m3-btn" id="copyCpuBtn"><span class="material-symbols-outlined" style="font-size:18px">content_copy</span>Copy</div></div></div>'+
+    '<div class="dp-title-row"><div><div class="dp-title">CPU - '+esc(cpuName.trim())+'</div><div class="dp-sub">'+esc(subParts.join(' \u00b7 '))+'</div></div>'+
+    '<div class="dp-status ok"><span class="status-dot"></span>No problems found</div></div></div>';
+
+  h+='<div class="dp-stats">'+
+    (ctm?'<div class="dp-stat"><div class="dp-stat-l">Cores</div><div class="dp-stat-v">'+ctm[1]+'</div><div class="dp-stat-s">physical cores</div></div>':'')+
+    (ctm?'<div class="dp-stat"><div class="dp-stat-l">Threads</div><div class="dp-stat-v">'+ctm[2]+'</div><div class="dp-stat-s">logical processors</div></div>':'')+
+    (ghzm?'<div class="dp-stat"><div class="dp-stat-l">Speed</div><div class="dp-stat-v">'+ghzm[1]+'<span class="unit"> '+esc(ghzm[2])+'</span></div><div class="dp-stat-s">as reported</div></div>':'')+
+    (cachem?'<div class="dp-stat"><div class="dp-stat-l">'+cacheHeadlineLabel+'</div><div class="dp-stat-v">'+cachem[1]+'<span class="unit"> '+esc(cachem[2])+'</span></div><div class="dp-stat-s">shared</div></div>':'')+
+    '</div>';
+
+  h+='<div class="dp-content"><div class="dp-card">'+
+    '<div class="dp-card-head"><div class="dp-card-title">All reported values</div></div><div class="dp-kv">'+
+    '<dt>Name</dt><dd style="text-align:right">'+esc(cpuName.trim())+'</dd>'+
+    (ctm?'<dt>Cores / threads</dt><dd style="text-align:right">'+ctm[1]+' / '+ctm[2]+'</dd>':'')+
+    (ghz?'<dt>Speed</dt><dd style="text-align:right">'+esc(ghz)+'</dd>':'')+
+    (socket?'<dt>Socket</dt><dd style="text-align:right">'+esc(socket)+'</dd>':'')+
+    ((l2&&l3)?'<dt>L2 / L3 cache</dt><dd style="text-align:right">'+esc(l2)+' / '+esc(l3)+'</dd>':(l2?'<dt>L2 cache</dt><dd style="text-align:right">'+esc(l2)+'</dd>':(l3?'<dt>L3 cache</dt><dd style="text-align:right">'+esc(l3)+'</dd>':'')))+
+    (arch?'<dt>Architecture</dt><dd style="text-align:right">'+esc(arch)+'</dd>':'')+
+    (virt?'<dt>Virtualisation</dt><dd style="text-align:right">'+esc(virt)+'</dd>':'')+
+    '</div></div></div>';
+
   v.innerHTML=h;
+  const copyBtn=document.getElementById('copyCpuBtn');
+  if(copyBtn)copyBtn.onclick=()=>{
+    const txt=v.textContent.replace(/\s*\n\s*/g,'\n').trim();
+    const done=()=>{const old=copyBtn.innerHTML;copyBtn.innerHTML='<span class="material-symbols-outlined" style="font-size:18px">check</span>Copied';setTimeout(()=>{copyBtn.innerHTML=old;},1500);};
+    if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(txt).then(done).catch(()=>{});
+    else{const ta=document.createElement('textarea');ta.value=txt;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);done();}
+  };
 }
 function renderMemory(){
   const v=document.getElementById('memoryView');
   const sp=parseSpecs(SPECS);
   const pageFile=specVal(sp.info,'Page File Size');
   const pageFileManaged=specVal(sp.info,'Page File Managed');
-  let h='';
-  if(RAM.length){
-    h+='<div class="spec-section"><h2>Memory modules ('+RAM.length+')</h2>';
-    if(RAMSLOTS)h+='<div style="color:var(--dim);font-size:14px;margin-bottom:16px">'+RAM.length+' of '+RAMSLOTS+' slots populated'+(RAM.length<RAMSLOTS?' <span style="color:var(--faint)">('+(RAMSLOTS-RAM.length)+' free)</span>':'')+'</div>';
-    h+='<div class="drive-grid">';
-    RAM.forEach(m=>{
-      h+='<div class="drive"><h3>'+esc(m.slot)+'</h3>'+
-        '<div class="sub">'+esc(m.mfr||'')+'</div>'+
-        '<dl class="kv smart-kv">'+
-        '<dt>Part number</dt><dd>'+esc(m.pn||'?')+'</dd>'+
-        (m.ddrType?'<dt>Type</dt><dd>'+esc(m.ddrType)+'</dd>':'')+
-        '<dt>Capacity</dt><dd>'+esc(m.cap)+' GB</dd>'+
-        (m.rated?'<dt>Rated speed</dt><dd>'+esc(m.rated)+' MT/s</dd>':'')+
-        (m.pnSpeed?'<dt>Speed (from part number)</dt><dd>'+esc(m.pnSpeed)+' MT/s'+'</dd>':'')+
-        (m.conf?'<dt>Configured speed</dt><dd>'+esc(m.conf)+' MT/s</dd>':'')+
-        '</dl></div>';
-    });
-    h+='</div></div>';
+  if(!RAM.length){
+    v.innerHTML='<div class="dp-head"><div class="dp-crumb"><span class="crumb">Hardware <span class="material-symbols-outlined" style="font-size:16px">chevron_right</span> <b>Memory</b></span></div>'+
+      '<div class="dp-title-row"><div><div class="dp-title">Memory (RAM)</div></div></div></div>'+
+      '<div class="dp-content"><div class="dp-card"><div class="dp-empty">No memory data embedded.</div></div></div>';
+    return;
   }
+  const effRatedMem=m=>Math.max(+m.rated||0,+m.pnSpeed||0)||'';
+  const totalGB=RAM.reduce((a,m)=>a+(+m.cap||0),0);
+  const confSet=[...new Set(RAM.map(m=>m.conf).filter(Boolean))];
+  const ratedSet=[...new Set(RAM.map(m=>effRatedMem(m)).filter(Boolean))];
+  const typeSet=[...new Set(RAM.map(m=>m.ddrType).filter(Boolean))];
+  const mfrSet=[...new Set(RAM.map(m=>m.mfr).filter(Boolean))];
+  const ramSlow=RAM.some(m=>effRatedMem(m)&&m.conf&&+m.conf<+effRatedMem(m));
+
+  const memTitle='Memory (RAM)'+(totalGB?' '+totalGB+'GB':'')+(typeSet.length===1?' '+typeSet[0]:'')+(confSet.length?' '+confSet.join('/')+'MT/s':'');
+  const memSub=[mfrSet.length===1?mfrSet[0]:'',RAM.length+' module'+(RAM.length===1?'':'s')].filter(Boolean).join(' \u00b7 ');
+  const statusCls=ramSlow?'warn':'ok';
+  const memBadgeEl=document.getElementById('memoryTabBadge');
+  if(memBadgeEl){ if(ramSlow){memBadgeEl.textContent='1';memBadgeEl.style.display='';} else {memBadgeEl.style.display='none';} }
+  const statusText=ramSlow?'1 warning here':'No problems found';
+
+  let h='<div class="dp-head"><div class="dp-crumb"><span class="crumb">Hardware <span class="material-symbols-outlined" style="font-size:16px">chevron_right</span> <b>Memory</b></span>'+
+    '<div class="dp-actions"><div class="m3-btn" id="copyMemBtn"><span class="material-symbols-outlined" style="font-size:18px">content_copy</span>Copy</div></div></div>'+
+    '<div class="dp-title-row"><div><div class="dp-title">'+esc(memTitle)+'</div>'+
+    (memSub?'<div class="dp-sub">'+esc(memSub)+'</div>':'')+'</div>'+
+    '<div class="dp-status '+statusCls+'"><span class="status-dot"></span>'+esc(statusText)+'</div></div></div>';
+
+  h+='<div class="dp-stats">'+
+    '<div class="dp-stat"><div class="dp-stat-l">Capacity</div><div class="dp-stat-v">'+totalGB+'<span class="unit"> GB</span></div></div>'+
+    (confSet.length?'<div class="dp-stat"><div class="dp-stat-l">Configured speed</div><div class="dp-stat-v" style="color:'+(ramSlow?'var(--warn)':'var(--text)')+'">'+esc(confSet.join('/'))+'<span class="unit"> MT/s</span></div></div>':'')+
+    (ratedSet.length?'<div class="dp-stat"><div class="dp-stat-l">Rated speed</div><div class="dp-stat-v">'+esc(ratedSet.join('/'))+'<span class="unit"> MT/s</span></div></div>':'')+
+    '<div class="dp-stat"><div class="dp-stat-l">Modules</div><div class="dp-stat-v">'+RAM.length+(RAMSLOTS?'<span class="unit"> / '+RAMSLOTS+'</span>':'')+'</div></div>'+
+    '</div>';
+
+  h+='<div class="dp-content">';
+
+  if(ramSlow){
+    h+='<div class="dp-banner" onclick="return goFaq(\'ram-speed\')" style="margin-top:0"><span class="material-symbols-outlined">warning</span>'+
+      '<div class="dp-banner-text">Running at '+esc(confSet.join('/'))+' of '+esc(ratedSet.join('/'))+' MT/s \u2014 XMP/EXPO appears disabled</div>'+
+      '<span class="dp-banner-link">Explain \u2192</span></div>';
+  }
+
+  if(RAMSLOTS){
+    const slotCols=Math.max(RAMSLOTS,RAM.length);
+    h+='<div><div class="dp-section-label">Slot map</div><div class="dp-card slot-grid" style="grid-template-columns:repeat('+slotCols+',1fr)">'+
+      RAM.map((m,i)=>'<span class="vol-chip plain slot-chip" onclick="highlightModule('+i+')" title="Show this module">'+esc(m.slot||'?')+' \u00b7 '+esc(m.cap)+' GB</span>').join('')+
+      Array.from({length:Math.max(0,RAMSLOTS-RAM.length)},()=>'<span class="vol-chip plain slot-chip empty">Empty</span>').join('')+
+      '</div></div>';
+  }
+
+  h+='<div><div class="dp-section-label">Modules ('+RAM.length+')</div><div class="vol-grid">';
+  RAM.forEach((m,i)=>{
+    const modSlow=effRatedMem(m)&&m.conf&&+m.conf<+effRatedMem(m);
+    h+='<div class="dp-card" id="ramModule-'+i+'"><div class="dp-card-head"><div class="dp-card-title" style="font-size:16px">'+esc(m.slot)+'</div>'+(m.mfr?'<span class="dp-card-count">'+esc(m.mfr)+'</span>':'')+'</div><div class="dp-kv">'+
+      '<dt>Part number</dt><dd class="mono" style="font-size:13px">'+esc(m.pn||'?')+'</dd>'+
+      (m.ddrType?'<dt>Type</dt><dd>'+esc(m.ddrType)+'</dd>':'')+
+      '<dt>Capacity</dt><dd>'+esc(m.cap)+' GB</dd>'+
+      (m.rated?'<dt>Rated speed</dt><dd>'+esc(m.rated)+' MT/s</dd>':'')+
+      (m.pnSpeed?'<dt>Speed (from part number)</dt><dd>'+esc(m.pnSpeed)+' MT/s</dd>':'')+
+      (m.conf?'<dt>Configured speed</dt><dd style="color:'+(modSlow?'var(--warn)':'var(--dim)')+'">'+esc(m.conf)+' MT/s</dd>':'')+
+      '</div></div>';
+  });
+  h+='</div></div>';
+
   const hasOtherBox=(MEMUSE&&(MEMUSE.avail!=null||MEMUSE.cache!=null||MEMUSE.pagedPool!=null||MEMUSE.nonPagedPool!=null))||pageFile;
   if((MEMUSE&&MEMUSE.pt)||hasOtherBox){
-    h+='<div class="spec-section"><h2>Memory usage at capture</h2><div class="drive-grid">';
+    h+='<div><div class="dp-section-label">Memory usage at capture</div><div class="vol-grid">';
     if(MEMUSE&&MEMUSE.pt){
       const physPct=Math.round(MEMUSE.pu/MEMUSE.pt*100);
-      h+='<div class="drive"><h3>In use (compressed)</h3>'+
-        '<div class="meter'+(physPct>85?' low':'')+'"><div style="width:'+Math.min(physPct,100)+'%"></div></div>'+
-        '<div class="use mono">'+MEMUSE.pu.toFixed(1)+' GB used of '+MEMUSE.pt.toFixed(1)+' GB ('+physPct+'%)</div></div>';
+      h+='<div class="dp-card"><div class="dp-card-head"><div class="dp-card-title" style="font-size:16px">In use (compressed)</div></div>'+
+        '<div class="vol-bar-track" style="margin-bottom:10px"><div class="vol-bar-fill'+(physPct>85?' warn':'')+'" style="width:'+Math.min(physPct,100)+'%"></div></div>'+
+        '<div class="mono" style="font-size:14px;color:var(--dim)">'+MEMUSE.pu.toFixed(1)+' GB used of '+MEMUSE.pt.toFixed(1)+' GB ('+physPct+'%)</div></div>';
       if(MEMUSE.ct){
         const commitPct=Math.round(MEMUSE.cu/MEMUSE.ct*100);
-        h+='<div class="drive"><h3>Committed</h3>'+
-          '<div class="meter'+(commitPct>90?' low':'')+'"><div style="width:'+Math.min(commitPct,100)+'%"></div></div>'+
-          '<div class="use mono">'+MEMUSE.cu.toFixed(1)+' GB used of '+MEMUSE.ct.toFixed(1)+' GB ('+commitPct+'%)</div></div>';
+        h+='<div class="dp-card"><div class="dp-card-head"><div class="dp-card-title" style="font-size:16px">Committed</div></div>'+
+          '<div class="vol-bar-track" style="margin-bottom:10px"><div class="vol-bar-fill'+(commitPct>90?' warn':'')+'" style="width:'+Math.min(commitPct,100)+'%"></div></div>'+
+          '<div class="mono" style="font-size:14px;color:var(--dim)">'+MEMUSE.cu.toFixed(1)+' GB used of '+MEMUSE.ct.toFixed(1)+' GB ('+commitPct+'%)</div></div>';
       }
     }
     if(hasOtherBox){
-      h+='<div class="drive"><h3>Other</h3><dl class="kv smart-kv">'+
+      h+='<div class="dp-card"><div class="dp-card-head"><div class="dp-card-title" style="font-size:16px">Other</div></div><div class="dp-kv">'+
         (MEMUSE&&MEMUSE.avail!=null?'<dt>Available</dt><dd>'+MEMUSE.avail.toFixed(1)+' GB</dd>':'')+
         (MEMUSE&&MEMUSE.cache!=null?'<dt>Cached</dt><dd>'+MEMUSE.cache.toFixed(2)+' GB</dd>':'')+
         (MEMUSE&&MEMUSE.pagedPool!=null?'<dt>Paged pool</dt><dd>'+Math.round(MEMUSE.pagedPool)+' MB</dd>':'')+
         (MEMUSE&&MEMUSE.nonPagedPool!=null?'<dt>Non-paged pool</dt><dd>'+Math.round(MEMUSE.nonPagedPool)+' MB</dd>':'')+
         (pageFile?'<dt>Page file size</dt><dd>'+esc(pageFile)+'</dd>':'')+
-        (pageFileManaged?'<dt>Page file management</dt><dd>'+(pageFileManaged==='Manual'?'<span style="color:var(--warn)">Manual (auto-manage off)</span>':pageFileManaged==='Disabled'?'<span style="color:var(--err)">Disabled (no page file)</span>':esc(pageFileManaged))+'</dd>':'')+
-        '</dl></div>';
+        (pageFileManaged?'<dt>Page file management</dt><dd style="color:'+(pageFileManaged==='Manual'?'var(--warn)':pageFileManaged==='Disabled'?'var(--err)':'var(--dim)')+'">'+(pageFileManaged==='Manual'?'Manual (auto-manage off)':pageFileManaged==='Disabled'?'Disabled (no page file)':esc(pageFileManaged))+'</dd>':'')+
+        '</div></div>';
     }
     h+='</div></div>';
   }
-  v.innerHTML=h||'<div class="spec-section"><h2>Memory</h2><div style="color:var(--faint)">No memory data embedded.</div></div>';
+
+  h+='</div>';
+  v.innerHTML=h;
+  const copyBtn=document.getElementById('copyMemBtn');
+  if(copyBtn)copyBtn.onclick=()=>{
+    const txt=v.textContent.replace(/\s*\n\s*/g,'\n').trim();
+    const done=()=>{const old=copyBtn.innerHTML;copyBtn.innerHTML='<span class="material-symbols-outlined" style="font-size:18px">check</span>Copied';setTimeout(()=>{copyBtn.innerHTML=old;},1500);};
+    if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(txt).then(done).catch(()=>{});
+    else{const ta=document.createElement('textarea');ta.value=txt;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);done();}
+  };
 }
 function renderBattery(){
   if(!BATTERY.length)return;
@@ -2231,153 +3177,238 @@ function renderBattery(){
   h+='</div></div>';
   v.innerHTML=h;
 }
+// One list of network problems, used by both the Network page (banners, card outlines, status,
+// badge) and the Diagnostic Summary notes, so the two can never disagree.
+function fmtMbps(n){n=+n;return n>=1000?((n/1000)%1?(n/1000).toFixed(1):(n/1000))+' Gbps':Math.round(n)+' Mbps';}
+function netIssues(){
+  const out=[];
+  if(!NET)return out;
+  (NET.adapters||[]).forEach(a=>{
+    if(!/^up$/i.test(a.status))return;
+    const below=a.maxMbps!=null&&a.linkMbps!=null?(a.maxMbps>=1000&&a.linkMbps<a.maxMbps):a.gigabitBelowRated;
+    if(below){
+      const cap=a.maxMbps?fmtMbps(a.maxMbps):'Gigabit';
+      // Under 1 Gbps on a Gigabit-or-better port is almost always a cable/port fault. A 2.5/5/10G
+      // port at 1 Gbps is usually just a Gigabit router on the other end, so that's info only.
+      const sev=(a.linkMbps!=null&&a.linkMbps>=1000)?'info':'warn';
+      out.push({sev,faq:'gigabit-slow',target:'adapter:'+a.name,
+        text:esc(a.name)+' is '+esc(cap)+'-capable but connected at only '+esc(a.linkMbps?fmtMbps(a.linkMbps):a.speed)});
+    }
+    if(a.fullDuplex===false)out.push({sev:'warn',faq:'half-duplex',target:'adapter:'+a.name,text:esc(a.name)+' is running at half duplex'});
+  });
+  const w=NET.wifi;
+  if(w&&w.signal){
+    const sig=parseInt(w.signal)||0;
+    if(sig&&sig<30)out.push({sev:'err',faq:'wifi-signal',target:'wifi',text:'Very weak Wi-Fi signal ('+sig+'%)'+(w.band?' on '+esc(w.band):'')});
+    else if(sig&&sig<50)out.push({sev:'warn',faq:'wifi-signal',target:'wifi',text:'Weak Wi-Fi signal ('+sig+'%)'+(w.band?' on '+esc(w.band):'')});
+    const rate=Math.max(+w.rx||0,+w.tx||0);
+    const modern=/802\.11(ac|ax|be)/.test(w.radio||''), n=/802\.11n/.test(w.radio||'');
+    if(rate&&((modern&&rate<150)||(n&&rate<65)))out.push({sev:'warn',faq:'wifi-link-rate',target:'wifi',text:'Wi-Fi link rate is only '+rate+' Mbps on '+esc(w.radio)});
+    if(/^2\.4/.test(w.band||'')&&w.supports5===true)out.push({sev:'info',faq:'wifi-band',target:'wifi',text:'Wi-Fi is on 2.4 GHz, but the adapter supports 5 GHz'});
+  }
+  return out;
+}
 function renderNet(){
   const v=document.getElementById('netView');
   if(!NET||(!NET.adapters||!NET.adapters.length)&&!NET.wifi){
-    v.innerHTML='<div class="spec-section"><h2>Network adapters</h2><div style="color:var(--faint)">No network data embedded.</div></div>';
+    v.innerHTML='<div class="dp-head"><div class="dp-crumb"><span class="crumb">Hardware <span class="material-symbols-outlined" style="font-size:16px">chevron_right</span> <b>Network</b></span></div>'+
+      '<div class="dp-title-row"><div><div class="dp-title">Network</div></div></div></div>'+
+      '<div class="dp-content"><div class="dp-card"><div class="dp-empty">No network data embedded.</div></div></div>';
     return;
   }
-  let h='';
+  const connectedCount=(NET.adapters||[]).filter(a=>/^up$/i.test(a.status)).length;
+  const SEV_ORDER={err:0,warn:1,info:2};
+  const issues=netIssues().sort((a,b)=>SEV_ORDER[a.sev]-SEV_ORDER[b.sev]);
+  const flagged=issues.filter(i=>i.sev!=='info');
+  const netWarnCount=flagged.length, netHasErr=flagged.some(i=>i.sev==='err');
+  const sevFor=t=>{const f=flagged.filter(i=>i.target===t);return f.some(i=>i.sev==='err')?'err':f.length?'warn':'';};
+  const netSub=[(NET.adapters||[]).length?(NET.adapters||[]).length+' adapter'+((NET.adapters||[]).length===1?'':'s'):'',connectedCount?connectedCount+' connected':''].filter(Boolean);
+  const netStatusCls=netHasErr?'err':netWarnCount?'warn':'ok';
+  const netBadgeEl=document.getElementById('netTabBadge');
+  if(netBadgeEl){ if(netWarnCount){netBadgeEl.textContent=netWarnCount;netBadgeEl.className='tab-badge'+(netHasErr?'':' warn');netBadgeEl.style.display='';} else {netBadgeEl.style.display='none';} }
+  const nErr=flagged.filter(i=>i.sev==='err').length, nWarn=netWarnCount-nErr;
+  const netStatusText=netWarnCount?[nErr?nErr+' error'+(nErr>1?'s':''):'',nWarn?nWarn+' warning'+(nWarn>1?'s':''):''].filter(Boolean).join(', '):'No problems found';
+
+  let h='<div class="dp-head"><div class="dp-crumb"><span class="crumb">Hardware <span class="material-symbols-outlined" style="font-size:16px">chevron_right</span> <b>Network</b></span>'+
+    '<div class="dp-actions"><div class="m3-btn" id="copyNetBtn"><span class="material-symbols-outlined" style="font-size:18px">content_copy</span>Copy</div></div></div>'+
+    '<div class="dp-title-row"><div><div class="dp-title">Network</div><div class="dp-sub">'+esc(netSub.join(' \u00b7 '))+'</div></div>'+
+    '<div class="dp-status '+netStatusCls+'"><span class="status-dot"></span>'+esc(netStatusText)+'</div></div></div>';
+
+  h+='<div class="dp-content">';
+  issues.forEach(i=>{
+    h+='<div class="dp-banner'+(i.sev==='err'?' err':i.sev==='info'?' info':'')+'" onclick="return goFaq(\''+i.faq+'\')" style="margin-top:0"><span class="material-symbols-outlined">'+(i.sev==='err'?'error':i.sev==='info'?'info':'warning')+'</span>'+
+      '<div class="dp-banner-text">'+i.text+'</div><span class="dp-banner-link">Explain \u2192</span></div>';
+  });
   if(NET.adapters&&NET.adapters.length){
-    h+='<div class="spec-section"><h2>Network adapters ('+NET.adapters.length+')</h2><div class="drive-grid">';
+    h+='<div><div class="dp-section-label">Network adapters ('+NET.adapters.length+')</div><div class="vol-grid">';
     NET.adapters.forEach(a=>{
       const up=/^up$/i.test(a.status);
       const stCol=up?'var(--ok)':/disconnect/i.test(a.status)?'var(--warn)':'var(--faint)';
-      h+='<div class="drive"><h3>'+esc(a.name)+'</h3>'+
-        '<div class="sub">'+esc(a.desc||'')+'</div>'+
-        '<dl class="kv smart-kv">'+
+      const sev=sevFor('adapter:'+a.name)||(up&&/802\.11/.test(a.media||'')&&NET.wifi?sevFor('wifi'):'');
+      const slow=flagged.some(i=>i.target==='adapter:'+a.name&&i.faq==='gigabit-slow');
+      h+='<div class="dp-card'+(sev?' vol-card-'+sev:'')+'"><div class="dp-card-head"><div class="dp-card-title" style="font-size:16px">'+esc(a.name)+'</div></div>'+
+        (a.desc?'<div class="dp-card-note">'+esc(a.desc)+'</div>':'')+
+        '<div class="dp-kv">'+
         '<dt>Status</dt><dd style="color:'+stCol+'">'+esc(a.status)+'</dd>'+
-        (up&&a.speed?'<dt>Link speed</dt><dd'+(a.gigabitBelowRated?' style="color:var(--warn)"':'')+'>'+esc(a.speed)+(a.gigabitBelowRated?' <span style="color:var(--faint)">(Gigabit-capable)</span>':'')+'</dd>':'')+
+        (up&&(a.linkMbps||a.speed)?'<dt>Link speed</dt><dd style="color:'+(slow?'var(--warn)':'var(--dim)')+'">'+esc(a.linkMbps?fmtMbps(a.linkMbps):a.speed)+'</dd>':'')+
+        (a.maxMbps?'<dt>Maximum speed</dt><dd>'+esc(fmtMbps(a.maxMbps))+'</dd>':'')+
+        (up&&a.fullDuplex!=null?'<dt>Duplex</dt><dd'+(a.fullDuplex?'':' style="color:var(--warn)"')+'>'+(a.fullDuplex?'Full':'Half')+'</dd>':'')+
         (a.media?'<dt>Media</dt><dd>'+esc(friendlyMedia(a.media))+'</dd>':'')+
         (a.driverVersion?'<dt>Driver version</dt><dd class="mono">'+esc(a.driverVersion)+'</dd>':'')+
         (a.driverDate?'<dt>Driver date</dt><dd>'+esc(a.driverDate)+'</dd>':'')+
-        '</dl></div>';
+        '</div></div>';
     });
     h+='</div></div>';
   }
   if(NET.vpns&&NET.vpns.length){
-    h+='<div class="spec-section"><h2>Network Adapters ('+NET.vpns.length+')</h2><div class="drive-grid">';
+    h+='<div><div class="dp-section-label">Virtual adapters ('+NET.vpns.length+')</div><div class="vol-grid">';
     NET.vpns.forEach(a=>{
       const up=/^up$/i.test(a.status);
-      h+='<div class="drive"><h3>'+esc(a.name)+'</h3>'+
-        '<div class="sub">'+esc(a.desc||'')+'</div>'+
-        '<dl class="kv smart-kv"><dt>Status</dt><dd style="color:'+(up?'var(--ok)':'var(--faint)')+'">'+esc(a.status)+'</dd></dl></div>';
+      h+='<div class="dp-card"><div class="dp-card-head"><div class="dp-card-title" style="font-size:16px">'+esc(a.name)+'</div></div>'+
+        (a.desc?'<div class="dp-card-note">'+esc(a.desc)+'</div>':'')+
+        '<div class="dp-kv"><dt>Status</dt><dd style="color:'+(up?'var(--ok)':'var(--faint)')+'">'+esc(a.status)+'</dd></div></div>';
     });
     h+='</div></div>';
   }
   if(NET.wifi&&NET.wifi.signal){
     const w=NET.wifi;
     const sig=parseInt(w.signal)||0;
-    h+='<div class="spec-section"><h2>Wi-Fi connection</h2>'+
-      '<div class="drive" style="max-width:420px">'+
-      '<div class="sub" style="margin-bottom:6px">Signal '+esc(w.signal)+'</div>'+
-      '<div class="meter'+(sig<50?' low':'')+'" style="margin-bottom:8px"><div style="width:'+sig+'%"></div></div>'+
-      '<dl class="kv smart-kv">'+
+    const wsev=sevFor('wifi');
+    h+='<div><div class="dp-section-label">Wi-Fi connection</div><div class="dp-card'+(wsev?' vol-card-'+wsev:'')+'" style="max-width:420px">'+
+      '<div class="dp-card-note" style="margin-bottom:8px">Signal '+esc(w.signal)+'</div>'+
+      '<div class="vol-bar-track" style="margin-bottom:12px"><div class="vol-bar-fill'+(sig<30?' err':sig<50?' warn':'')+'" style="width:'+sig+'%"></div></div>'+
+      '<div class="dp-kv">'+
       (w.band?'<dt>Band</dt><dd>'+esc(w.band)+'</dd>':'')+
       (w.channel?'<dt>Channel</dt><dd>'+esc(w.channel)+(w.width?' ('+esc(w.width)+')':'')+'</dd>':'')+
       (w.radio?'<dt>Radio type</dt><dd>'+esc(w.radio)+'</dd>':'')+
+      (w.supports5!=null?'<dt>5 GHz capable</dt><dd>'+(w.supports5?'Yes':'No')+'</dd>':'')+
       (w.rx?'<dt>Receive rate</dt><dd>'+esc(w.rx)+' Mbps</dd>':'')+
       (w.tx?'<dt>Transmit rate</dt><dd>'+esc(w.tx)+' Mbps</dd>':'')+
       (w.auth?'<dt>Authentication</dt><dd>'+esc(w.auth)+'</dd>':'')+
-      '</dl></div>'+
-      '<div style="color:var(--faint);font-size:13.5px;margin-top:10px">SSID, BSSID and IP address are intentionally not collected.</div></div>';
+      '</div>'+
+      '<div class="dp-card-note" style="margin:12px 0 0">SSID, BSSID and IP address are intentionally not collected.</div></div></div>';
   }
   if(NET.dns&&NET.dns.length){
-    h+='<div class="spec-section"><h2>DNS servers</h2><dl class="kv"><dt style="grid-column:1/-1">'+esc(NET.dns.join(', '))+'</dt></dl></div>';
+    h+='<div><div class="dp-section-label">DNS servers</div><div class="dp-card">'+esc(NET.dns.join(', '))+'</div></div>';
   }
+  h+='</div>';
   v.innerHTML=h;
+  const copyBtn=document.getElementById('copyNetBtn');
+  if(copyBtn)copyBtn.onclick=()=>{
+    const txt=v.textContent.replace(/\s*\n\s*/g,'\n').trim();
+    const done=()=>{const old=copyBtn.innerHTML;copyBtn.innerHTML='<span class="material-symbols-outlined" style="font-size:18px">check</span>Copied';setTimeout(()=>{copyBtn.innerHTML=old;},1500);};
+    if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(txt).then(done).catch(()=>{});
+    else{const ta=document.createElement('textarea');ta.value=txt;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);done();}
+  };
 }
 function renderDevices(){
   const v=document.getElementById('devicesView');
-  let h='';
   const isVirtualAudio=n=>/vb-audio|voicemeeter|cable (input|output)|virtual audio/i.test(n);
   const isVirtualCam=n=>/obs virtual|virtual camera|droidcam|snap camera/i.test(n);
+  const DEVERR_CODES={
+    '1':'Device not configured correctly','3':'Driver may be corrupted, or system is low on resources',
+    '10':'Device cannot start','12':'Not enough free resources','14':'Device needs a restart to work',
+    '18':'Drivers need reinstalling','19':'Registry entries for the device are corrupted',
+    '21':'Windows is in the process of removing the device','22':'Device is disabled',
+    '24':'Device not present, not working, or missing drivers','28':'Drivers are not installed',
+    '29':'Disabled by firmware \u2014 didn\u2019t give the device resources','31':'Windows cannot load the drivers',
+    '32':'Driver service is disabled','37':'Driver returned a failure','39':'Driver is missing or corrupted',
+    '41':'Driver loaded but can\u2019t find the device','42':'Duplicate device found','43':'Device reported a problem',
+    '44':'An application or driver stopped the device','45':'Device not currently connected',
+    '48':'A previous driver for this device is blocked from loading','52':'Drivers aren\u2019t digitally signed',
+  };
+
+  const hasAny=(AUDIO&&(AUDIO.playbackDevices&&AUDIO.playbackDevices.length||AUDIO.recordingDevices&&AUDIO.recordingDevices.length))
+    ||(CAMERAS&&CAMERAS.length)||(USBDEVS&&USBDEVS.length)||DEVERR.length;
+
+  const devBadgeEl=document.getElementById('devicesTabBadge');
+  if(devBadgeEl){ if(DEVERR.length){devBadgeEl.textContent=DEVERR.length;devBadgeEl.style.display='';} else {devBadgeEl.style.display='none';} }
+
+  if(!hasAny){
+    v.innerHTML='<div class="dp-head"><div class="dp-crumb"><span class="crumb">Hardware <span class="material-symbols-outlined" style="font-size:16px">chevron_right</span> <b>Devices</b></span></div>'+
+      '<div class="dp-title-row"><div><div class="dp-title">Devices and hardware</div></div></div></div>'+
+      '<div class="dp-content"><div class="dp-card"><div class="dp-empty">No audio, webcam, or USB peripheral data was collected.</div></div></div>';
+    return;
+  }
+
+  const statusCls=DEVERR.length?'err':'ok';
+  const statusText=DEVERR.length?DEVERR.length+' device error'+(DEVERR.length===1?'':'s')+' here':'No problems found';
+  let h='<div class="dp-head"><div class="dp-crumb"><span class="crumb">Hardware <span class="material-symbols-outlined" style="font-size:16px">chevron_right</span> <b>Devices</b></span>'+
+    '<div class="dp-actions"><div class="m3-btn" id="copyDevBtn"><span class="material-symbols-outlined" style="font-size:18px">content_copy</span>Copy</div></div></div>'+
+    '<div class="dp-title-row"><div><div class="dp-title">Devices and hardware</div></div>'+
+    '<div class="dp-status '+statusCls+'"><span class="status-dot"></span>'+esc(statusText)+'</div></div></div>';
+
+  h+='<div class="dp-content">';
+
+  if(DEVERR.length){
+    h+='<div id="devErrSection"><div class="dp-section-label">Device Manager errors ('+DEVERR.length+')</div><div class="dev-grid">';
+    DEVERR.forEach(e=>{
+      const desc=DEVERR_CODES[String(e.code)];
+      h+='<div class="dev-card err"><div class="dev-icon err"><span class="material-symbols-outlined">error</span></div>'+
+        '<div class="dev-body"><div class="dev-title">'+esc(e.name)+'</div>'+
+        '<div class="dev-badges"><span class="dev-badge err">Error code '+esc(e.code)+'</span></div>'+
+        (desc?'<div class="dev-desc">'+esc(desc)+'</div>':'')+
+        '</div></div>';
+    });
+    h+='</div></div>';
+  }
+
   if(AUDIO&&(AUDIO.playbackDevices&&AUDIO.playbackDevices.length||AUDIO.recordingDevices&&AUDIO.recordingDevices.length)){
-    h+='<div class="spec-section"><h2>Audio</h2>';
     if(AUDIO.playbackDevices&&AUDIO.playbackDevices.length){
-      h+='<div class="sub-label">Playback (output)</div><div class="device-grid compact">';
+      h+='<div><div class="dp-section-label">Audio \u00b7 playback (output)</div><div class="dev-grid">';
       AUDIO.playbackDevices.forEach(d=>{
         const virtual=isVirtualAudio(d.name);
-        h+='<div class="dcard"><div class="dcard-icon icon-info">'+ICON_SPEAKER+'</div>'+
-          '<div class="dcard-body"><div class="dcard-title">'+esc(d.name)+'</div>'+
-          (virtual?'<span class="dcard-badge badge-info">Virtual</span>':'')+
+        h+='<div class="dev-card"><div class="dev-icon plain"><span class="material-symbols-outlined">volume_up</span></div>'+
+          '<div class="dev-body"><div class="dev-title">'+esc(d.name)+'</div>'+
+          (virtual?'<div class="dev-badges"><span class="dev-badge info">Virtual</span></div>':'')+
           '</div></div>';
       });
-      h+='</div>';
+      h+='</div></div>';
     }
     if(AUDIO.recordingDevices&&AUDIO.recordingDevices.length){
-      h+='<div class="sub-label">Recording (input)</div><div class="device-grid compact">';
+      h+='<div><div class="dp-section-label">Audio \u00b7 recording (input)</div><div class="dev-grid">';
       AUDIO.recordingDevices.forEach(d=>{
         const virtual=isVirtualAudio(d.name);
-        h+='<div class="dcard"><div class="dcard-icon icon-ok">'+ICON_MIC+'</div>'+
-          '<div class="dcard-body"><div class="dcard-title">'+esc(d.name)+'</div>'+
-          (virtual?'<span class="dcard-badge badge-info">Virtual</span>':'')+
+        h+='<div class="dev-card"><div class="dev-icon ok"><span class="material-symbols-outlined">mic</span></div>'+
+          '<div class="dev-body"><div class="dev-title">'+esc(d.name)+'</div>'+
+          (virtual?'<div class="dev-badges"><span class="dev-badge info">Virtual</span></div>':'')+
           '</div></div>';
       });
-      h+='</div>';
+      h+='</div></div>';
     }
-    h+='</div>';
   }
+
   if(CAMERAS&&CAMERAS.length){
-    h+='<div class="spec-section"><h2>Webcams &amp; Capture Devices ('+CAMERAS.length+')</h2><div class="device-grid compact">';
+    h+='<div><div class="dp-section-label">Webcams &amp; capture devices ('+CAMERAS.length+')</div><div class="dev-grid">';
     CAMERAS.forEach(c=>{
       const ok=/^ok$/i.test(c.status);
       const virtual=isVirtualCam(c.name);
-      h+='<div class="dcard'+(ok?'':' err-card')+'"><div class="dcard-icon '+(ok?'icon-ok':'icon-warn')+'">'+ICON_CAMERA+'</div>'+
-        '<div class="dcard-body"><div class="dcard-title">'+esc(c.name)+'</div>'+
-        '<span class="dcard-badge '+(ok?'badge-ok':'badge-warn')+'">'+esc(c.status||'Unknown')+'</span>'+
-        (virtual?'<span class="dcard-badge badge-info">Virtual</span>':'')+
-        '</div></div>';
+      h+='<div class="dev-card'+(ok?'':' err')+'"><div class="dev-icon '+(ok?'ok':'warn')+'"><span class="material-symbols-outlined">videocam</span></div>'+
+        '<div class="dev-body"><div class="dev-title">'+esc(c.name)+'</div>'+
+        '<div class="dev-badges"><span class="dev-badge '+(ok?'ok':'warn')+'">'+esc(c.status||'Unknown')+'</span>'+
+        (virtual?'<span class="dev-badge info">Virtual</span>':'')+'</div></div></div>';
     });
     h+='</div></div>';
   }
+
   if(USBDEVS&&USBDEVS.length){
-    h+='<div class="spec-section"><h2>Peripherals ('+USBDEVS.length+')</h2><div class="device-grid compact">';
+    h+='<div><div class="dp-section-label">Peripherals ('+USBDEVS.length+')</div><div class="dev-grid">';
     USBDEVS.forEach(u=>{
-      h+='<div class="dcard"><div class="dcard-icon icon-dim">'+ICON_USB+'</div>'+
-        '<div class="dcard-body"><div class="dcard-title">'+esc(u.name)+'</div></div></div>';
+      h+='<div class="dev-card"><div class="dev-icon plain"><span class="material-symbols-outlined">usb</span></div>'+
+        '<div class="dev-body"><div class="dev-title">'+esc(u.name)+'</div></div></div>';
     });
     h+='</div></div>';
   }
-  if(DEVERR.length){
-    const DEVERR_CODES={
-      '1':'Device not configured correctly',
-      '3':'Driver may be corrupted, or system is low on resources',
-      '10':'Device cannot start',
-      '12':'Not enough free resources',
-      '14':'Device needs a restart to work',
-      '18':'Drivers need reinstalling',
-      '19':'Registry entries for the device are corrupted',
-      '21':'Windows is in the process of removing the device',
-      '22':'Device is disabled',
-      '24':'Device not present, not working, or missing drivers',
-      '28':'Drivers are not installed',
-      '29':'Disabled by firmware \u2014 didn\u2019t give the device resources',
-      '31':'Windows cannot load the drivers',
-      '32':'Driver service is disabled',
-      '37':'Driver returned a failure',
-      '39':'Driver is missing or corrupted',
-      '41':'Driver loaded but can\u2019t find the device',
-      '42':'Duplicate device found',
-      '43':'Device reported a problem',
-      '44':'An application or driver stopped the device',
-      '45':'Device not currently connected',
-      '48':'A previous driver for this device is blocked from loading',
-      '52':'Drivers aren\u2019t digitally signed',
-    };
-    h+='<div class="spec-section" id="devErrSection"><h2>Device Manager errors ('+DEVERR.length+')</h2><div class="device-grid">';
-    DEVERR.forEach(e=>{
-      const desc=DEVERR_CODES[String(e.code)];
-      h+='<div class="dcard err-card"><div class="dcard-icon icon-err">'+ICON_ALERT+'</div>'+
-        '<div class="dcard-body"><div class="dcard-title">'+esc(e.name)+'</div>'+
-        '<span class="dcard-badge badge-err">Error code '+esc(e.code)+'</span>'+
-        (desc?'<div class="dcard-desc">'+esc(desc)+'</div>':'')+
-        '</div></div>';
-    });
-    h+='</div></div>';
-  }
-  if(!h)h='<div class="spec-section"><h2>Devices</h2><div style="color:var(--faint)">No audio, webcam, or USB peripheral data was collected.</div></div>';
+
+  h+='</div>';
   v.innerHTML=h;
+  const copyBtn=document.getElementById('copyDevBtn');
+  if(copyBtn)copyBtn.onclick=()=>{
+    const txt=v.textContent.replace(/\s*\n\s*/g,'\n').trim();
+    const done=()=>{const old=copyBtn.innerHTML;copyBtn.innerHTML='<span class="material-symbols-outlined" style="font-size:18px">check</span>Copied';setTimeout(()=>{copyBtn.innerHTML=old;},1500);};
+    if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(txt).then(done).catch(()=>{});
+    else{const ta=document.createElement('textarea');ta.value=txt;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);done();}
+  };
 }
 function renderDumps(){
   if(!DUMPS.length)return;
@@ -2390,16 +3421,32 @@ function renderDumps(){
 document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{
   document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('on',x===t));
   document.body.className='tab-'+t.dataset.tab;
-  document.getElementById('pageTitleSub').textContent='- '+t.textContent;
+  const lbl=t.querySelector('.tab-label');
+  document.getElementById('pageTitleSub').textContent='- '+(lbl?lbl.textContent:t.textContent);
 });
+// A nav group with a flagged page inside it opens on load, so a warning is never hidden behind a
+// collapsed header. If the user collapses it again, the header carries a roll-up badge instead.
+function syncNavGroups(expand){
+  document.querySelectorAll('.nav-group').forEach(grp=>{
+    const title=grp.querySelector('.nav-group-title:not(.static)');
+    if(!title)return;
+    const live=[...grp.querySelectorAll('.nav-group-items .tab-badge')].filter(b=>b.style.display!=='none'&&b.textContent.trim()&&(!b.closest('.tab')||b.closest('.tab').style.display!=='none'));
+    let gb=title.querySelector('.group-badge');
+    if(!gb){gb=document.createElement('span');gb.className='tab-badge group-badge';title.insertBefore(gb,title.querySelector('.chev'));}
+    if(!live.length){gb.classList.remove('show');return;}
+    const anyErr=live.some(b=>!b.classList.contains('warn'));
+    gb.textContent='';
+    gb.title=live.length+' page'+(live.length===1?'':'s')+' with notes';
+    gb.className='tab-badge group-badge show'+(anyErr?'':' warn');
+    if(expand)grp.classList.remove('collapsed');
+  });
+}
 document.querySelectorAll('.nav-group-title:not(.static)').forEach(g=>g.onclick=()=>{
   g.closest('.nav-group').classList.toggle('collapsed');
 });
 renderSpecs();
 load(RAW);
 renderSummary();
-renderSys();
-renderShutdowns();
 renderDumps();
 renderNet();
 renderDevices();
@@ -2414,7 +3461,9 @@ renderProcesses();
 renderExtensions();
 renderUpdates();
 renderFAQ();
-document.getElementById('pageFoot').textContent=(GEN?'Generated '+GEN+' · ':'')+'PCHH Triage'+(VER?' v'+VER:'')+' · Author: Rory (ctrl.alt.repeat)';
+syncNavGroups(true);
+document.getElementById('pageFoot').textContent=GEN?'Generated '+GEN:'';
+document.getElementById('brand-sub').textContent=GEN?'Report \u00b7 '+GEN:'System report';
 </script>
 </body>
 </html>
@@ -2460,8 +3509,7 @@ function dmpcheck {
     Clear-Host 
     Write-Host ""
     Write-Host "==================================================" -ForegroundColor DarkGreen
-    Write-Host "         PCHH Triage v$scriptVersion            " -ForegroundColor Green
-    Write-Host "       Developed by Rory (ctrl.alt.repeat)		  " -ForegroundColor DarkGray
+    Write-Host "                PCHH Triage                      " -ForegroundColor Green
     Write-Host "==================================================" -ForegroundColor DarkGreen
     Write-Host ""
     Write-Host "This collects crash logs, specs and diagnostics into" -ForegroundColor Gray
@@ -2519,9 +3567,14 @@ function fileadd {
 
     $motherboardModel = Get-WmiObject Win32_BaseBoard | Select-Object -ExpandProperty Product
     $motherboardMfr = Get-WmiObject Win32_BaseBoard | Select-Object -ExpandProperty Manufacturer
+    $motherboardSerial = Get-WmiObject Win32_BaseBoard | Select-Object -ExpandProperty SerialNumber
     $bios = Get-WmiObject Win32_BIOS
     $biosVersion = $bios | Select-Object -ExpandProperty SMBIOSBIOSVersion
     $biosDate = $bios | Select-Object -ExpandProperty ReleaseDate
+    $biosMfr = $bios | Select-Object -ExpandProperty Manufacturer
+    # Presence of this key is a long-standing, reliable proxy for UEFI firmware - Legacy BIOS
+    # systems never create it, regardless of whether Secure Boot itself is turned on.
+    $firmwareType = if (Test-Path "HKLM:\SYSTEM\CurrentControlSet\Control\SecureBoot\State") { "UEFI" } else { "Legacy BIOS" }
     $os = Get-WmiObject Win32_OperatingSystem
     $osName = $os | Select-Object -ExpandProperty Caption
     $osVersion = $os | Select-Object -ExpandProperty Version
@@ -2585,8 +3638,11 @@ function fileadd {
     specs "GPU: $gpu"
     specs "`nMotherboard Manufacturer: $motherboardMfr"
     specs "Motherboard: $motherboardModel"
+    specs "Motherboard Serial: $motherboardSerial"
+    specs "BIOS Manufacturer: $biosMfr"
     specs "BIOS Version: $biosVersion"
     specs "BIOS Date: $([System.Management.ManagementDateTimeConverter]::ToDateTime($biosDate).ToString("MM'/'dd'/'yyyy HH:mm:ss"))"
+    specs "Firmware Mode: $firmwareType"
     specs "`nOS: $osName"
     specs "OS Version: $osVersion"
     specs "System Uptime: $($uptime.Days) days, $($uptime.Hours) hours, $($uptime.Minutes) minutes"
@@ -3331,11 +4387,20 @@ function reliabilityexport {
         try {
             $gpus = @(Get-CimInstance Win32_VideoController -ErrorAction Stop | ForEach-Object {
                 $vram = if ($vramByKey.ContainsKey($_.Name)) { $vramByKey[$_.Name] } elseif ($_.AdapterRAM) { $_.AdapterRAM } else { 0 }
-                # DriverDate comes back as a CIM_DATETIME string (e.g. "20250815000000.000000+000");
-                # convert to a plain ISO date the report's JS can parse with `new Date(...)`.
+                # Get-CimInstance (unlike Get-WmiObject) already converts CIM_DATETIME properties
+                # into a real [DateTime] object, so running that through
+                # ManagementDateTimeConverter (which expects the raw DMTF string) throws and was
+                # silently swallowed by the catch below, leaving driverDate blank on every machine.
+                # Handle both shapes so it works regardless of which one this comes back as.
                 $driverDate = ""
                 if ($_.DriverDate) {
-                    try { $driverDate = ([System.Management.ManagementDateTimeConverter]::ToDateTime($_.DriverDate)).ToString('yyyy-MM-dd') } catch { }
+                    try {
+                        if ($_.DriverDate -is [DateTime]) {
+                            $driverDate = $_.DriverDate.ToString('yyyy-MM-dd')
+                        } else {
+                            $driverDate = ([System.Management.ManagementDateTimeConverter]::ToDateTime($_.DriverDate)).ToString('yyyy-MM-dd')
+                        }
+                    } catch { }
                 }
                 [PSCustomObject]@{
                     name       = "$($_.Name)"
@@ -3743,17 +4808,28 @@ function reliabilityexport {
                 # driver's own advertised speed options (ValidDisplayValues) rather than guessing
                 # gigabit capability from the adapter's name, since plenty of genuine gigabit NICs
                 # (e.g. most Intel ones) don't say "Gigabit" anywhere in their description.
+                # The fastest speed is read from every value the driver offers (10/100/1000/2500/
+                # 5000/10000...), so a 2.5 GbE port stuck at 1 Gbps is caught as well as a Gigabit
+                # port stuck at 100 Mbps. ReceiveLinkSpeed is a raw bits-per-second number, so the
+                # current speed doesn't depend on parsing the localized LinkSpeed text.
                 $gigabitBelowRated = $false
+                $linkMbps = $null; $maxMbps = $null
                 try {
-                    if ($_.Status -eq 'Up' -and $_.PhysicalMediaType -eq '802.3') {
+                    if ($_.ReceiveLinkSpeed) { $linkMbps = [math]::Round([double]$_.ReceiveLinkSpeed / 1e6) }
+                    elseif ("$($_.LinkSpeed)" -match '^([\d.,]+)\s*(G|M|K)') {
+                        $val = [double]($Matches[1] -replace ',', '.')
+                        $linkMbps = switch ($Matches[2]) { 'G' { $val * 1000 }; 'M' { $val }; 'K' { $val / 1000 } }
+                    }
+                    if ($_.PhysicalMediaType -eq '802.3') {
                         $speedProp = Get-NetAdapterAdvancedProperty -Name $_.Name -RegistryKeyword '*SpeedDuplex' -ErrorAction Stop
-                        if ($speedProp.ValidDisplayValues -match '1\.?0?\s*Gbps|1000') {
-                            if ("$($_.LinkSpeed)" -match '^([\d.,]+)\s*(Gbps|Mbps|Kbps)') {
-                                $val = [double]($Matches[1] -replace ',', '.')
-                                $mbps = switch -Regex ($Matches[2]) { 'Gbps' { $val * 1000 }; 'Mbps' { $val }; 'Kbps' { $val / 1000 } }
-                                if ($mbps -lt 1000) { $gigabitBelowRated = $true }
+                        foreach ($opt in @($speedProp.ValidDisplayValues)) {
+                            foreach ($m in [regex]::Matches("$opt", '(\d+(?:[.,]\d+)?)\s*([GM])\s*(?:bps|bit|b/s|B)', 'IgnoreCase')) {
+                                $v = [double]($m.Groups[1].Value -replace ',', '.')
+                                $optMbps = if ($m.Groups[2].Value -match 'G') { $v * 1000 } else { $v }
+                                if ($null -eq $maxMbps -or $optMbps -gt $maxMbps) { $maxMbps = $optMbps }
                             }
                         }
+                        if ($_.Status -eq 'Up' -and $maxMbps -ge 1000 -and $linkMbps -and $linkMbps -lt $maxMbps) { $gigabitBelowRated = $true }
                     }
                 } catch { }
                 [PSCustomObject]@{
@@ -3763,8 +4839,13 @@ function reliabilityexport {
                     speed  = "$($_.LinkSpeed)"
                     media  = "$($_.PhysicalMediaType)"
                     gigabitBelowRated = $gigabitBelowRated
+                    linkMbps   = $linkMbps
+                    maxMbps    = $maxMbps
+                    fullDuplex = if ($_.Status -eq 'Up' -and $_.PhysicalMediaType -eq '802.3' -and $null -ne $_.FullDuplex) { [bool]$_.FullDuplex } else { $null }
                     driverVersion = "$($_.DriverVersion)"
-                    driverDate    = if ($_.DriverDate) { $_.DriverDate.ToString("MM'/'dd'/'yyyy") } else { "" }
+                    # Get-NetAdapter returns DriverDate as a plain 'yyyy-MM-dd' string, not a DateTime -
+                    # calling .ToString(format) on it threw and wiped out the whole adapter list.
+                    driverDate    = $(try { $dd = $_.DriverDate; if ($dd -is [datetime]) { $dd.ToString("MM'/'dd'/'yyyy") } elseif ("$dd") { ([datetime]::Parse("$dd", [Globalization.CultureInfo]::InvariantCulture)).ToString("MM'/'dd'/'yyyy") } else { "" } } catch { "" })
                 }
             })
         } catch { }
@@ -3805,7 +4886,7 @@ function reliabilityexport {
             # matching netsh's localized field labels - this returns raw enum/numeric values from the
             # OS regardless of display language, so it no longer silently comes back empty on a
             # non-English system the way the old netsh parsing did.
-            $radioType = $null; $authDisplay = $null; $rxMbps = $null; $txMbps = $null
+            $radioType = $null; $authDisplay = $null; $rxMbps = $null; $txMbps = $null; $apiChannel = $null; $phyId = $null
             try {
                 if (-not ("PCHH.Wlan" -as [type])) {
                     Add-Type -Namespace PCHH -Name Wlan -MemberDefinition @'
@@ -3892,9 +4973,17 @@ namespace PCHH {
                                             if ($authMap.ContainsKey([int]$sec.dot11AuthAlgorithm)) { $authDisplay = $authMap[[int]$sec.dot11AuthAlgorithm] }
 
                                             if ($null -eq $wifiSignalPct) { $wifiSignalPct = [int]$assoc.wlanSignalQuality }
+                                            $phyId = [int]$assoc.dot11PhyType
                                             $rxMbps = [math]::Round($assoc.ulRxRate / 1000)
                                             $txMbps = [math]::Round($assoc.ulTxRate / 1000)
                                         } finally { [PCHH.Wlan]::WlanFreeMemory($dataPtr) }
+                                    }
+                                    # wlan_intf_opcode_channel_number (8): the raw channel number,
+                                    # locale-independent, used to work out the band when netsh's
+                                    # English-only "Band" field isn't available.
+                                    $cs = 0; $cp = [IntPtr]::Zero
+                                    if ([PCHH.Wlan]::WlanQueryInterface($clientHandle, [ref]$guidCopy, 8, [IntPtr]::Zero, [ref]$cs, [ref]$cp, [IntPtr]::Zero) -eq 0) {
+                                        try { $apiChannel = [Runtime.InteropServices.Marshal]::ReadInt32($cp) } finally { [PCHH.Wlan]::WlanFreeMemory($cp) }
                                     }
                                     break
                                 }
@@ -3918,8 +5007,23 @@ namespace PCHH {
                     }
                 }
             }
+            # Band fallback from the channel number: 1-14 is 2.4 GHz, 32+ is 5 GHz. 6 GHz reuses
+            # low channel numbers, so a low channel on an 802.11ax/be link is left undetermined.
+            if (-not $wf['Band'] -and $apiChannel) {
+                if ($apiChannel -ge 32) { $wf['Band'] = '5 GHz' }
+                elseif ($apiChannel -le 14 -and $phyId -notin 10, 11) { $wf['Band'] = '2.4 GHz' }
+            }
+            if (-not $wf['Channel'] -and $apiChannel) { $wf['Channel'] = "$apiChannel" }
+            # Whether the adapter can do 5 GHz at all: the supported radio types in 'netsh wlan show
+            # drivers' are standard names (802.11a/ac/ax/be) even when the labels are translated.
+            $supports5 = $null
+            try {
+                $drv = (netsh wlan show drivers 2>$null) -join ' '
+                if ($drv -match '802\.11') { $supports5 = [bool]($drv -match '802\.11(a|ac|ax|be)\b') }
+            } catch { }
             if ($null -ne $wifiSignalPct) {
                 $wifi = [PSCustomObject]@{
+                    supports5 = $supports5
                     signal  = "$wifiSignalPct%"
                     band    = "$($wf['Band'])"
                     channel = "$($wf['Channel'])"
@@ -4031,7 +5135,24 @@ function compression {
 
     Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\CrashControl" -Name "DisplayParameters" -Value 1 -Type DWord -Force | Out-Null
 
-    $filesToCompress = @($infofile, $reliability_csv_path, $reliability_html_path)
+    # wevtutil's export (epl) reads the log's on-disk file directly rather than needing exclusive
+    # access to it, so this works even while the Event Log service has System/Application open -
+    # a plain file copy of the live .evtx would fail with a sharing violation. The time filter
+    # matches the memory dump retention window below, so both stay a similarly-sized recent slice
+    # rather than the full log (which can run into the tens of MB on a machine that's been up a
+    # long time).
+    $evtxExports = @()
+    $evtxCutoffMs = 60 * 24 * 60 * 60 * 1000
+    foreach ($logName in @('System', 'Application')) {
+        $exportPath = "$File\$logName.evtx"
+        try {
+            $query = "*[System[TimeCreated[timediff(@SystemTime) <= $evtxCutoffMs]]]"
+            wevtutil epl $logName $exportPath "/q:$query" /ow:true 2>$null
+            if (Test-Path $exportPath) { $evtxExports += $exportPath }
+        } catch { }
+    }
+
+    $filesToCompress = @($infofile, $reliability_csv_path, $reliability_html_path) + $evtxExports
 
     if ($dmpfound) {
         # Only include dumps from the last 60 days in the zip - older ones are left alone on disk
@@ -4058,6 +5179,7 @@ function compression {
     }
 
     Remove-Item -Path $infofile, $reliability_csv_path, $reliability_html_path -Force -Recurse -ErrorAction SilentlyContinue > $null 2>&1
+    if ($evtxExports.Count -gt 0) { Remove-Item -Path $evtxExports -Force -ErrorAction SilentlyContinue > $null 2>&1 }
 
     Write-Host -NoNewline -ForegroundColor Green "$(cmark)"
     Write-Host " Zip created"
