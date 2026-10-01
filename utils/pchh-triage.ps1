@@ -114,6 +114,10 @@ body{background:var(--bg);color:var(--text);font-family:'Roboto',system-ui,sans-
 .tab-badge{margin-left:auto;min-width:20px;height:20px;padding:0 6px;box-sizing:border-box;border-radius:10px;background:var(--err-c);color:var(--err-on-c);font:500 11px/20px Roboto;text-align:center;flex:none}
 .tab-badge.warn{background:var(--warn-container);color:var(--warn)}
 .tab-badge.neutral{background:#272A2F;color:var(--dim)}
+.sec-issue{display:flex;align-items:center;gap:12px;padding:8px 10px;border-radius:8px;color:var(--text);text-decoration:none;font:400 14px/20px Roboto}
+.sec-issue:hover{background:#22262B}
+.sec-issue-go{color:var(--info);font:500 12px/16px Roboto;white-space:nowrap}
+.dp-card.sec-flash{outline:2px solid var(--info);outline-offset:2px;transition:outline-color .3s}
 .flag-sep{width:1px;align-self:stretch;background:var(--line2);margin:0 4px}
 .nav-group-title .group-badge{display:none;margin-left:auto;margin-right:10px;min-width:10px;width:10px;height:10px;padding:0}
 .nav-group.collapsed .nav-group-title .group-badge.show{display:block}
@@ -2628,6 +2632,12 @@ function shutFactsHtml(x){
   return '<div class="shut-facts">'+rows.map(r=>'<div class="sf-k">'+r[0]+'</div><div class="sf-v">'+r[1]+'</div>').join('')+
     '<div class="sf-k"></div><div class="sf-v"><a onclick="event.stopPropagation();return goFaq(\'unexpected-shutdown\')">What causes unexpected shutdowns \u2192</a></div></div>';
 }
+// Scroll the Security tab to the card with this title and briefly outline it.
+function secJump(title){
+  const card=[...document.querySelectorAll('#securityView .dp-card')].find(c=>{const t=c.querySelector('.dp-card-title');return t&&t.textContent.trim()===title;});
+  if(card){card.scrollIntoView({behavior:'smooth',block:'start'});card.classList.add('sec-flash');setTimeout(()=>card.classList.remove('sec-flash'),1600);}
+  return false;
+}
 function renderSecurity(){
   const v=document.getElementById('securityView');
   const sp=parseSpecs(SPECS);
@@ -2668,19 +2678,27 @@ function renderSecurity(){
   }
 
   // --- overall status line, top-right of the header ---
-  let critCount=0,warnCount=0;
-  if(d&&d.rtp!=='True')critCount++;
-  if(SECURITY&&SECURITY.rdp&&SECURITY.rdp.enabled){warnCount++; if(SECURITY.rdp.nlaRequired===false)warnCount++;}
-  if(SECURITY&&SECURITY.exclFlags&&SECURITY.exclFlags.length)warnCount++;
-  if(SECURITY&&SECURITY.hostsFlags&&SECURITY.hostsFlags.length)warnCount++;
-  if(SECURITY&&SECURITY.startupFlags&&SECURITY.startupFlags.length)warnCount++;
-  if(SECURITY&&SECURITY.avProducts&&SECURITY.avProducts.filter(a=>a.enabled).length>1)warnCount++;
-  if(tpmStatus&&tpmStatus!=='Enabled')critCount++;
-  if(secureBoot&&secureBoot!=='Enabled')warnCount++;
+  // Same rules and severities as the Diagnostic Summary notes for this tab, so the badge, the
+  // status line and the summary always agree. TPM / Secure Boot off are reference-only there,
+  // so they're not counted here either. Each issue names the card it lives in so it can be jumped to.
+  const secIssues=[];
+  if(SECURITY){
+    if(d&&d.rtp!=='True')secIssues.push({sev:'err',text:'Windows Defender real-time protection is disabled',card:'Windows Defender'});
+    const fwOff=(SECURITY.firewall||[]).filter(f=>f.enabled!=='True').map(f=>f.profile||f.name).filter(Boolean);
+    if((SECURITY.firewall||[]).some(f=>f.enabled!=='True'))secIssues.push({sev:'err',text:'Firewall disabled'+(fwOff.length?' on: '+fwOff.join(', '):''),card:'Firewall'});
+    if(SECURITY.threats&&SECURITY.threats.length)secIssues.push({sev:'err',text:SECURITY.threats.length+' threat detection'+(SECURITY.threats.length>1?'s':'')+' recorded',card:'Threat detections'});
+    if(SECURITY.exclFlags&&SECURITY.exclFlags.length)secIssues.push({sev:'warn',text:SECURITY.exclFlags.length+' risky Defender exclusion'+(SECURITY.exclFlags.length>1?'s':''),card:'Defender exclusions'});
+    if(SECURITY.hostsFlags&&SECURITY.hostsFlags.length)secIssues.push({sev:'warn',text:'Hosts file redirects a known update/security domain',card:'Hosts file'});
+    if(SECURITY.startupFlags&&SECURITY.startupFlags.length)secIssues.push({sev:'warn',text:SECURITY.startupFlags.length+' flagged startup entr'+(SECURITY.startupFlags.length>1?'ies':'y'),card:'Startup entries flagged'});
+    if(SECURITY.rdp&&SECURITY.rdp.enabled)secIssues.push({sev:'warn',text:'Remote Desktop is enabled'+(SECURITY.rdp.nlaRequired===false?' (Network Level Authentication off)':''),card:'Remote Desktop (RDP)'});
+    const avOn=(SECURITY.avProducts||[]).filter(a=>a.enabled);
+    if(avOn.length>1)secIssues.push({sev:'warn',text:'Multiple real-time antivirus products active: '+avOn.map(a=>a.name).join(', '),card:'Antivirus'});
+  }
+  const critCount=secIssues.filter(i=>i.sev==='err').length, warnCount=secIssues.length-critCount;
   const statusCls=critCount?'err':(warnCount?'warn':'ok');
   const statusText=critCount?critCount+' error'+(critCount===1?'':'s')+', '+warnCount+' warning'+(warnCount===1?'':'s')+' here':(warnCount?warnCount+' warning'+(warnCount===1?'':'s')+' here':'No problems found');
   const secBadgeEl=document.getElementById('securityTabBadge');
-  if(secBadgeEl){ const bc=critCount+warnCount; if(bc){secBadgeEl.textContent=bc;secBadgeEl.style.display='';} else {secBadgeEl.style.display='none';} }
+  if(secBadgeEl){ const bc=critCount+warnCount; if(bc){secBadgeEl.textContent=bc;secBadgeEl.className='tab-badge'+(critCount?'':' warn');secBadgeEl.style.display='';} else {secBadgeEl.style.display='none';} }
 
   let h='<div class="dp-head"><div class="dp-crumb"><span class="crumb">Software <span class="material-symbols-outlined" style="font-size:16px">chevron_right</span> <b>Security</b></span>'+
     '<div class="dp-actions"><div class="m3-btn" id="copySecurityBtn"><span class="material-symbols-outlined" style="font-size:18px">content_copy</span>Copy</div></div></div>'+
@@ -2694,11 +2712,21 @@ function renderSecurity(){
     ).join('')+'</div>';
   }
 
+  // "Needs attention" list: every counted issue, each one jumping to the card that holds the detail.
+  if(secIssues.length){
+    h+='<div class="list-flagband"><div class="list-flagband-inner" style="flex-direction:column;align-items:stretch;gap:6px">'+
+      '<div class="dp-card-title" style="margin-bottom:4px">Needs attention</div>'+
+      secIssues.map(i=>'<a href="#" class="sec-issue" onclick="return secJump(\''+i.card.replace(/'/g,"\\'")+'\')">'+
+        '<span class="material-symbols-outlined" style="font-size:18px;color:var(--'+(i.sev==='err'?'err':'warn')+')">'+(i.sev==='err'?'error':'warning')+'</span>'+
+        '<span style="flex:1">'+esc(i.text)+'</span><span class="sec-issue-go">'+esc(i.card)+' <span class="material-symbols-outlined" style="font-size:16px;vertical-align:-3px">arrow_downward</span></span></a>').join('')+
+      '</div></div>';
+  }
+
   const cards=[];
   if(tpmStatus||secureBoot||uac){
     let c='<div class="dp-card"><div class="dp-card-head"><div class="dp-card-title">Firmware &amp; account security</div></div><div class="dp-kv">';
     if(tpmStatus)c+='<dt>'+flagLink('tpm','TPM')+'</dt><dd style="color:'+(tpmStatus==='Enabled'?'var(--ok)':'var(--err)')+'">'+esc(tpmStatus)+(tpmVersion?' <span style="color:var(--faint)">('+esc(tpmVersion)+')</span>':'')+'</dd>';
-    if(secureBoot)c+='<dt>'+flagLink('secure-boot','Secure Boot')+'</dt><dd style="color:'+(secureBoot==='Enabled'?'var(--ok)':'var(--warn)')+'">'+esc(secureBoot)+'</dd>';
+    if(secureBoot)c+='<dt>'+flagLink('secure-boot','Secure Boot')+'</dt><dd style="color:'+(secureBoot==='Enabled'?'var(--ok)':'var(--dim)')+'">'+esc(secureBoot)+'</dd>';
     if(uac)c+='<dt>User Account Control (UAC)</dt><dd style="color:'+(uac==='Enabled'?'var(--ok)':'var(--err)')+'">'+esc(uac)+'</dd>';
     cards.push(c+'</div></div>');
   }
