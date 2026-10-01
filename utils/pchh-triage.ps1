@@ -113,6 +113,7 @@ body{background:var(--bg);color:var(--text);font-family:'Roboto',system-ui,sans-
 .tab.on .material-symbols-outlined{font-variation-settings:'FILL' 1}
 .tab-badge{margin-left:auto;min-width:20px;height:20px;padding:0 6px;box-sizing:border-box;border-radius:10px;background:var(--err-c);color:var(--err-on-c);font:500 11px/20px Roboto;text-align:center;flex:none}
 .tab-badge.warn{background:var(--warn-container);color:var(--warn)}
+.tab-badge.neutral{background:#272A2F;color:var(--dim)}
 .flag-sep{width:1px;align-self:stretch;background:var(--line2);margin:0 4px}
 .nav-group-title .group-badge{display:none;margin-left:auto;margin-right:10px;min-width:10px;width:10px;height:10px;padding:0}
 .nav-group.collapsed .nav-group-title .group-badge.show{display:block}
@@ -438,6 +439,18 @@ body.tab-sys #pageTitle{display:none}
 .diag-stat .material-symbols-outlined{font-size:22px}
 .diag-stat-n{font:400 24px/28px Roboto}
 .diag-stat-l{font:500 12px/16px Roboto}
+/* Reference groups (For reference / software) are secondary: smaller, no fill, faint text - colour is reserved for things to act on. */
+.diag-stat.minor{flex:0 1 auto;min-width:0;background:transparent;color:var(--dim);padding:8px 14px}
+.diag-stat.minor .diag-stat-n{font-size:18px;line-height:22px}
+.diag-stat.minor .material-symbols-outlined{font-size:18px;color:var(--faint)}
+#diagSub .act{color:var(--text)}
+.diag-soft{border-radius:10px}
+.diag-soft>summary{list-style:none;cursor:pointer}
+.diag-soft>summary::-webkit-details-marker{display:none}
+.diag-soft>summary .chev{display:inline-block;width:18px;overflow:hidden;font-size:18px;color:var(--faint);transition:transform .15s}
+.diag-soft[open]>summary .chev{transform:rotate(90deg)}
+.diag-soft-cat{display:inline-block;min-width:200px;color:var(--faint)}
+.diag-soft-cat .sr{font-size:0}
 #diagToolbar{padding:0 40px 12px;flex:none}
 #diagSearchBox{display:flex;align-items:center;gap:10px;height:42px;padding:0 16px;border-radius:21px;background:var(--panel);color:var(--faint)}
 #diagSearchBox .material-symbols-outlined{font-size:20px}
@@ -1418,8 +1431,8 @@ function renderAppsList(programs){
   // when nothing is flagged so the page never opens empty.
   if(!flaggedCount&&PG_.flagFilter==='any')PG_.flagFilter=null;
 
-  if(appsBadgeEl){ if(foundSoft.cheat&&foundSoft.cheat.size){appsBadgeEl.textContent=foundSoft.cheat.size;appsBadgeEl.className='tab-badge';appsBadgeEl.style.display='';}
-    else if(flaggedCount){appsBadgeEl.textContent=flaggedCount;appsBadgeEl.className='tab-badge warn';appsBadgeEl.style.display='';}
+  // Neutral count: installed software of interest is context, not a warning.
+  if(appsBadgeEl){ if(flaggedCount){appsBadgeEl.textContent=flaggedCount;appsBadgeEl.className='tab-badge neutral';appsBadgeEl.style.display='';}
     else appsBadgeEl.style.display='none'; }
 
   let h='<div class="dp-head"><div class="dp-crumb"><span class="crumb">Software <span class="material-symbols-outlined" style="font-size:16px">chevron_right</span> <b>Installed Programs</b></span>'+
@@ -2055,7 +2068,7 @@ const SOFT_GROUP_COLOR={
   ac:{bg:'#0E3A5F',fg:'#9ECBFF'}, oc:{bg:'#0B3B36',fg:'#6FE0CB'}, periph:{bg:'#3A2A5C',fg:'#D3B8FA'},
   bloat:{bg:'#332703',fg:'#FFDF9B'}, audio:{bg:'#4A2338',fg:'#FFAFD1'}, remote:{bg:'#0B3A42',fg:'#7FE0EE'},
   fan:{bg:'#0F2A16',fg:'#8BD17C'}, net:{bg:'#2A2E5C',fg:'#B7BCFF'}, wallpaper:{bg:'#4A3010',fg:'#FFB870'},
-  shell:{bg:'#2A3542',fg:'#A9C2D9'}, cheat:{bg:'#93000A',fg:'#FFDAD6'},
+  shell:{bg:'#2A3542',fg:'#A9C2D9'}, cheat:{bg:'#3A2F2A',fg:'#E8C3A8'},
 };
 function getSoftwareFlags(programs){
   const foundSoft={};
@@ -2168,7 +2181,7 @@ function renderSummary(){
   const softNotes=[];
   if(SECURITY&&SECURITY.avProducts&&SECURITY.avProducts.length){
     const avList=SECURITY.avProducts.filter(a=>a.enabled).map(a=>a.name);
-    if(avList.length>1)softNotes.push(dataLink('security','antivirus-conflict','<span class="y">Multiple real-time antivirus products active: '+esc(avList.join(', '))+'</span>'));
+    if(avList.length>1)notes.push(dataLink('security','antivirus-conflict','<span class="y">Multiple real-time antivirus products active: '+esc(avList.join(', '))+'</span>'));
   }
   // Fan-curve conflicts: dedicated fan-control tools (grp 'fan') plus the multi-purpose RGB
   // hubs that also drive fan curves (iCUE, CAM, Dragon Center, Armoury Crate) - two or more
@@ -2181,8 +2194,9 @@ function renderSummary(){
   }
   Object.keys(foundSoft).forEach(grp=>{
     const items=[...foundSoft[grp]].sort().join(', ');
-    const GRP_COLOR={cheat:'r'};
-    softNotes.push(dataLink('apps',SOFT_FAQ[grp]||'','<span class="'+(GRP_COLOR[grp]||'')+'">'+esc(items)+'</span>'));
+    // Neutral by design: being installed isn't a problem. Software only gets colour when a
+    // specific conflict is detected (fan controllers, multiple AV), and those go into notes.
+    softNotes.push('<span class="diag-soft-cat">'+esc(SOFT_GROUP_LABEL[grp]||grp)+'<span class="sr">: </span></span>'+dataLink('apps',SOFT_FAQ[grp]||'',esc(items)));
   });
 
   if(SECURITY){
@@ -2496,17 +2510,22 @@ function renderSummary(){
   const DIAG_GROUPS=[
     {key:'crit',label:'Error',cls:'crit',icon:'error',items:critItems},
     {key:'warn',label:'Warnings',cls:'warn',icon:'warning',items:warnItems},
-    {key:'info',label:'Information',cls:'',icon:'info',items:infoItems},
-    {key:'soft',label:'Notable software',cls:'',icon:'apps',items:softNotes},
+    {key:'info',label:'For reference',cls:'minor',icon:'info',items:infoItems},
+    {key:'soft',label:'Installed software of interest',cls:'minor',icon:'apps',items:softNotes},
   ];
   const diagTotalCount=DIAG_GROUPS.reduce((a,g)=>a+g.items.length,0);
-  document.getElementById('diagSub').textContent=diagTotalCount+' note'+(diagTotalCount===1?'':'s')+' \u00b7 '+sysTitle+(sysSubParts.length?' \u00b7 '+sysSubParts.join(' \u00b7 '):'');
+  // Headline counts only things to act on (errors + warnings); reference notes are a faint add-on.
+  const actCount=critItems.length+warnItems.length;
+  const refCount=diagTotalCount-actCount;
+  document.getElementById('diagSub').innerHTML='<span class="act">'+(actCount?actCount+' thing'+(actCount===1?'':'s')+' to check':'All clear')+'</span>'+
+    (refCount?' + '+refCount+' note'+(refCount===1?'':'s')+' for reference':'')+
+    ' \u00b7 '+esc(sysTitle)+(sysSubParts.length?' \u00b7 '+esc(sysSubParts.join(' \u00b7 ')):'');
   const badgeCount=critItems.length+warnItems.length;
   const diagBadgeEl=document.getElementById('diagTabBadge');
   if(diagBadgeEl){ if(badgeCount){diagBadgeEl.textContent=badgeCount;diagBadgeEl.style.display='';} else {diagBadgeEl.style.display='none';} }
 
   document.getElementById('diagStats').innerHTML=DIAG_GROUPS.map(g=>
-    '<div class="diag-stat '+g.cls+'" data-key="'+g.key+'"><span class="material-symbols-outlined">'+g.icon+'</span>'+
+    '<div class="diag-stat '+((g.cls==='minor'||g.items.length)?g.cls:'')+'" data-key="'+g.key+'"><span class="material-symbols-outlined">'+g.icon+'</span>'+
     '<div><div class="diag-stat-n">'+g.items.length+'</div><div class="diag-stat-l">'+esc(g.label)+'</div></div></div>'
   ).join('');
 
@@ -2520,6 +2539,13 @@ function renderSummary(){
       let items=g.items;
       if(q)items=items.filter(n=>n.toLowerCase().replace(/<[^>]+>/g,' ').includes(q));
       if(!items.length)return;
+      // Software list is collapsed by default - open it when filtering to it or searching.
+      if(g.key==='soft'){
+        h+='<details class="diag-soft"'+((q||diagFilter==='soft')?' open':'')+'><summary class="diag-group-head"><span class="material-symbols-outlined chev">chevron_right</span><span class="diag-group-label">'+esc(g.label)+'</span><span class="diag-group-count">'+items.length+' categor'+(items.length===1?'y':'ies')+'</span><span class="diag-group-line"></span></summary>';
+        items.forEach(n=>{h+='<div class="diag-row"><div class="diag-row-main">'+n+'</div></div>';});
+        h+='</details>';
+        return;
+      }
       h+='<div class="diag-group-head"><span class="diag-group-label '+g.cls+'">'+esc(g.label)+'</span><span class="diag-group-count">'+items.length+' note'+(items.length===1?'':'s')+'</span><span class="diag-group-line"></span></div>';
       // Errors share one red panel rather than each row carrying its own.
       if(g.key==='crit')h+='<div class="diag-crit-box">';
@@ -3431,7 +3457,7 @@ function syncNavGroups(expand){
   document.querySelectorAll('.nav-group').forEach(grp=>{
     const title=grp.querySelector('.nav-group-title:not(.static)');
     if(!title)return;
-    const live=[...grp.querySelectorAll('.nav-group-items .tab-badge')].filter(b=>b.style.display!=='none'&&b.textContent.trim()&&(!b.closest('.tab')||b.closest('.tab').style.display!=='none'));
+    const live=[...grp.querySelectorAll('.nav-group-items .tab-badge:not(.neutral)')].filter(b=>b.style.display!=='none'&&b.textContent.trim()&&(!b.closest('.tab')||b.closest('.tab').style.display!=='none'));
     let gb=title.querySelector('.group-badge');
     if(!gb){gb=document.createElement('span');gb.className='tab-badge group-badge';title.insertBefore(gb,title.querySelector('.chev'));}
     if(!live.length){gb.classList.remove('show');return;}
