@@ -243,6 +243,8 @@ body.tab-sys #pageTitle{display:none}
 .dp-posture-card.err .dp-posture-t{color:var(--err-on-c)}
 .dp-posture-card.warn .dp-posture-t{color:var(--warn)}
 .dp-body{flex:1;min-height:0;padding:0 40px 40px;display:grid;grid-template-columns:1fr 1fr;gap:16px;align-content:start}
+/* A .dp-body placed directly in a view (Updates, Security) is the scroll container - #content is overflow:hidden on these tabs. */
+.dp-view>.dp-body{overflow-y:auto}
 @media (max-width:900px){.dp-body{grid-template-columns:1fr}}
 .dp-card{background:var(--panel);border-radius:16px;padding:20px 22px}
 .dp-card-head{display:flex;align-items:center;gap:10px;margin-bottom:12px}
@@ -2394,7 +2396,7 @@ function renderSummary(){
       const pgGBStr=(pgMB&&!isNaN(pgMB))?((Math.round(pgMB/1024*10)/10).toString().replace(/\.0$/,'')+' GB'):'';
       const pgLabel=pgManaged==='Automatic'?'System managed':pgManaged==='Manual'?'Manual':pgManaged==='Disabled'?'Disabled':pgManaged;
       const pgLine=pgLabel?pgLabel+(pgGBStr?' \u00b7 '+pgGBStr:''):'';
-      tiles.push({cls:'os',icon:'desktop_windows',label:'Windows',tab:'summary',value:os.replace('Microsoft ',''),
+      tiles.push({cls:'os',icon:'desktop_windows',label:'Windows',tab:'updates',value:os.replace('Microsoft ',''),
         warnKeys:[pgManaged==='Disabled'?'Page file':''].filter(Boolean),
         lines:[
         fv?'Version: '+fv:'',
@@ -4303,7 +4305,12 @@ function reliabilityexport {
         # -PresentOnly switch is the documented, correct way to filter those out.
         $cameras = @()
         try {
-            $camRaw = @(Get-PnpDevice -PresentOnly -Class Camera,Image -ErrorAction Stop)
+            # Image class also holds scanners and multifunction printers (WIA), so only keep Image
+            # devices that are actually video: the UVC driver (usbvideo) or an obviously camera-like name.
+            $camRaw = @(Get-PnpDevice -PresentOnly -Class Camera,Image -ErrorAction Stop | Where-Object {
+                $_.Class -eq 'Camera' -or
+                ($_.Service -ne 'usbscan' -and ($_.Service -eq 'usbvideo' -or $_.FriendlyName -match 'cam|video|capture'))
+            })
             $cameras = @($camRaw | Group-Object FriendlyName,Status | ForEach-Object {
                 $g = $_.Group[0]
                 [PSCustomObject]@{ name = "$($g.FriendlyName)$(if($_.Count -gt 1){" (x$($_.Count))"})"; status = "$($g.Status)" }
