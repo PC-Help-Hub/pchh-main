@@ -1080,6 +1080,10 @@ function summary(e){
   }
   return esc(e.s);
 }
+// Rated RAM speed. Prefer the speed embedded in the part number over Win32_PhysicalMemory.Speed
+// when it's higher - Speed often just reflects the JEDEC default the stick is running at, not what
+// it's rated for. Single shared helper so every view shows the same number.
+const effRated=m=>Math.max(+m.rated||0,+m.pnSpeed||0)||'';
 function esc(s){return String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
 function fmtSize(gb){return gb>=1000?(gb/1000).toFixed(1)+' TB':Math.round(gb)+' GB';}
 function fmtFree(gb){return gb>=1000?(gb/1000).toFixed(1)+'TB':gb.toFixed(1)+'GB';}
@@ -2093,10 +2097,6 @@ function renderSummary(){
   // means this stays accurate on non-English Windows installs instead of silently reading 0.
   const crashes=relEvents.filter(e=>e.cat==='err'&&e.s==='Application Error').length;
   const shutdowns=getShutdowns().length;
-  // Prefer the speed embedded in the part number over Win32_PhysicalMemory.Speed when it's
-  // higher - Speed often just reflects the JEDEC default the stick is currently running at,
-  // not what it's actually rated for, which silently hides an XMP/EXPO-off situation.
-  const effRated=m=>Math.max(+m.rated||0,+m.pnSpeed||0)||'';
   const notes=[];
   notes.push(crashes?dataLink('rel','app-crashes','<span class="r"><b>'+crashes+'</b> Application crash'+(crashes>1?'es':'')+'</span>'):'<span class="g">No application crashes</span>');
   // Unexpected shutdowns: reliability history (6008-derived) and Kernel-Power 41 record the
@@ -3056,13 +3056,12 @@ function renderMemory(){
       '<div class="dp-content"><div class="dp-card"><div class="dp-empty">No memory data embedded.</div></div></div>';
     return;
   }
-  const effRatedMem=m=>Math.max(+m.rated||0,+m.pnSpeed||0)||'';
   const totalGB=RAM.reduce((a,m)=>a+(+m.cap||0),0);
   const confSet=[...new Set(RAM.map(m=>m.conf).filter(Boolean))];
-  const ratedSet=[...new Set(RAM.map(m=>effRatedMem(m)).filter(Boolean))];
+  const ratedSet=[...new Set(RAM.map(m=>effRated(m)).filter(Boolean))];
   const typeSet=[...new Set(RAM.map(m=>m.ddrType).filter(Boolean))];
   const mfrSet=[...new Set(RAM.map(m=>m.mfr).filter(Boolean))];
-  const ramSlow=RAM.some(m=>effRatedMem(m)&&m.conf&&+m.conf<+effRatedMem(m));
+  const ramSlow=RAM.some(m=>effRated(m)&&m.conf&&+m.conf<+effRated(m));
 
   const memTitle='Memory (RAM)'+(totalGB?' '+totalGB+'GB':'')+(typeSet.length===1?' '+typeSet[0]:'')+(confSet.length?' '+confSet.join('/')+'MT/s':'');
   const memSub=[mfrSet.length===1?mfrSet[0]:'',RAM.length+' module'+(RAM.length===1?'':'s')].filter(Boolean).join(' \u00b7 ');
@@ -3102,13 +3101,13 @@ function renderMemory(){
 
   h+='<div><div class="dp-section-label">Modules ('+RAM.length+')</div><div class="vol-grid">';
   RAM.forEach((m,i)=>{
-    const modSlow=effRatedMem(m)&&m.conf&&+m.conf<+effRatedMem(m);
+    const modSlow=effRated(m)&&m.conf&&+m.conf<+effRated(m);
     h+='<div class="dp-card" id="ramModule-'+i+'"><div class="dp-card-head"><div class="dp-card-title" style="font-size:16px">'+esc(m.slot)+'</div>'+(m.mfr?'<span class="dp-card-count">'+esc(m.mfr)+'</span>':'')+'</div><div class="dp-kv">'+
       '<dt>Part number</dt><dd class="mono" style="font-size:13px">'+esc(m.pn||'?')+'</dd>'+
       (m.ddrType?'<dt>Type</dt><dd>'+esc(m.ddrType)+'</dd>':'')+
       '<dt>Capacity</dt><dd>'+esc(m.cap)+' GB</dd>'+
-      (m.rated?'<dt>Rated speed</dt><dd>'+esc(m.rated)+' MT/s</dd>':'')+
-      (m.pnSpeed?'<dt>Speed (from part number)</dt><dd>'+esc(m.pnSpeed)+' MT/s</dd>':'')+
+      (effRated(m)?'<dt>Rated speed</dt><dd>'+esc(effRated(m))+' MT/s</dd>':'')+
+      (m.rated&&+m.rated!==+effRated(m)?'<dt>JEDEC base speed</dt><dd>'+esc(m.rated)+' MT/s</dd>':'')+
       (m.conf?'<dt>Configured speed</dt><dd style="color:'+(modSlow?'var(--warn)':'var(--dim)')+'">'+esc(m.conf)+' MT/s</dd>':'')+
       '</div></div>';
   });
@@ -3745,7 +3744,7 @@ function fileadd {
         ForEach-Object {
             $installDate = ""
             if ($_.InstallDate -and "$($_.InstallDate)" -match '^\d{8}$') {
-                try { $installDate = [datetime]::ParseExact("$($_.InstallDate)", 'yyyyMMdd', $null).ToString('MM/dd/yyyy') } catch { }
+                try { $installDate = [datetime]::ParseExact("$($_.InstallDate)", 'yyyyMMdd', $null).ToString("MM'/'dd'/'yyyy") } catch { }
             }
             [PSCustomObject]@{ name = "$($_.DisplayName)"; date = $installDate }
         })
