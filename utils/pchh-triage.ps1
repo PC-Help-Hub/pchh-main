@@ -2209,7 +2209,13 @@ function renderSummary(){
       const off=SECURITY.firewall.filter(f=>f.enabled!=='True').map(f=>f.profile);
       notes.push(dataLink('security','firewall-disabled','<span class="r">Firewall disabled on: '+esc(off.join(', '))+'</span>'));
     }
-    if(SECURITY.threats&&SECURITY.threats.length)notes.push(dataLink('security','defender-threats','<span class="r"><b>'+SECURITY.threats.length+'</b> threat detection'+(SECURITY.threats.length>1?'s':'')+' recorded by Windows Defender</span>'));
+    // Only detections Defender failed to deal with need action (red). Ones it removed/quarantined
+    // successfully are history - reference only, no colour.
+    if(SECURITY.threats&&SECURITY.threats.length){
+      const unresolved=SECURITY.threats.filter(t=>t.act!=='True').length;
+      if(unresolved)notes.push(dataLink('security','defender-threats','<span class="r"><b>'+unresolved+'</b> threat detection'+(unresolved>1?'s':'')+' not resolved by Windows Defender</span>'));
+      else notes.push(dataLink('security','defender-threats','<span style="color:var(--dim)">'+SECURITY.threats.length+' past threat detection'+(SECURITY.threats.length>1?'s':'')+', all handled by Windows Defender</span>'));
+    }
     if(SECURITY.exclFlags&&SECURITY.exclFlags.length)notes.push(dataLink('security','defender-exclusions','<span class="y"><b>'+SECURITY.exclFlags.length+'</b> risky Defender exclusion'+(SECURITY.exclFlags.length>1?'s':'')+'</span>'));
     if(SECURITY.hostsFlags&&SECURITY.hostsFlags.length)notes.push(dataLink('security','hosts-redirect','<span class="y">Hosts file redirects a known update/security domain</span>'));
     if(SECURITY.startupFlags&&SECURITY.startupFlags.length)notes.push(dataLink('security','startup-flagged','<span class="y"><b>'+SECURITY.startupFlags.length+'</b> flagged startup entr'+(SECURITY.startupFlags.length>1?'ies':'y')+'</span>'));
@@ -2686,7 +2692,8 @@ function renderSecurity(){
     if(d&&d.rtp!=='True')secIssues.push({sev:'err',text:'Windows Defender real-time protection is disabled',card:'Windows Defender'});
     const fwOff=(SECURITY.firewall||[]).filter(f=>f.enabled!=='True').map(f=>f.profile||f.name).filter(Boolean);
     if((SECURITY.firewall||[]).some(f=>f.enabled!=='True'))secIssues.push({sev:'err',text:'Firewall disabled'+(fwOff.length?' on: '+fwOff.join(', '):''),card:'Firewall'});
-    if(SECURITY.threats&&SECURITY.threats.length)secIssues.push({sev:'err',text:SECURITY.threats.length+' threat detection'+(SECURITY.threats.length>1?'s':'')+' recorded',card:'Threat detections'});
+    const unresolvedThreats=(SECURITY.threats||[]).filter(t=>t.act!=='True').length;
+    if(unresolvedThreats)secIssues.push({sev:'err',text:unresolvedThreats+' threat detection'+(unresolvedThreats>1?'s':'')+' not resolved',card:'Threat detections'});
     if(SECURITY.exclFlags&&SECURITY.exclFlags.length)secIssues.push({sev:'warn',text:SECURITY.exclFlags.length+' risky Defender exclusion'+(SECURITY.exclFlags.length>1?'s':''),card:'Defender exclusions'});
     if(SECURITY.hostsFlags&&SECURITY.hostsFlags.length)secIssues.push({sev:'warn',text:'Hosts file redirects a known update/security domain',card:'Hosts file'});
     if(SECURITY.startupFlags&&SECURITY.startupFlags.length)secIssues.push({sev:'warn',text:SECURITY.startupFlags.length+' flagged startup entr'+(SECURITY.startupFlags.length>1?'ies':'y'),card:'Startup entries flagged'});
@@ -4571,9 +4578,13 @@ function reliabilityexport {
 
             $threats = @()
             try {
+                # Get-MpThreatDetection has no ThreatName - only a ThreatID. The name lives in Get-MpThreat.
+                $threatNames = @{}
+                try { Get-MpThreat -ErrorAction Stop | ForEach-Object { $threatNames["$($_.ThreatID)"] = "$($_.ThreatName)" } } catch { }
                 $threats = @(Get-MpThreatDetection -ErrorAction Stop | Select-Object -First 25 | ForEach-Object {
+                    $tn = $threatNames["$($_.ThreatID)"]
                     [PSCustomObject]@{
-                        name = "$($_.ThreatName)"
+                        name = if ($tn) { $tn } else { "Threat ID $($_.ThreatID)" }
                         time = $_.InitialDetectionTime.ToString("MM'/'dd'/'yyyy HH:mm")
                         act  = "$($_.ActionSuccess)"
                     }
