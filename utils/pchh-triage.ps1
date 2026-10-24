@@ -615,6 +615,7 @@ body.dragging #drop{background:var(--info-c);color:var(--info-on-c)}
 .chip-sep{width:1px;height:24px;background:var(--line2);margin:0 4px}
 .src-tag{flex:none;font:500 11px/22px Roboto;padding:0 8px;border-radius:6px;background:#272A2F;color:var(--dim);white-space:nowrap}
 .src-tag.src-both{color:var(--info)}
+.hook-tag{display:inline-block;height:20px;padding:0 8px;margin-left:6px;border-radius:6px;background:var(--warn-container);color:var(--warn);font:500 11px/20px Roboto;vertical-align:1px}
 #search{background:var(--panel);border:none;border-radius:22px;color:var(--text);padding:0 18px;height:44px;font:400 15px/44px Roboto;font-family:inherit;flex:1 1 100%;order:-1;margin:0 0 4px;outline:none}
 #search::placeholder{color:var(--faint)}
 #search::placeholder{color:var(--faint)}
@@ -902,6 +903,66 @@ function classify(r){
 }
 const CATNAMES={err:'Error events',warn:'Warnings',info:'Informational events'};
 
+// DLLs that overlays/capture tools inject into games. A crash inside one points at that tool,
+// not the game or the hardware. Keys are lower-case module names.
+const HOOK_DLLS={
+  'rtsshooks64.dll':'RivaTuner (RTSS)','rtsshooks.dll':'RivaTuner (RTSS)',
+  'gameoverlayrenderer64.dll':'Steam overlay','gameoverlayrenderer.dll':'Steam overlay',
+  'discordhook64.dll':'Discord overlay','discordhook.dll':'Discord overlay',
+  'graphics-hook64.dll':'OBS game capture','graphics-hook32.dll':'OBS game capture',
+  'igo64.dll':'EA app / Origin overlay','igo32.dll':'EA app / Origin overlay',
+  'eosoverlayrenderer-win64-shipping.dll':'Epic overlay',
+  'nvspcap64.dll':'NVIDIA overlay',
+  'reshade64.dll':'ReShade','reshade32.dll':'ReShade'
+};
+// Fault details for an Application Error (1000). Reports from this script carry InsertionStrings
+// (e.f), which are raw values and don't change with Windows' language. The message regex is a
+// fallback for older reports and hand-loaded CSVs - its labels only match English Windows.
+function faultInfo(e){
+  if(e.s!=='Application Error')return null;
+  let mod='',off='',pid='',code='',path='';
+  if(e.f){mod=e.f.mod||'';off=e.f.off||'';pid=e.f.pid||'';code=e.f.code||'';path=e.f.mp||'';}
+  else{
+    const g=re=>(((e.m||'').match(re)||[])[1]||'').trim();
+    mod=g(/Faulting module name:\s*([^,\r\n]+)/);off=g(/Fault offset:\s*(\S+)/);pid=g(/Faulting process id:\s*(\S+)/);
+    code=g(/Exception code:\s*(\S+)/);path=g(/Faulting module path:\s*([^\r\n]+)/);
+  }
+  mod=mod.trim();
+  if(!mod)return null;
+  const hex=v=>{v=(v||'').trim().toLowerCase();return v&&!/^0x/.test(v)?'0x'+v:v;};
+  const base=mod.replace(/_unloaded$/i,'');
+  return {mod,base,unloaded:base!==mod,off:hex(off),pid:hex(pid),code:hex(code),path,
+    attrib:/^unknown$/i.test(base)?'':base,inferred:false};
+}
+// The first report of a crash often names the module 'unknown' and gives an absolute address.
+// 64-bit DLLs load at 0x180000000 by default, so if (address - 0x180000000) matches a named
+// module's offset in the same process, it's the same fault in that module.
+function attributeUnknown(evs){
+  const norm=o=>{try{return BigInt(o).toString(16);}catch(_){return '';}};
+  const known={};
+  evs.forEach(e=>{const f=e.fi;if(f&&f.attrib&&f.pid&&f.off)known[f.pid+'|'+norm(f.off)]=f.attrib;});
+  evs.forEach(e=>{
+    const f=e.fi;if(!f||f.attrib||!f.pid||!f.off)return;
+    try{
+      const abs=BigInt(f.off);if(abs<0x180000000n)return;
+      const hit=known[f.pid+'|'+(abs-0x180000000n).toString(16)];
+      if(hit){f.attrib=hit;f.inferred=true;f.path='';}
+    }catch(_){}
+  });
+}
+function crashSummary(e){
+  const f=e.fi;
+  if(!f)return 'Stopped working';
+  if(!f.attrib)return 'Crashed in an unidentified module';
+  const hook=HOOK_DLLS[f.attrib.toLowerCase()];
+  let s=(e.p||'').toLowerCase()===f.attrib.toLowerCase()
+    ?'Crashed in its own code'
+    :'Crashed in <span class="mono" title="'+esc(f.path||f.attrib)+'">'+esc(f.attrib)+'</span>';
+  if(f.inferred)s+=' <span style="color:var(--faint)">(matched by offset)</span>';
+  if(hook)s+='<span class="hook-tag">'+esc(hook)+'</span>';
+  return s;
+}
+
 // events = the merged Events timeline: reliability history + curated System log entries, with the
 // separate records of one unexpected shutdown (6008 in both logs, Kernel-Power 41) folded into a
 // single incident row. relEvents keeps reliability history on its own for the summary counts.
@@ -916,6 +977,8 @@ function load(raw){
     const d=parseDate(r.t);
     return {...r, d, cat:classify(r), src:'rel', dayKey:d?d.toISOString().slice(0,10):'?'};
   }).filter(e=>e.d).sort((a,b)=>b.d-a.d);
+  relEvents.forEach(e=>{e.fi=faultInfo(e);});
+  attributeUnknown(relEvents);
   const sysEvents=SYSEVT.map(r=>{
     const d=parseDate(r.t);
     return {t:r.t, s:r.prov, e:String(r.id), p:r.prov, m:r.msg||'', bc:r.bc, cnt:r.cnt, d, cat:sysCat(r.lvl), src:'sys', dayKey:d?d.toISOString().slice(0,10):'?'};
@@ -1037,7 +1100,9 @@ function render(){
         .trim();
       const groupsByKey=new Map();
       evs.forEach(e=>{
-        const key=e.kind==='shutdown'?'shut|'+e.d.getTime():(e.src+'|'+(e.p||'')+'|'+e.s+'|'+crashKey(e.m));
+        const key=e.kind==='shutdown'?'shut|'+e.d.getTime():
+          (e.fi&&e.fi.attrib)?('crash|'+(e.p||'')+'|'+e.fi.attrib.toLowerCase()+'|'+e.fi.code):
+          (e.src+'|'+(e.p||'')+'|'+e.s+'|'+crashKey(e.m));
         if(!groupsByKey.has(key))groupsByKey.set(key,[]);
         groupsByKey.get(key).push(e);
       });
@@ -1051,6 +1116,9 @@ function render(){
         if(!shut&&e.src==='sys'&&e.bc&&String(e.bc)!=='0')title+=' <span style="color:var(--err)">\u00b7 Bugcheck 0x'+esc(parseInt(e.bc).toString(16).toUpperCase())+'</span>';
         const n=dupes.length>1?dupes.length:(+e.cnt>1?+e.cnt:0);
         if(n)title+=' <span style="color:var(--faint);font-weight:400">\u00d7'+n+'</span>';
+        // Windows logs one crash several times in a row - distinct process IDs = real sessions.
+        const sess=new Set(dupes.map(x=>x.fi&&x.fi.pid).filter(Boolean)).size;
+        if(n&&sess>1)title+=' <span style="color:var(--faint);font-weight:400">('+sess+' sessions)</span>';
         const meta=shut?'':esc(e.s)+' \u00b7 '+esc(e.e);
         row.innerHTML='<span class="time mono">'+times[0]+'</span>'+
           '<span class="dot d-'+e.cat+'"></span>'+
@@ -1082,7 +1150,7 @@ function summary(e){
     return e.cat==='err'?'System error':e.cat==='warn'?'System warning':'System event';
   }
   if(e.cat==='err'){
-    if(e.s==='Application Error')return 'Stopped working';
+    if(e.s==='Application Error')return crashSummary(e);
     if(e.s==='EventLog')return 'Windows was not properly shut down';
     return 'Error event';
   }
@@ -1573,6 +1641,7 @@ function renderWuHistList(){
 }
 const FAQ_DATA=[
 {id:'app-crashes',q:"Application Crashes",a:"This counts how many times a program on your PC has crashed and forced Windows to close it, based on the "+tabLink('rel','Windows Reliability History')+".<br><br>Occasional crashes are normal, especially in games or browsers. A rising number, especially if they're all the same program or all mention the same driver file, usually points to that specific program, a graphics driver, or a plugin/mod rather than Windows itself.",tools:["WhoCrashed","Display Driver Uninstaller (DDU)"]},
+{id:'overlay-hook-crash',q:"Crash Caused by an Overlay or Hook",a:"Overlays and capture tools (RivaTuner / MSI Afterburner's on-screen display, Discord, Steam, OBS game capture, ReShade and similar) work by injecting a DLL into the game. When a game crashes inside one of those DLLs, the overlay is the cause, not the game, Windows or the hardware.<br><br>A module name ending in <span class='mono'>_unloaded</span> means the overlay had already been removed from the game when it crashed, but the game still tried to use it. Anti-cheat software (Vanguard, Easy Anti-Cheat) is a common trigger for this.<br><br>Fix: close the overlay before playing, or exclude the game in the overlay's settings. For RivaTuner, add the game's .exe as a profile and set <b>Application detection level</b> to <b>None</b>.",tools:[]},
 {id:'unexpected-shutdown',q:"Unexpected Shutdowns",a:"Windows didn't shut down properly last time, meaning it never received the normal 'the user is turning off the PC' signal. This can be caused by:<ul style='margin:8px 0 8px 20px;padding:0'><li>a full system crash (a 'blue screen')</li><li>a power cut</li><li>overheating (thermal shutdown)</li><li>someone holding the power button</li><li>the PC freezing and being force-restarted</li></ul>If a specific bugcheck code is shown, that's the technical reason Windows gave. It can point toward whether this is a hardware, driver, or Windows problem. Most bugcheck codes are Google-able and have common fixes.<br><br>When Windows detects the power button was physically held down for 4+ seconds, it records that moment separately from the shutdown itself - that's shown as 'Power button held down' with the exact time, which usually means the PC was unresponsive and had to be force-closed rather than crashing cleanly with a bugcheck.",tools:["WhoCrashed","OCCT","MemTest86","Display Driver Uninstaller (DDU)"]},
 {id:'memory-dump',q:"Memory Dump",a:"When Windows crashes badly, a 'blue screen' happens. Windows tries to save a snapshot of exactly what the computer was doing at that moment to a file called a memory dump.<br><br>Memory dump(s) are included in the zip this tool creates. If you have them, you can share the zip file with us and we'll try to debug for you. Memory dumps are one of the most useful pieces of evidence for figuring out precisely what caused a crash.<br><br>If there are no memory dumps in the zip file but you've been experiencing crashes, shutdowns, or freezing, that means Windows wasn't able to create one. This can (but not always) indicate a hardware problem over a software one. Windows will usually try to generate a memory dump when the system crashes.",tools:["WhoCrashed"]},
 {id:'whea',q:"Fatal Hardware Error (WHEA)",a:"WHEA is Windows' hardware error reporting system. A fatal WHEA error means a core piece of hardware, usually the CPU, memory controller, or a PCIe device, reported a serious problem Windows couldn't recover from, and the machine likely crashed or rebooted as a result.<br><br>This is a strong indication that something is physically wrong or unstable, often an overclock, degraded hardware, or insufficient voltage, rather than a software issue.",tools:["OCCT","MemTest86","HWiNFO"]},
@@ -2117,6 +2186,17 @@ function renderSummary(){
   const crashes=relEvents.filter(e=>e.cat==='err'&&e.s==='Application Error').length;
   const shutdowns=getShutdowns().length;
   const notes=[];
+  // Crashes inside an overlay/hook DLL point at that tool. Counted in sessions (distinct
+  // process IDs), since Windows logs one crash several times in a row.
+  const hookHits={};
+  relEvents.forEach(e=>{
+    const f=e.fi, src=f&&f.attrib?HOOK_DLLS[f.attrib.toLowerCase()]:null;
+    if(!src)return;
+    const k=(e.p||'')+'|'+src;
+    (hookHits[k]=hookHits[k]||{app:e.p||'(unknown app)',src,mod:f.attrib,pids:new Set()}).pids.add(f.pid||e.t);
+  });
+  Object.values(hookHits).forEach(h=>notes.push(dataLink('rel','overlay-hook-crash',
+    '<span class="r"><b>'+h.pids.size+'</b> '+esc(h.app)+' crash session'+(h.pids.size>1?'s':'')+' caused by '+esc(h.src)+' ('+esc(h.mod)+')</span>')));
   notes.push(crashes?dataLink('rel','app-crashes','<span class="r"><b>'+crashes+'</b> Application crash'+(crashes>1?'es':'')+'</span>'):'<span class="g">No application crashes</span>');
   // Unexpected shutdowns: reliability history (6008-derived) and Kernel-Power 41 record the
   // same incident. Report one merged line, using the larger count if they disagree.
@@ -3926,16 +4006,25 @@ function reliabilityexport {
         $recs = @()
         try {
             $recs = @(Get-CimInstance Win32_ReliabilityRecords -ErrorAction Stop | ForEach-Object {
-                [PSCustomObject]@{
+                $rec = [ordered]@{
                     t = $_.TimeGenerated.ToString("MM'/'dd'/'yyyy HH:mm:ss")
                     s = $_.SourceName
                     e = "$($_.EventIdentifier)"
                     p = $_.ProductName
                     m = $_.Message
                 }
+                # Application Error 1000: the message text is translated on non-English Windows, but
+                # InsertionStrings are the raw values in a fixed order, so the viewer reads these
+                # instead. Order: 3 module name, 6 exception code, 7 fault offset, 8 process id,
+                # 11 module path.
+                $is = $_.InsertionStrings
+                if ($_.SourceName -eq 'Application Error' -and "$($_.EventIdentifier)" -eq '1000' -and $is -and $is.Count -ge 12) {
+                    $rec.f = [PSCustomObject]@{ mod = "$($is[3])"; code = "$($is[6])"; off = "$($is[7])"; pid = "$($is[8])"; mp = "$($is[11])" }
+                }
+                [PSCustomObject]$rec
             })
-            # CSV copy for sharing
-            $recs | Export-Csv $reliability_csv_path -NoTypeInformation -Encoding UTF8
+            # CSV copy for sharing (the nested fault details stay out of the CSV)
+            $recs | Select-Object t, s, e, p, m | Export-Csv $reliability_csv_path -NoTypeInformation -Encoding UTF8
         } catch {
             Write-Host "      Could not read reliability history - continuing with the rest of the report." -ForegroundColor Yellow
         }
