@@ -1593,10 +1593,11 @@ function renderUpdates(){
     return;
   }
   const lastInstall=HOTFIXES.length?HOTFIXES.slice().sort((a,b)=>(b.date||'').localeCompare(a.date||''))[0]:null;
-  const verdictWarn=failCount>0;
+  const win10=isWin10OrOlder();
+  const verdictWarn=failCount>0||win10;
   const verdictInfo=!verdictWarn&&w&&w.pendingReboot;
   const updatesBadgeEl=document.getElementById('updatesTabBadge');
-  if(updatesBadgeEl){ if(failCount){updatesBadgeEl.textContent=failCount;updatesBadgeEl.style.display='';} else {updatesBadgeEl.style.display='none';} }
+  if(updatesBadgeEl){ if(failCount||win10){updatesBadgeEl.textContent=failCount+(win10?1:0);updatesBadgeEl.style.display='';} else {updatesBadgeEl.style.display='none';} }
 
   let h='<div class="dp-head"><div class="dp-crumb"><span class="crumb">Software <span class="material-symbols-outlined" style="font-size:16px">chevron_right</span> <b>Windows Updates</b></span></div>'+
     '<div class="dp-title-row"><div><div class="dp-title">Windows updates</div>'+
@@ -1606,10 +1607,12 @@ function renderUpdates(){
   h+='<div class="list-flagband"><div class="list-flagband-inner">'+
     '<span class="material-symbols-outlined" style="font-size:32px;color:'+(verdictWarn?'var(--warn)':verdictInfo?'var(--info)':'var(--ok)')+'">'+(verdictWarn?'warning':verdictInfo?'info':'check_circle')+'</span>'+
     '<div style="min-width:0">'+
-    '<div style="font:500 16px/22px Roboto">'+(verdictWarn?failCount+' update'+(failCount===1?'':'s')+' did not complete successfully':verdictInfo?'A restart is pending to finish installing updates':'Windows is up to date')+'</div>'+
+    '<div style="font:500 16px/22px Roboto">'+(failCount?failCount+' update'+(failCount===1?'':'s')+' did not complete successfully':win10?'Windows 10 is no longer supported':verdictInfo?'A restart is pending to finish installing updates':'Windows is up to date')+'</div>'+
     (w&&w.serviceStatus?'<div class="dp-card-note" style="margin:2px 0 0">Windows Update service: '+esc(w.serviceStatus)+(w.serviceStartType?' ('+esc(w.serviceStartType)+')':'')+'</div>':'')+
     '</div></div></div>';
 
+  if(win10)h+='<div class="list-flagband" style="padding-top:0"><div class="dp-banner" style="margin-top:0" onclick="return goFaq(\'windows-10\')"><span class="material-symbols-outlined">warning</span>'+
+    '<div class="dp-banner-text">Windows 10 reached end of support on 14 October 2025. Upgrade to Windows 11 if this PC supports it.</div><span class="dp-banner-link">Explain \u2192</span></div></div>';
   h+='<div class="dp-body" style="padding-top:0;grid-template-columns:1fr">';
   if(HOTFIXES.length){
     h+='<div class="dp-card"><div class="dp-card-head"><div class="dp-card-title">Installed updates</div><span class="dp-card-count">'+HOTFIXES.length+'</span></div>'+
@@ -1658,6 +1661,7 @@ const FAQ_DATA=[
   +"<br><br>Freeing up space (uninstalling unused programs, clearing Downloads, running Disk Cleanup, or moving files to another drive) is the direct fix. If the drive is already fairly full of things that are actually needed, a larger replacement drive may be the more lasting solution.",tools:["WizTree","BleachBit"]},
 {id:'pending-reboot',q:"Pending Reboot",a:"Windows or an update has made changes that only take full effect after a restart, and it's currently waiting on one. Until then the system can behave oddly and further updates may queue up behind it.<br><br>A normal restart resolves this.",tools:[]},
 {id:'wu-service',q:"Windows Update Service",a:"The background service that lets Windows check for and install updates is disabled. Normally it's set to start on demand (so it's often shown as 'Stopped' when idle - that's expected and not a problem), but 'Disabled' means it can't start at all, so Windows won't be able to update until it's turned back on.",tools:[]},
+{id:'windows-10',q:"Windows 10 End of Support",a:"Windows 10 reached end of support on 14 October 2025. It still works, but it no longer gets free security updates, so newly found vulnerabilities stay unpatched. Game, driver and app support for Windows 10 is also being dropped over time.<br><br>The fix is upgrading to Windows 11, which is free on eligible PCs (Settings &gt; Windows Update, or Microsoft's Installation Assistant). Windows 11 needs TPM 2.0, Secure Boot and a supported CPU (roughly Intel 8th gen / AMD Ryzen 2000 series or newer). TPM and Secure Boot status are on this report's Security page, and both can usually be turned on in the BIOS.<br><br>If the PC can't run Windows 11, Microsoft's Extended Security Updates (ESU) programme for home PCs keeps security updates coming until October 2027. It's paid in most regions, and free in the European Economic Area with a Microsoft account.",tools:["Windows 11 Download"]},
 {id:'wu-failed',q:"Failed Windows Updates",a:"One or more recent update attempts failed partway through rather than installing cleanly. This can happen for lots of reasons: a bad download, low disk space, corrupted update files, or a conflict with other software.<br><br>It can sometimes leave a PC feeling unstable or repeatedly nagging about the same update.",tools:["Windows 11 Download"]},
 {id:'cores-vs-threads',q:"Cores vs Threads",a:"A CPU core is a physical processing unit - more cores generally means more work can genuinely happen at the same time. Threads (via Intel Hyper-Threading or AMD SMT) let each core handle two instruction streams instead of one, which improves throughput in well-threaded workloads but doesn't double real performance the way an extra physical core would.<br><br>An '8C/16T' CPU has 8 physical cores presenting 16 logical processors to Windows. Task Manager and this report both count threads (logical processors) unless stated otherwise.",tools:[]},
 {id:'cpu-virtualization',q:"CPU Virtualisation (VT-x / AMD-V)",a:"This is hardware-level support for running virtual machines efficiently, built into the CPU itself. It needs to be enabled in the BIOS/UEFI (often labelled Intel VT-x, AMD-V, or SVM Mode) before Windows features that rely on it - Hyper-V, WSL2, Android emulators, VirtualBox/VMware with hardware acceleration - will work.<br><br>Enabling it is not overclocking and carries no risk. If a VM or emulator refuses to start with an error mentioning virtualization, this is almost always the cause.",tools:[]},
@@ -2000,6 +2004,13 @@ function friendlyDriver(gpuName,ver,radeon){
   return ver;
 }
 function specVal(info,key){const f=info.find(([k])=>k===key);return f?f[1]:null;}
+// Windows 11 starts at build 22000, so any lower build is Windows 10 (or older). The build number
+// is used rather than the OS name because the name is translated on non-English Windows.
+// Server editions are excluded - they follow their own support timeline.
+function isWin10OrOlder(){
+  const info=parseSpecs(SPECS).info, b=parseInt(specVal(info,'Build')||'',10);
+  return b>0&&b<22000&&!/server/i.test(specVal(info,'OS')||'');
+}
 // Rough average glyph width for Albert Sans / IBM Plex Mono at a given size, used to keep
 // GPU/monitor node text inside its box instead of overflowing.
 function fitText(text,maxWidth,fontSize,opts){
@@ -2253,6 +2264,7 @@ function renderSummary(){
   if(WINUPDATE&&WINUPDATE.pendingReboot)notes.push(dataLink('updates','pending-reboot','System has a pending reboot (Windows Update or servicing)'));
   if(WINUPDATE&&WINUPDATE.serviceStartType==='Disabled')notes.push(dataLink('updates','wu-service','<span class="y">Windows Update service is disabled</span>'));
   const wuFails=WUHISTORY.filter(u=>u.result==='Failed'||u.result==='Cancelled').length;
+  if(isWin10OrOlder())notes.push(dataLink('updates','windows-10','<span class="y">This PC is on Windows 10, which reached end of support on 14 October 2025 &mdash; no free security updates unless it\'s enrolled in Extended Security Updates</span>'));
   if(wuFails)notes.push(dataLink('updates','wu-failed','<span class="y"><b>'+wuFails+'</b> Windows Update'+(wuFails>1?'s':'')+' did not complete successfully</span>'));
   if(RAM.length){
     const slow=RAM.filter(m=>effRated(m)&&m.conf&&+m.conf<+effRated(m));
@@ -2501,9 +2513,10 @@ function renderSummary(){
       const pgLabel=pgManaged==='Automatic'?'System managed':pgManaged==='Manual'?'Manual':pgManaged==='Disabled'?'Disabled':pgManaged;
       const pgLine=pgLabel?pgLabel+(pgGBStr?' \u00b7 '+pgGBStr:''):'';
       tiles.push({cls:'os',icon:'desktop_windows',label:'Windows',tab:'updates',value:os.replace('Microsoft ',''),
-        warnKeys:[pgManaged==='Disabled'?'Page file':''].filter(Boolean),
+        warnKeys:[pgManaged==='Disabled'?'Page file':'',isWin10OrOlder()?'Support':''].filter(Boolean),
         lines:[
         fv?'Version: '+fv:'',
+        isWin10OrOlder()?'Support: Ended 14 Oct 2025':'',
         build?'Build: '+build:'',
         up?'System uptime: '+up.replace(/ days?/,'d').replace(/ hours?/,'h').replace(/ minutes?/,'m').replace(/,/g,''):'',
         installDate?'Installed on: '+installDate:'',
