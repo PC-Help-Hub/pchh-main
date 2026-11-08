@@ -1,20 +1,23 @@
 Set-ExecutionPolicy -ExecutionPolicy Unrestricted -Scope Process -Force
 
-# change window size to fit textt
+# change window size to fit text
 # change window color
 
-$pshost = Get-Host
-$pswindow = $pshost.UI.RawUI
+# Windows Terminal doesn't allow resizing - ignore the error there
+try {
+    $pshost = Get-Host
+    $pswindow = $pshost.UI.RawUI
 
-$newBufferSize = $pswindow.BufferSize
-$newBufferSize.Width = 170
-$newBufferSize.Height = 3000
-$pswindow.BufferSize = $newBufferSize
+    $newBufferSize = $pswindow.BufferSize
+    $newBufferSize.Width = 170
+    $newBufferSize.Height = 3000
+    $pswindow.BufferSize = $newBufferSize
 
-$newWindowSize = $pswindow.WindowSize
-$newWindowSize.Width = 170
-$newWindowSize.Height = 50
-$pswindow.WindowSize = $newWindowSize
+    $newWindowSize = $pswindow.WindowSize
+    $newWindowSize.Width = 170
+    $newWindowSize.Height = 50
+    $pswindow.WindowSize = $newWindowSize
+} catch { }
 
 
 $Host.UI.RawUI.BackgroundColor = "Black"
@@ -78,11 +81,11 @@ $viewerTemplate = @'
 @media (prefers-reduced-motion: reduce){*{animation-duration:.001ms!important;animation-iteration-count:1!important}}
 body{background:var(--bg);color:var(--text);font-family:'Roboto',system-ui,sans-serif;font-size:16px;height:100vh;overflow:hidden}
 .material-symbols-outlined{font-family:'Material Symbols Outlined';font-weight:normal;font-style:normal;font-size:24px;line-height:1;letter-spacing:normal;text-transform:none;display:inline-block;white-space:nowrap;word-wrap:normal;direction:ltr;vertical-align:middle;-webkit-font-feature-settings:'liga';-webkit-font-smoothing:antialiased;flex-shrink:0}
-#appShell{display:flex;background:var(--bg);padding:40px 16px 40px 40px;gap:16px;height:100vh;width:100%}
+#appShell{display:flex;background:var(--bg);padding:24px 16px 24px 24px;gap:16px;height:100vh;width:100%}
 .mono{font-family:'Roboto Mono',monospace}
-#sidebar{width:300px;flex:0 0 300px;background:var(--panel2);border-radius:16px;display:flex;flex-direction:column;padding:12px 12px 8px;overflow:hidden}
-#brand{display:flex;align-items:center;gap:12px;padding:16px 16px 20px;font-size:19px;font-weight:600;letter-spacing:.01em}
-#brand .material-symbols-outlined{font-size:30px;color:var(--info)}
+#sidebar{width:264px;flex:0 0 264px;background:var(--panel2);border-radius:16px;display:flex;flex-direction:column;padding:10px 10px 8px;overflow:hidden}
+#brand{display:flex;align-items:center;gap:10px;padding:10px 12px 14px;font-size:17px;font-weight:600;letter-spacing:.01em}
+#brand .material-symbols-outlined{font-size:26px;color:var(--info)}
 #brand-sub{font:400 12px/16px Roboto;color:var(--faint);font-weight:400}
 #content{flex:1;min-width:0;height:100%;min-height:0;display:flex;flex-direction:column;overflow-y:auto}
 @media (max-width:900px){
@@ -96,18 +99,18 @@ body{background:var(--bg);color:var(--text);font-family:'Roboto',system-ui,sans-
 }
 #tabs{display:flex;flex-direction:column;gap:2px;flex:1;overflow-y:auto;overflow-x:hidden}
 .nav-group{margin-bottom:2px}
-.nav-group-title{display:flex;align-items:center;justify-content:space-between;color:var(--dim);font:500 14px/20px Roboto;text-transform:none;letter-spacing:0;padding:0 28px;height:40px;cursor:pointer;border-radius:6px;user-select:none}
+.nav-group-title{display:flex;align-items:center;justify-content:space-between;color:var(--dim);font:500 14px/20px Roboto;text-transform:none;letter-spacing:0;padding:0 20px;height:34px;cursor:pointer;border-radius:6px;user-select:none}
 .nav-group-title:hover{color:var(--dim)}
-.nav-group-title.static{cursor:default;height:40px}
+.nav-group-title.static{cursor:default;height:34px}
 .nav-group-title.static:hover{color:var(--dim)}
 .nav-group-title .chev{font-size:18px;transition:transform .15s;color:var(--faint)}
 .nav-group.collapsed .nav-group-title .chev{transform:rotate(-90deg)}
 .nav-group.collapsed .nav-group-items{display:none}
 .nav-group-items{display:flex;flex-direction:column;gap:2px}
-#sideFoot{margin-top:auto;padding-top:14px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:4px}
+#sideFoot{margin-top:auto;padding-top:10px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:4px}
 #sideFoot span{color:var(--faint);font-size:12px}
-.tab{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:none;border:none;color:var(--dim);font-family:'Roboto',inherit;font-size:15px;font-weight:500;height:52px;padding:0 24px;cursor:pointer;border-radius:26px}
-.tab .material-symbols-outlined{font-size:24px;color:currentColor}
+.tab{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:none;border:none;color:var(--dim);font-family:'Roboto',inherit;font-size:14px;font-weight:500;height:42px;padding:0 18px;cursor:pointer;border-radius:21px}
+.tab .material-symbols-outlined{font-size:22px;color:currentColor}
 .tab:hover{color:var(--text);background:#272A2F}
 .tab.on{color:var(--info-on-c);background:var(--info-c)}
 .tab.on .material-symbols-outlined{font-variation-settings:'FILL' 1}
@@ -572,9 +575,9 @@ body.tab-sys #pageTitle{display:none}
 @media (max-width:600px){.kv{grid-template-columns:1fr;gap:0}.kv dt{margin-top:8px}}
 h1{font-size:24px;font-weight:600;letter-spacing:.01em}
 #range{color:var(--dim);font-size:14px}
-#drop{display:flex;align-items:center;justify-content:center;gap:8px;height:44px;margin:0 16px 24px;border:none;border-radius:22px;background:#3B4858;color:#D7E3F8;font:500 15px/20px Roboto;cursor:pointer;text-align:center}
+#drop{display:flex;align-items:center;justify-content:center;gap:6px;height:32px;margin:0 0 4px;border:none;border-radius:16px;background:#3B4858;color:#D7E3F8;font:500 13px/18px Roboto;cursor:pointer;text-align:center}
 #drop:hover{background:#465464}
-#drop .material-symbols-outlined{font-size:20px}
+#drop .material-symbols-outlined{font-size:18px;color:inherit}
 body.dragging #drop{background:var(--info-c);color:var(--info-on-c)}
 
 /* timeline */
@@ -666,13 +669,31 @@ body.dragging #drop{background:var(--info-c);color:var(--info-on-c)}
   .dp-body,.dp-split,.dp-content,.rel-content,#summaryBody,#diagBody,#list,.evt-layout,.evt-facets,.evt-rows{overflow:visible!important;height:auto!important;flex:none!important}
   .dp-actions,#summaryActions,#diagActions{display:none!important}
 }
+/* Shorter screens (1080p at 100-125% scaling, laptops) - tighten the sidebar so it fits without
+   scrolling. Must stay at the end of the stylesheet so these override the base rules above. */
+@media (min-width:901px) and (max-height:1000px){
+  #appShell{padding-top:16px;padding-bottom:16px}
+  #brand{padding:6px 12px 10px;font-size:16px}
+  #brand .material-symbols-outlined{font-size:24px}
+  .tab{height:36px;border-radius:18px}
+  .tab .material-symbols-outlined{font-size:20px}
+  .nav-group-title,.nav-group-title.static{height:30px}
+  #tabs,.nav-group-items{gap:1px}
+  #sideFoot{padding-top:8px}
+}
+@media (min-width:901px) and (max-height:800px){
+  #appShell{padding-top:10px;padding-bottom:10px}
+  #brand-sub{display:none}
+  .tab{height:32px;border-radius:16px;font-size:13.5px}
+  .nav-group-title,.nav-group-title.static{height:28px;font-size:13px}
+  #drop{height:28px}
+}
 </style>
 </head>
 <body class="tab-summary">
 <div id="appShell">
 <aside id="sidebar">
   <div id="brand"><span class="material-symbols-outlined">monitor_heart</span><div>PCHH Triage<div id="brand-sub"></div></div></div>
-  <label id="drop"><span class="material-symbols-outlined">upload_file</span>Open another CSV<input type="file" accept=".csv" hidden></label>
   <nav id="tabs">
     <div class="nav-group">
       <div class="nav-group-title static"><span>Overview</span></div>
@@ -719,7 +740,10 @@ body.dragging #drop{background:var(--info-c);color:var(--info-on-c)}
       </div>
     </div>
   </nav>
-  <div id="sideFoot"><span id="pageFoot"></span></div>
+  <div id="sideFoot">
+    <label id="drop"><span class="material-symbols-outlined">upload_file</span>Open another CSV<input type="file" accept=".csv" hidden></label>
+    <span id="pageFoot"></span>
+  </div>
 </aside>
 <main id="content">
 
@@ -857,6 +881,8 @@ const DEVERR = /*__DEVERR__*/[];
 const AUDIO = /*__AUDIO__*/null;
 const USBDEVS = /*__USB__*/[];
 const CAMERAS = /*__CAMERAS__*/[];
+const BITFLIP = /*__BITFLIP__*/null;
+const TWEAKS = /*__TWEAKS__*/null;
 const VER = /*__VER__*/"";
 const GEN = /*__GEN__*/"";
 
@@ -1665,6 +1691,9 @@ const FAQ_DATA=[
 {id:'wu-failed',q:"Failed Windows Updates",a:"One or more recent update attempts failed partway through rather than installing cleanly. This can happen for lots of reasons: a bad download, low disk space, corrupted update files, or a conflict with other software.<br><br>It can sometimes leave a PC feeling unstable or repeatedly nagging about the same update.",tools:["Windows 11 Download"]},
 {id:'cores-vs-threads',q:"Cores vs Threads",a:"A CPU core is a physical processing unit - more cores generally means more work can genuinely happen at the same time. Threads (via Intel Hyper-Threading or AMD SMT) let each core handle two instruction streams instead of one, which improves throughput in well-threaded workloads but doesn't double real performance the way an extra physical core would.<br><br>An '8C/16T' CPU has 8 physical cores presenting 16 logical processors to Windows. Task Manager and this report both count threads (logical processors) unless stated otherwise.",tools:[]},
 {id:'cpu-virtualization',q:"CPU Virtualisation (VT-x / AMD-V)",a:"This is hardware-level support for running virtual machines efficiently, built into the CPU itself. It needs to be enabled in the BIOS/UEFI (often labelled Intel VT-x, AMD-V, or SVM Mode) before Windows features that rely on it - Hyper-V, WSL2, Android emulators, VirtualBox/VMware with hardware acceleration - will work.<br><br>Enabling it is not overclocking and carries no risk. If a VM or emulator refuses to start with an error mentioning virtualization, this is almost always the cause.",tools:[]},
+{id:'tweak-tools',q:"Tweaking Tools Detected",a:"This PC shows traces left behind by a Windows tweaking or 'debloat' tool, such as Chris Titus WinUtil, or a modified Windows like AtlasOS or ReviOS. These are only named when the tool leaves something unique behind (its own log files, restore point or system folder), so the detection is reliable.<br><br>Using these tools isn't wrong, and many of their changes are harmless. It's flagged because some options switch off services that updates, the Store, security or games depend on - so it's useful to know when chasing a problem that doesn't make sense otherwise.<br><br>Most tools can undo their own changes (WinUtil has 'Undo selected tweaks'), or a restore point from before the tool ran can be used. AtlasOS and ReviOS change Windows too deeply to fully undo - a clean reinstall is the reliable fix if problems persist.",tools:[]},
+{id:'tweaked-settings',q:"Changed System Settings",a:"These are settings that are different from how Windows ships and are known to cause problems. The report can't tell who changed them - a tweaking tool, a guide, an app, or a work/school policy - so it only lists the setting and what it affects.<br><br><b>Red</b> items break core things like Windows Update, the Store or security and are worth fixing first. <b>Yellow</b> items reduce safety or commonly cause odd problems. Grey items are listed for reference and are usually fine.<br><br>Disabled services can be set back in services.msc (most should be 'Manual' or 'Automatic'). Policy settings live in the Group Policy editor or registry. If a tweaking tool was used, its own undo option is the cleanest way back.",tools:["Autoruns"]},
+{id:'ram-bitflip',q:"RAM Bit-Flips",a:"Some blue screens record the memory address Windows was trying to read when it crashed. When two crashes point at addresses that are almost identical &mdash; same ending, only a few bits different &mdash; it usually means it was the <i>same</i> address both times, with one or more bits flipped in memory. That's a classic sign of faulty or unstable RAM rather than a bad driver.<br><br>'Possible' means one such pair was found; 'Likely' means several, or one alongside lots of different stop codes or the same instruction crashing again. It's a hint, not proof &mdash; a clean result doesn't rule RAM out either.<br><br>What to do:<ul style='margin:8px 0 8px 20px;padding:0'><li>Turn off XMP/EXPO in the BIOS and see if the crashes stop</li><li>Run a RAM test (TestMem5 in Windows, or MemTest86 from USB) for several passes</li><li>If it fails, test one stick at a time to find the bad one</li><li>Update the BIOS &mdash; newer versions often improve memory stability</li></ul>",tools:["MemTest86","OCCT"]},
 {id:'ram-speed',q:"RAM Speed (XMP/EXPO)",a:"Your memory (RAM) is capable of running faster than it currently is. This almost always means that a feature called XMP (Intel) or EXPO (AMD) isn't enabled.<br><br>XMP/EXPO is a one-click profile in the BIOS that allows your RAM to run at its advertised speed. When it's disabled, your RAM will default to a lower speed. Enabling it isn't overclocking, and isn't dangerous. We'd recommend enabling it, which can be done through your BIOS. If you're unsure how to do that, you can ask one of our advisors for more help.<br><br><i>Note: some systems can struggle to run RAM at its full advertised speed for various reasons, which is why it isn't enabled by default. When this happens, it can sometimes help to disable it, to prevent system instability or crashes.</i><br><br>This isn't dangerous either way, but running below the rated speed does mean the RAM isn't performing the way it was bought to.",tools:["CPU-Z"]},
 {id:'pagefile-manual',q:"Page File Manually Managed",a:"Windows normally handles the page file (a portion of a drive used as overflow when physical RAM fills up) itself, growing and shrinking it as needed. Someone has turned off 'Automatically manage paging file size for all drives', meaning it's set to a fixed size (or a custom drive) by hand instead.<br><br>This isn't inherently a problem, but it's a common source of trouble if the size chosen is too small for the workload, or if it was set on a drive that's since become full or was removed/replaced. A page file that's too small can cause 'out of memory' errors or crashes even when the drive has plenty of free space otherwise.<br><br>If there isn't a specific reason it was changed (some people do this deliberately to save SSD writes, or as an old 'performance tweak' that no longer really applies on modern systems), switching it back to automatic under System Properties &gt; Advanced &gt; Performance Settings &gt; Advanced &gt; Virtual Memory is usually the simplest fix.",tools:[]},
 {id:'pagefile-disabled',q:"No Page File Configured",a:"There is no page file on this PC at all - every drive is set to 'No paging file' rather than a size. This is more serious than a manually-sized page file, and isn't recommended even on a system with a lot of RAM.<br><br>Without a page file, Windows has nowhere to overflow to once physical RAM fills up, so instead of slowing down it can crash, refuse to launch programs, or throw 'out of memory' errors well before RAM actually looks full (some of it is reserved and can't be reallocated the way a page file's space can). It also prevents Windows from writing a memory dump when the system crashes, which removes a key diagnostic tool for tracking down the cause of any crash.<br><br>The fix is the same either way: System Properties &gt; Advanced &gt; Performance Settings &gt; Advanced &gt; Virtual Memory, then either switch back to 'Automatically manage paging file size for all drives', or manually set a page file on at least one drive.",tools:[]},
@@ -1824,14 +1853,6 @@ function renderExtensions(){
   });
   h+='</div></div>';
   v.innerHTML=h;
-}
-function pager(el,page,pages,total,shown,onGo){
-  if(!el)return;
-  if(pages<=1){el.innerHTML=total?'<span class="pg-info">'+shown+' of '+total+'</span>':'';return;}
-  el.innerHTML='<button class="pg-btn" '+(page<=1?'disabled':'')+' data-go="-1">\u2039 Prev</button>'+
-    '<span class="pg-info">Page '+page+' of '+pages+' \u00b7 '+total+' items</span>'+
-    '<button class="pg-btn" '+(page>=pages?'disabled':'')+' data-go="1">Next \u203a</button>';
-  el.querySelectorAll('.pg-btn').forEach(b=>b.onclick=()=>onGo(+b.dataset.go));
 }
 function renderProcList(){
   const el=document.getElementById('procList');if(!el)return;
@@ -2011,41 +2032,6 @@ function isWin10OrOlder(){
   const info=parseSpecs(SPECS).info, b=parseInt(specVal(info,'Build')||'',10);
   return b>0&&b<22000&&!/server/i.test(specVal(info,'OS')||'');
 }
-// Rough average glyph width for Albert Sans / IBM Plex Mono at a given size, used to keep
-// GPU/monitor node text inside its box instead of overflowing.
-function fitText(text,maxWidth,fontSize,opts){
-  opts=opts||{};
-  const perChar=fontSize*(opts.mono?0.6:(opts.bold?0.62:0.56));
-  if(text.length*perChar<=maxWidth)return esc(text);
-  const maxChars=Math.max(1,Math.floor(maxWidth/perChar)-1);
-  return esc(text.slice(0,maxChars).trimEnd())+'\u2026';
-}
-// Wraps onto up to maxLines lines by word, truncating the final line with an ellipsis if
-// it still doesn't fit. Used for GPU names, which can run long.
-function wrapText(text,maxWidth,fontSize,opts,maxLines){
-  opts=opts||{};
-  const perChar=fontSize*(opts.mono?0.6:(opts.bold?0.62:0.56));
-  const maxChars=Math.max(1,Math.floor(maxWidth/perChar));
-  const words=text.split(' ');
-  const lines=[];
-  let cur='';
-  for(const w of words){
-    const test=cur?cur+' '+w:w;
-    if(test.length<=maxChars||!cur){
-      cur=test.length<=maxChars?test:w;
-      if(test.length>maxChars&&cur===w){lines.push(cur);cur='';}
-    }else{
-      lines.push(cur);
-      cur=w;
-    }
-    if(lines.length>=maxLines)break;
-  }
-  if(cur&&lines.length<maxLines)lines.push(cur);
-  if(lines.length>maxLines)lines.length=maxLines;
-  const last=lines[lines.length-1]||'';
-  if(last.length>maxChars)lines[lines.length-1]=last.slice(0,maxChars-1).trimEnd()+'\u2026';
-  return lines.map(l=>esc(l));
-}
 function realSpec(v){
   if(!v)return '';
   if(/^(system manufacturer|system product name|to be filled by o\.e\.m\.?|default string|not applicable|unknown|n\/a)$/i.test(v.trim()))return '';
@@ -2145,7 +2131,6 @@ const SOFT_FLAGS=[
     {re:/ek loop connect/i,       label:'EK Loop Connect',            grp:'fan'},
     {re:/gigabyte.*(smart ?fan|\bsiv\b)/i, label:'Gigabyte SIV/Smart Fan', grp:'fan'},
 ];
-const FAN_CAPABLE_PERIPH=['Corsair iCUE','NZXT CAM','MSI Dragon Center','ASUS Armoury Crate'];
 const SOFT_FAQ={ac:'software-anticheat',oc:'software-overclock',periph:'software-rgb',audio:'software-audio',net:'software-network',bloat:'software-bloatware',shell:'software-shell',cheat:'software-cheat',fan:'software-fancontrol',wallpaper:'software-wallpaperengine',remote:'software-remote'};
 const SOFT_GROUP_LABEL={bloat:'Bloatware / PUPs',periph:'RGB / peripheral suites',oc:'OC & monitoring',ac:'Anti-cheat drivers',audio:'Audio & overlays',remote:'Remote access',fan:'Fan controllers',net:'Network tools',wallpaper:'Wallpaper Engine',shell:'Shell customisation',cheat:'Game exploit tools'};
 const SOFT_GROUP_COLOR={
@@ -2270,6 +2255,10 @@ function renderSummary(){
     const slow=RAM.filter(m=>effRated(m)&&m.conf&&+m.conf<+effRated(m));
     if(slow.length)notes.push(dataLink('memory','ram-speed','<span class="y">RAM configured at '+esc(slow[0].conf)+' MT/s, rated '+esc(effRated(slow[0]))+' MT/s</span>'));
   }
+  if(BITFLIP&&BITFLIP.verdict&&BITFLIP.verdict!=='None'){
+    const n=(BITFLIP.pairs||[]).length;
+    notes.push(dataLink('memory','ram-bitflip','<span class="'+(BITFLIP.verdict==='Likely'?'r':'y')+'">'+esc(BITFLIP.verdict)+' RAM fault: crash addresses differ by only a few bits ('+n+' pair'+(n===1?'':'s')+')</span>'));
+  }
   const pgfileState=specVal(sp.info,'Page File Managed');
   if(pgfileState==='Disabled')notes.push(dataLink('memory','pagefile-disabled','<span class="r">No page file is configured &mdash; this is set to \'No paging file\' on every drive</span>'));
   else if(pgfileState==='Manual')notes.push(dataLink('memory','pagefile-manual','<span class="y">Page file is manually managed (automatic management is turned off)</span>'));
@@ -2309,6 +2298,8 @@ function renderSummary(){
       else notes.push(dataLink('security','defender-threats','<span style="color:var(--dim)">'+SECURITY.threats.length+' past threat detection'+(SECURITY.threats.length>1?'s':'')+', all handled by Windows Defender</span>'));
     }
     if(SECURITY.exclFlags&&SECURITY.exclFlags.length)notes.push(dataLink('security','defender-exclusions','<span class="y"><b>'+SECURITY.exclFlags.length+'</b> risky Defender exclusion'+(SECURITY.exclFlags.length>1?'s':'')+'</span>'));
+    ((TWEAKS&&TWEAKS.settings)||[]).filter(t=>t.sev==='err'||t.sev==='warn').forEach(t=>notes.push(dataLink('security','tweaked-settings','<span class="'+(t.sev==='err'?'r':'y')+'">'+esc(t.label)+(t.cat==='Disabled services'?' service disabled':'')+'</span>')));
+    ((TWEAKS&&TWEAKS.tools)||[]).forEach(t=>notes.push(dataLink('security','tweak-tools','Signs of '+esc(t.name)+' <span style="color:var(--faint)">('+esc(t.detail)+')</span>')));
     if(SECURITY.hostsFlags&&SECURITY.hostsFlags.length)notes.push(dataLink('security','hosts-redirect','<span class="y">Hosts file redirects a known update/security domain</span>'));
     if(SECURITY.startupFlags&&SECURITY.startupFlags.length)notes.push(dataLink('security','startup-flagged','<span class="y"><b>'+SECURITY.startupFlags.length+'</b> flagged startup entr'+(SECURITY.startupFlags.length>1?'ies':'y')+'</span>'));
     if(SECURITY.rdp&&SECURITY.rdp.enabled){
@@ -2744,7 +2735,7 @@ function renderSecurity(){
   const secureBoot=specVal(sp.info,'Secure Boot State'), uac=specVal(sp.info,'UAC');
   const d=SECURITY&&SECURITY.defender;
 
-  if(!SECURITY&&!tpmStatus&&!secureBoot&&!uac){
+  if(!SECURITY&&!TWEAKS&&!tpmStatus&&!secureBoot&&!uac){
     v.innerHTML='<div class="dp-head"><div class="dp-crumb"><span class="crumb">Software <span class="material-symbols-outlined" style="font-size:16px">chevron_right</span> <b>Security</b></span></div>'+
       '<div class="dp-title-row"><div><div class="dp-title">Security</div></div></div></div>'+
       '<div class="dp-body" style="grid-template-columns:1fr"><div class="dp-card"><div class="dp-empty">No security data embedded.</div></div></div>';
@@ -2794,6 +2785,8 @@ function renderSecurity(){
     const avOn=(SECURITY.avProducts||[]).filter(a=>a.enabled);
     if(avOn.length>1)secIssues.push({sev:'warn',text:'Multiple real-time antivirus products active: '+avOn.map(a=>a.name).join(', '),card:'Antivirus'});
   }
+  ((TWEAKS&&TWEAKS.settings)||[]).filter(t=>t.sev==='err'||t.sev==='warn').forEach(t=>
+    secIssues.push({sev:t.sev,text:t.label+(t.cat==='Disabled services'?' service disabled':''),card:'System tweaks'}));
   const critCount=secIssues.filter(i=>i.sev==='err').length, warnCount=secIssues.length-critCount;
   const statusCls=critCount?'err':(warnCount?'warn':'ok');
   const statusText=critCount?critCount+' error'+(critCount===1?'':'s')+', '+warnCount+' warning'+(warnCount===1?'':'s')+' here':(warnCount?warnCount+' warning'+(warnCount===1?'':'s')+' here':'No problems found');
@@ -2913,6 +2906,29 @@ function renderSecurity(){
   if(SECURITY&&SECURITY.firewallProducts&&SECURITY.firewallProducts.length){
     let c='<div class="dp-card"><div class="dp-card-head"><div class="dp-card-title">Third-party firewall software</div></div>';
     SECURITY.firewallProducts.forEach(a=>{c+='<div class="dp-row"><div class="dp-row-label">'+esc(a.name)+'</div><div class="dp-row-val" style="color:'+(a.enabled?'var(--ok)':'var(--faint)')+'">'+(a.enabled?'Active':'Inactive')+'</div></div>';});
+    cards.push(c+'</div>');
+  }
+
+  if(TWEAKS&&((TWEAKS.tools||[]).length||(TWEAKS.settings||[]).length)){
+    const tt=TWEAKS.tools||[], ts=TWEAKS.settings||[];
+    const dotC=s=>s==='err'?'var(--err)':s==='warn'?'var(--warn)':'var(--faint)';
+    let c='<div class="dp-card" style="grid-column:1/-1"><div class="dp-card-head"><div class="dp-card-title">System tweaks</div>'+
+      '<span class="dp-card-count">'+(tt.length?tt.length+' tool'+(tt.length===1?'':'s')+' \u00b7 ':'')+ts.length+' changed setting'+(ts.length===1?'':'s')+'</span>'+
+      '<a href="#" onclick="return goFaq(\'tweaked-settings\')" style="margin-left:auto;color:var(--info);font-size:13px">What is this?</a></div>';
+    if(tt.length){
+      c+='<div class="dp-section-label" style="margin-top:4px">Tweaking tools used</div>';
+      tt.forEach(t=>{c+='<div class="dp-row"><div class="dp-row-label"><b style="color:var(--text);font-weight:500">'+esc(t.name)+'</b></div><div class="dp-row-val" style="color:var(--dim);font-weight:400;white-space:normal;text-align:right">'+esc(t.detail)+'</div></div>';});
+    }
+    const cats=[...new Set(ts.map(t=>t.cat))];
+    cats.forEach(cat=>{
+      c+='<div class="dp-section-label" style="margin-top:16px">'+esc(cat)+'</div>';
+      ts.filter(t=>t.cat===cat).forEach(t=>{
+        c+='<div class="dp-row"><span style="width:8px;height:8px;border-radius:50%;flex:none;background:'+dotC(t.sev)+'"></span>'+
+          '<div class="dp-row-label"><span style="color:var(--text)">'+esc(t.label)+'</span><br><span style="color:var(--faint);font-size:13px">'+esc(t.why)+'</span></div>'+
+          '<div class="dp-row-val mono" style="color:'+dotC(t.sev)+';white-space:normal;text-align:right;max-width:45%">'+esc(t.value)+'</div></div>';
+      });
+    });
+    if(!ts.length)c+='<div class="dp-card-note" style="margin-top:12px">No problem settings found.</div>';
     cards.push(c+'</div>');
   }
 
@@ -3061,6 +3077,12 @@ function renderGPU(){
     h+='</div></div>';
   }
 
+  if(HAGS){
+    h+='<div><div class="dp-section-label">Settings</div><div class="vol-grid"><div class="dp-card"><div class="dp-kv">'+
+      '<dt>Hardware-accelerated GPU scheduling</dt><dd>'+esc(HAGS)+'</dd>'+
+      '</div></div></div></div>';
+  }
+
   h+='</div>';
   v.innerHTML=h;
   const copyBtn=document.getElementById('copyGpuBtn');
@@ -3088,10 +3110,6 @@ function renderMotherboard(){
   const firmwareMode=specVal(sp.info,'Firmware Mode');
   const fastBoot=specVal(sp.info,'Fast Boot State');
   const powerPlan=specVal(sp.info,'Active Power Plan');
-  // OEM boards frequently leave the serial number field as an unset placeholder rather than
-  // leaving it blank, so those need filtering out same as an actually-empty value would be.
-  const serialRaw=specVal(sp.info,'Motherboard Serial');
-  const serial=(serialRaw&&!/^(default string|none|to be filled by o\.?e\.?m\.?|not specified|n\/a|0+)$/i.test(serialRaw.trim()))?serialRaw.trim():'';
   // Vendor support sites are single-page apps that get restructured often (MSI's own
   // "/Search?searchKeyword=" link 404s as of 2026, and ASUS's has since moved behind a region
   // prefix) - hard-coding another guessed URL just sets up the next 404. A site-scoped Google
@@ -3126,7 +3144,6 @@ function renderMotherboard(){
   h+='<div class="dp-content"><div class="dp-card"><div class="dp-kv">'+
     (mb?'<dt>Model</dt><dd>'+esc(mb)+'</dd>':'')+
     (mbMfr?'<dt>Manufacturer</dt><dd>'+esc(mbMfr)+'</dd>':'')+
-    (serial?'<dt>Serial number</dt><dd class="mono">'+esc(serial)+'</dd>':'')+
     (bver?'<dt>BIOS version</dt><dd>'+esc(bver)+(biosMfr?' <span style="color:var(--faint)">('+esc(biosMfr)+')</span>':'')+'</dd>':'')+
     (bdate?'<dt>BIOS date</dt><dd style="color:'+(bdateWarn?'var(--warn)':'var(--dim)')+'">'+esc(bdate.replace(/\s+\d{1,2}:\d{2}(:\d{2})?(\s*[AP]M)?$/i,''))+bdateAge+'</dd>':'')+
     (firmwareMode?'<dt>Firmware mode</dt><dd>'+esc(firmwareMode)+'</dd>':'')+
@@ -3221,10 +3238,13 @@ function renderMemory(){
 
   const memTitle='Memory (RAM)'+(totalGB?' '+totalGB+'GB':'')+(typeSet.length===1?' '+typeSet[0]:'')+(confSet.length?' '+confSet.join('/')+'MT/s':'');
   const memSub=[mfrSet.length===1?mfrSet[0]:'',RAM.length+' module'+(RAM.length===1?'':'s')].filter(Boolean).join(' \u00b7 ');
-  const statusCls=ramSlow?'warn':'ok';
+  const bfHit=!!(BITFLIP&&BITFLIP.verdict&&BITFLIP.verdict!=='None');
+  const bfLikely=bfHit&&BITFLIP.verdict==='Likely';
+  const memWarn=(ramSlow?1:0)+(bfHit?1:0);
+  const statusCls=bfLikely?'err':memWarn?'warn':'ok';
   const memBadgeEl=document.getElementById('memoryTabBadge');
-  if(memBadgeEl){ if(ramSlow){memBadgeEl.textContent='1';memBadgeEl.style.display='';} else {memBadgeEl.style.display='none';} }
-  const statusText=ramSlow?'1 warning here':'No problems found';
+  if(memBadgeEl){ if(memWarn){memBadgeEl.textContent=memWarn;memBadgeEl.style.display='';} else {memBadgeEl.style.display='none';} }
+  const statusText=memWarn?memWarn+' warning'+(memWarn>1?'s':'')+' here':'No problems found';
 
   let h='<div class="dp-head"><div class="dp-crumb"><span class="crumb">Hardware <span class="material-symbols-outlined" style="font-size:16px">chevron_right</span> <b>Memory</b></span>'+
     '<div class="dp-actions"><div class="m3-btn" id="copyMemBtn"><span class="material-symbols-outlined" style="font-size:18px">content_copy</span>Copy</div></div></div>'+
@@ -3268,6 +3288,22 @@ function renderMemory(){
       '</div></div>';
   });
   h+='</div></div>';
+
+  if(bfHit){
+    const bf=BITFLIP, pairs=bf.pairs||[], notesBf=bf.notes||[], cr=bf.crashes||[];
+    h+='<div><div class="dp-section-label">Crash pattern check</div><div class="dp-card" id="bitflipCard">'+
+      '<div class="dp-card-head"><div class="dp-card-title" style="font-size:16px">RAM bit-flip check</div><span class="dp-card-count">'+bf.crashCount+' blue screen'+(bf.crashCount===1?'':'s')+' \u00b7 last '+bf.days+' days</span>'+
+      '<div class="dp-status '+(bfLikely?'err':bfHit?'warn':'ok')+'"><span class="status-dot"></span>'+(bfHit?esc(bf.verdict):'No sign')+'</div></div>';
+    if(bfHit)h+='<div class="dp-banner'+(bfLikely?' err':'')+'" onclick="return goFaq(\'ram-bitflip\')" style="margin:0 0 12px"><span class="material-symbols-outlined"'+(bfLikely?' style="color:var(--err)"':'')+'>warning</span>'+
+      '<div class="dp-banner-text"'+(bfLikely?' style="color:var(--err)"':'')+'>Crash addresses differ by only a few bits \u2014 test the RAM</div><span class="dp-banner-link">Explain \u2192</span></div>';
+    if(notesBf.length)h+='<ul class="notes" style="margin:0 0 12px 2px">'+notesBf.map(n=>'<li>'+esc(n)+'</li>').join('')+'</ul>';
+    h+='<div class="dp-kv">';
+    if(bf.codes&&bf.codes.length)h+='<dt>Stop codes</dt><dd class="mono" style="font-size:13px">'+bf.codes.map(esc).join('<br>')+'</dd>';
+    pairs.forEach(p=>{h+='<dt>Flip pair ('+p.bits+' bit'+(p.bits===1?'':'s')+')</dt><dd class="mono" style="font-size:13px">'+esc(p.a)+'<br>'+esc(p.b)+'</dd>';});
+    cr.slice(0,10).forEach(c=>{h+='<dt>'+esc(c.t)+'</dt><dd class="mono" style="font-size:13px" title="P1 '+esc(c.p1)+'  P2 '+esc(c.p2)+'  P3 '+esc(c.p3)+'  P4 '+esc(c.p4)+'  ('+esc(c.src)+')">'+esc(c.code)+(c.name?' '+esc(c.name):'')+'<br><span style="color:var(--faint)">P1 '+esc(c.p1)+'</span></dd>';});
+    if(cr.length>10)h+='<dt></dt><dd>+'+(cr.length-10)+' more</dd>';
+    h+='</div></div></div>';
+  }
 
   const hasOtherBox=(MEMUSE&&(MEMUSE.avail!=null||MEMUSE.cache!=null||MEMUSE.pagedPool!=null||MEMUSE.nonPagedPool!=null))||pageFile;
   if((MEMUSE&&MEMUSE.pt)||hasOtherBox){
@@ -3617,7 +3653,18 @@ renderExtensions();
 renderUpdates();
 renderFAQ();
 syncNavGroups(true);
-document.getElementById('pageFoot').textContent=GEN?'Generated '+GEN:'';
+// If the auto-opened groups still don't fit, close them from the bottom up (their header keeps the
+// warning dot) rather than making people scroll the sidebar.
+(function fitNav(){
+  const nav=document.getElementById('tabs');
+  if(!nav||getComputedStyle(nav).flexDirection==='row')return;
+  const open=[...document.querySelectorAll('.nav-group:not(.collapsed)')].filter(g=>g.querySelector('.nav-group-title:not(.static)'));
+  for(let i=open.length-1;i>=0&&nav.scrollHeight>nav.clientHeight+1;i--){
+    if(open[i].querySelector('.tab.on'))continue;
+    open[i].classList.add('collapsed');
+  }
+})();
+document.getElementById('pageFoot').textContent=(GEN?'Generated '+GEN:'')+(VER?' \u00b7 v'+VER:'');
 document.getElementById('brand-sub').textContent=GEN?'Report \u00b7 '+GEN:'System report';
 </script>
 </body>
@@ -3691,6 +3738,8 @@ function filecreation {
     }
     catch {
         $errors.fileCreate = $true
+        functionerror $_
+        return
     }
 
     fileadd
@@ -3708,21 +3757,21 @@ function fileadd {
     $sysMfr = $compSys | Select-Object -ExpandProperty Manufacturer
     $sysModel = $compSys | Select-Object -ExpandProperty Model
 
-    if ((Get-Tpm).TpmEnabled -eq "True") {
+    $tpmInfo = try { Get-Tpm -ErrorAction Stop } catch { $null }
+    if ($tpmInfo -and $tpmInfo.TpmEnabled -eq "True") {
         $tpmEnabled = "Enabled"
     }
     else {
         $tpmEnabled = "Disabled"
     }
 
-    $tpmSpecParts = "$((Get-CimInstance -Namespace "root\CIMV2\Security\MicrosoftTPM" -ClassName Win32_TPM).SpecVersion)" -split ',' | ForEach-Object { $_.Trim() }
+    $tpmSpecParts = "$((Get-CimInstance -Namespace "root\CIMV2\Security\MicrosoftTPM" -ClassName Win32_TPM -ErrorAction SilentlyContinue).SpecVersion)" -split ',' | ForEach-Object { $_.Trim() }
     $tpmVersion = "$($tpmSpecParts[0])"
     if ($tpmVersion -and $tpmVersion -notmatch '\.') { $tpmVersion = "$tpmVersion.0" }
     if ($tpmSpecParts.Count -ge 3 -and $tpmSpecParts[2]) { $tpmVersion = "$tpmVersion (rev $($tpmSpecParts[2]))" }
 
     $motherboardModel = Get-WmiObject Win32_BaseBoard | Select-Object -ExpandProperty Product
     $motherboardMfr = Get-WmiObject Win32_BaseBoard | Select-Object -ExpandProperty Manufacturer
-    $motherboardSerial = Get-WmiObject Win32_BaseBoard | Select-Object -ExpandProperty SerialNumber
     $bios = Get-WmiObject Win32_BIOS
     $biosVersion = $bios | Select-Object -ExpandProperty SMBIOSBIOSVersion
     $biosDate = $bios | Select-Object -ExpandProperty ReleaseDate
@@ -3734,7 +3783,7 @@ function fileadd {
     $osName = $os | Select-Object -ExpandProperty Caption
     $osVersion = $os | Select-Object -ExpandProperty Version
     $secureBoot = try { Confirm-SecureBootUEFI } catch { $secCompat = $true }
-    $fastboot = (Get-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Power" -Name HiberbootEnabled).HiberbootEnabled
+    $fastboot = (Get-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Power" -Name HiberbootEnabled -ErrorAction SilentlyContinue).HiberbootEnabled
 
     $buildNumber = (Get-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion").CurrentBuild
     $ubr = (Get-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion").UBR
@@ -3778,7 +3827,8 @@ function fileadd {
     $pgfileManagedState = if ($pgfile.Count -eq 0) { "Disabled" } elseif ($null -eq $pgfileAuto) { "" } elseif ($pgfileAuto) { "Automatic" } else { "Manual" }
 
     $installedMemory = Get-WmiObject Win32_ComputerSystem | Select-Object -ExpandProperty TotalPhysicalMemory
-    $ramSpeed = ((Get-WmiObject Win32_PhysicalMemory | Select-Object -ExpandProperty Speed | Sort-Object -Unique) -join '/')
+    # ConfiguredClockSpeed = what the RAM actually runs at; Speed = its rated speed (XMP/EXPO aside)
+    $ramSpeed = ((Get-WmiObject Win32_PhysicalMemory | ForEach-Object { if ($_.ConfiguredClockSpeed) { $_.ConfiguredClockSpeed } else { $_.Speed } } | Sort-Object -Unique) -join '/')
 
     $secureBootState = if ($secureBoot -match "True") { "Enabled" } elseif ($secureBoot -match "False") { "Disabled" } elseif ($secCompat -eq "$true") { "Not Supported" }
     $fastbootState = if ($fastboot -eq "1") { "Enabled" } else { "Disabled" }
@@ -3793,7 +3843,6 @@ function fileadd {
     specs "GPU: $gpu"
     specs "`nMotherboard Manufacturer: $motherboardMfr"
     specs "Motherboard: $motherboardModel"
-    specs "Motherboard Serial: $motherboardSerial"
     specs "BIOS Manufacturer: $biosMfr"
     specs "BIOS Version: $biosVersion"
     specs "BIOS Date: $([System.Management.ManagementDateTimeConverter]::ToDateTime($biosDate).ToString("MM'/'dd'/'yyyy HH:mm:ss"))"
@@ -3826,11 +3875,13 @@ function fileadd {
     # DriveType=3 is 'Local Fixed Disk' - this excludes network/cloud-sync virtual mounts (like
     # Google Drive's virtual drive letter), removable media, and optical drives, all of which can
     # otherwise show up with misleading or borrowed capacity figures that aren't real storage.
+    $allPartitions = @(Get-Partition -ErrorAction SilentlyContinue)
+    $allPhysical   = @(Get-PhysicalDisk -ErrorAction SilentlyContinue)
     $drives = Get-WmiObject Win32_LogicalDisk -Filter "DriveType=3" | ForEach-Object {
         $logicalDisk = $_
         $windowsDrive = $logicalDisk.DeviceID.TrimEnd(':')
 
-        $partition = Get-Partition | Where-Object { $_.DriveLetter -eq $windowsDrive }
+        $partition = $allPartitions | Where-Object { $_.DriveLetter -eq $windowsDrive } | Select-Object -First 1
 
         $diskNumber = if ($partition) {
             $partition.DiskNumber
@@ -3840,11 +3891,11 @@ function fileadd {
         }
 
         $disk = if ($null -ne $diskNumber) {
-            Get-Disk -Number $diskNumber
+            Get-Disk -Number $diskNumber -ErrorAction SilentlyContinue
         }
 
         $physicalDisk = if ($disk) {
-            Get-PhysicalDisk | Where-Object { $_.DeviceId -eq $diskNumber }
+            $allPhysical | Where-Object { "$($_.DeviceId)" -eq "$diskNumber" } | Select-Object -First 1
         }
 
         $driveType = if ($physicalDisk) { $physicalDisk.MediaType } else { 'Unknown' }
@@ -3930,6 +3981,306 @@ function specs {
         [string]$value
     )
     Add-Content -Path $infofile -Value "$value"
+}
+
+# ---------------------------------------------------------------------------
+# RAM bit-flip hint - reads stop codes + parameters, no dump debugging needed.
+#   Kernel-Power 41 : stop code + 4 params, even when no dump was saved
+#   Minidump header : stop code at 0x38, params at 0x40 (catches crashes whose event rotated out)
+#   volmgr 161      : crash happened but the dump could NOT be written
+# For stop codes whose P1 is a memory address (0x0A, 0xD1, 0x50): two different addresses with the
+# same last 3 hex digits that differ by only 1-6 bits = probably one pointer with bits flipped.
+# A hint, not proof.
+# ---------------------------------------------------------------------------
+function ConvertFrom-PchhHex([string]$s) {
+    $s = "$s".Trim()
+    if ($s -match '^0x') { $s = $s.Substring(2) }
+    if (-not $s) { return [UInt64]0 }
+    try { return [UInt64]::Parse($s, [Globalization.NumberStyles]::HexNumber) } catch { return [UInt64]0 }
+}
+
+# Byte-wise so 0xFFFF... kernel addresses never overflow in PS 5.1
+function Get-PchhBitDiff([UInt64]$a, [UInt64]$b) {
+    $ba = [BitConverter]::GetBytes($a); $bb = [BitConverter]::GetBytes($b)
+    $n = 0
+    for ($i = 0; $i -lt 8; $i++) {
+        $x = [int]($ba[$i] -bxor $bb[$i])
+        while ($x) { $n += ($x -band 1); $x = $x -shr 1 }
+    }
+    return $n
+}
+
+function Get-PchhLowBits([UInt64]$v, [int]$hexDigits) {
+    $h = '{0:X16}' -f $v
+    return $h.Substring(16 - $hexDigits)
+}
+
+function Get-PchhBitFlipHint {
+    param([int]$Days = 60)
+
+    $stopNames = @{
+        'A' = 'IRQL_NOT_LESS_OR_EQUAL'; '1A' = 'MEMORY_MANAGEMENT'; '1E' = 'KMODE_EXCEPTION_NOT_HANDLED'
+        '3B' = 'SYSTEM_SERVICE_EXCEPTION'; '4E' = 'PFN_LIST_CORRUPT'; '50' = 'PAGE_FAULT_IN_NONPAGED_AREA'
+        '7E' = 'SYSTEM_THREAD_EXCEPTION_NOT_HANDLED'; '1000007E' = 'SYSTEM_THREAD_EXCEPTION_NOT_HANDLED_M'
+        '9F' = 'DRIVER_POWER_STATE_FAILURE'; 'D1' = 'DRIVER_IRQL_NOT_LESS_OR_EQUAL'; 'DE' = 'POOL_CORRUPTION_IN_FILE_AREA'
+        '109' = 'CRITICAL_STRUCTURE_CORRUPTION'; '116' = 'VIDEO_TDR_FAILURE'; '124' = 'WHEA_UNCORRECTABLE_ERROR'
+        '133' = 'DPC_WATCHDOG_VIOLATION'; '139' = 'KERNEL_SECURITY_CHECK_FAILURE'; '18B' = 'SECURE_KERNEL_ERROR'
+        '1A0' = 'TTM_WATCHDOG_TIMEOUT'
+    }
+    $since   = (Get-Date).AddDays(-$Days)
+    $crashes = New-Object System.Collections.Generic.List[object]
+    $keys    = @{}
+
+    # 1. Kernel-Power 41 (bugchecks only; code 0 = power loss / hard reset)
+    $evts = @(Get-WinEvent -FilterHashtable @{ LogName = 'System'; ProviderName = 'Microsoft-Windows-Kernel-Power'; Id = 41; StartTime = $since } -ErrorAction SilentlyContinue)
+    foreach ($e in $evts) {
+        try {
+            $d = @{}
+            foreach ($n in ([xml]$e.ToXml()).Event.EventData.Data) { $d[$n.Name] = $n.'#text' }
+            $code = [UInt32]"$($d['BugcheckCode'])"
+            if ($code -eq 0) { continue }
+            $p = @(1..4 | ForEach-Object { ConvertFrom-PchhHex $d["BugcheckParameter$_"] })
+            $key = '{0:X}|{1:X}|{2:X}' -f $code, $p[0], $p[3]
+            if ($keys.ContainsKey($key)) { continue }
+            $keys[$key] = $true
+            # SleepInProgress non-zero = crashed mid sleep / hibernate / shutdown transition (incl. Fast Startup)
+            $sleep = "$($d['SleepInProgress'])"
+            $crashes.Add([pscustomobject]@{ Time = $e.TimeCreated; Code = $code; P = $p; Source = 'Event 41'; Sleep = ($sleep -and $sleep -ne '0') })
+        } catch { }
+    }
+
+    # 2. Minidump headers (adds anything the event log missed)
+    foreach ($f in @(Get-ChildItem "$env:SystemRoot\Minidump\*.dmp" -ErrorAction SilentlyContinue | Where-Object { $_.LastWriteTime -ge $since })) {
+        try {
+            $fs = [IO.File]::Open($f.FullName, 'Open', 'Read', 'ReadWrite')
+            $b = New-Object byte[] 0x60
+            [void]$fs.Read($b, 0, 0x60); $fs.Close()
+        } catch { continue }
+        if ([Text.Encoding]::ASCII.GetString($b, 0, 8) -ne 'PAGEDU64') { continue }
+        $code = [BitConverter]::ToUInt32($b, 0x38)
+        if ($code -eq 0) { continue }
+        $p = @(0..3 | ForEach-Object { [BitConverter]::ToUInt64($b, 0x40 + $_ * 8) })
+        $key = '{0:X}|{1:X}|{2:X}' -f $code, $p[0], $p[3]
+        if ($keys.ContainsKey($key)) { continue }
+        $keys[$key] = $true
+        $crashes.Add([pscustomobject]@{ Time = $f.LastWriteTime; Code = $code; P = $p; Source = $f.Name; Sleep = $false })
+    }
+
+    # 3. Address-type parameters. 0x0A / 0xD1: P1 = address, P4 = instruction. 0x50: P1 = address, P3 = instruction.
+    $addrs = @{}; $instr = @{}
+    foreach ($c in $crashes) {
+        if ($c.Code -in 0x0A, 0xD1, 0x50) {
+            $a = [UInt64]$c.P[0]
+            # Below 64KB = null pointer + offset - a driver bug pattern, not a flipped bit
+            if ($a -ge [UInt64]0x10000) {
+                if (-not $addrs.ContainsKey($a)) { $addrs[$a] = 0 }
+                $addrs[$a]++
+            }
+            $ip = if ($c.Code -eq 0x50) { [UInt64]$c.P[2] } else { [UInt64]$c.P[3] }
+            if ($ip -ne 0) {
+                $tail = Get-PchhLowBits $ip 5   # KASLR moves the base; the same instruction usually keeps its low digits
+                if (-not $instr.ContainsKey($tail)) { $instr[$tail] = New-Object System.Collections.Generic.HashSet[UInt64] }
+                [void]$instr[$tail].Add($ip)
+            }
+        }
+    }
+
+    # 4. Bit-flip pairs
+    $pairs = New-Object System.Collections.Generic.List[object]
+    $vals  = @($addrs.Keys | Sort-Object)
+    for ($i = 0; $i -lt $vals.Count; $i++) {
+        for ($j = $i + 1; $j -lt $vals.Count; $j++) {
+            $a = [UInt64]$vals[$i]; $b = [UInt64]$vals[$j]
+            $lowA = Get-PchhLowBits $a 3
+            if ($lowA -ne (Get-PchhLowBits $b 3) -or $lowA -eq '000') { continue }   # skip page-aligned noise
+            $diff = Get-PchhBitDiff $a $b
+            if ($diff -ge 1 -and $diff -le 6) {
+                $pairs.Add([pscustomobject]@{ a = ('0x{0:X}' -f $a); b = ('0x{0:X}' -f $b); bits = $diff; end = $lowA })
+            }
+        }
+    }
+    $sameInstr = @($instr.GetEnumerator() | Where-Object { $_.Value.Count -ge 2 } | ForEach-Object { '...' + $_.Key })
+
+    # 5. Context
+    $distinct = @($crashes | ForEach-Object { $_.Code } | Select-Object -Unique)
+    $noDump   = @(Get-WinEvent -FilterHashtable @{ LogName = 'System'; ProviderName = 'volmgr'; Id = 161; StartTime = $since } -ErrorAction SilentlyContinue).Count
+    $sleeps   = @($crashes | Where-Object { $_.Sleep }).Count
+
+    $verdict = 'None'
+    if ($pairs.Count -ge 1) { $verdict = 'Possible' }
+    if ($pairs.Count -ge 2 -or ($pairs.Count -ge 1 -and ($distinct.Count -ge 4 -or $sameInstr.Count -ge 1))) { $verdict = 'Likely' }
+
+    $notes = New-Object System.Collections.Generic.List[string]
+    if ($verdict -ne 'None') { $notes.Add("Same crash address seen with different bits flipped ($($pairs.Count) pair(s)) - test RAM (TestMem5 / MemTest86) and try without EXPO/XMP.") }
+    if ($sameInstr.Count)    { $notes.Add("Same kernel instruction crashed on different boots ($($sameInstr -join ', ')) - same code, bad data.") }
+    if ($distinct.Count -ge 5) { $notes.Add("$($distinct.Count) different stop codes in $Days days - points to hardware/instability, not one driver.") }
+    if ($sleeps)             { $notes.Add("$sleeps crash(es) during sleep, hibernate or shutdown - try turning Fast Startup off.") }
+    if ($noDump)             { $notes.Add("$noDump crash(es) where the dump could not be saved (volmgr 161) - set the page file to system-managed.") }
+
+    return [pscustomobject]@{
+        verdict    = $verdict
+        days       = $Days
+        crashCount = $crashes.Count
+        codes      = @($distinct | Sort-Object | ForEach-Object { $n = $stopNames['{0:X}' -f $_]; if ($n) { '0x{0:X} {1}' -f $_, $n } else { '0x{0:X}' -f $_ } })
+        pairs      = @($pairs)
+        sameInstr  = $sameInstr
+        noDump     = $noDump
+        sleeps     = $sleeps
+        notes      = @($notes)
+        crashes    = @($crashes | Sort-Object Time -Descending | ForEach-Object {
+                        [pscustomobject]@{
+                            t    = $_.Time.ToString("MM'/'dd'/'yyyy HH:mm")
+                            code = '0x{0:X}' -f $_.Code
+                            name = "$($stopNames['{0:X}' -f $_.Code])"
+                            p1   = '0x{0:X}' -f $_.P[0]; p2 = '0x{0:X}' -f $_.P[1]
+                            p3   = '0x{0:X}' -f $_.P[2]; p4 = '0x{0:X}' -f $_.P[3]
+                            src  = $_.Source
+                        } })
+    }
+}
+
+# ---------------------------------------------------------------------------
+# Tweaking tools + changed settings. Read-only, no network, no paths or usernames in the output.
+#   tools    : traces only that tool leaves behind - safe to name the tool
+#   settings : non-default settings that cause support problems - cause unknown, never blamed on a tool
+# Sources: WinUtil log folder + restore point name from its own source; AtlasModules from Atlas docs;
+# Revision Tool install path from ReviOS docs. Windows defaults are stock client values.
+# ---------------------------------------------------------------------------
+function Get-PchhRegValue([string]$Path, [string]$Name) {
+    try { return (Get-ItemProperty -Path $Path -Name $Name -ErrorAction Stop).$Name } catch { return $null }
+}
+
+function Get-PchhTweaks {
+    $tools    = New-Object System.Collections.Generic.List[object]
+    $settings = New-Object System.Collections.Generic.List[object]
+    $add = { param($cat, $label, $value, $sev, $why) $settings.Add([pscustomobject]@{ cat = $cat; label = $label; value = "$value"; sev = $sev; why = $why }) }
+
+    $cv      = try { Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion' -ErrorAction Stop } catch { $null }
+    $build   = if ($cv) { [int]"0$($cv.CurrentBuild)" } else { 0 }
+    $isLtsc  = $cv -and ("$($cv.EditionID)" -match 'EnterpriseS|IoTEnterpriseS')
+
+    # ---- Tools ----
+    # Chris Titus WinUtil: one transcript per run in %LOCALAPPDATA%\winutil\logs (checked for every profile)
+    try {
+        $profiles = @(Get-CimInstance Win32_UserProfile -ErrorAction Stop | Where-Object { -not $_.Special -and $_.LocalPath } | ForEach-Object { $_.LocalPath })
+        $logs = @(); $wuFolder = $false
+        foreach ($pp in $profiles) {
+            if (Test-Path -LiteralPath "$pp\AppData\Local\winutil") { $wuFolder = $true }
+            $logs += @(Get-ChildItem -LiteralPath "$pp\AppData\Local\winutil\logs" -Filter 'winutil_*.log' -File -ErrorAction SilentlyContinue)
+        }
+        if ($logs.Count) {
+            $last = ($logs | Sort-Object LastWriteTime -Descending | Select-Object -First 1).LastWriteTime
+            $tools.Add([pscustomobject]@{ name = 'Chris Titus WinUtil'; detail = "$($logs.Count) run log$(if ($logs.Count -ne 1) { 's' }), last run $($last.ToString("MM'/'dd'/'yyyy"))" })
+        } elseif ($wuFolder) {
+            $tools.Add([pscustomobject]@{ name = 'Chris Titus WinUtil'; detail = 'WinUtil settings folder found' })
+        }
+    } catch { }
+    # WinUtil's restore point (only exists if System Restore was on when it ran)
+    try {
+        $rp = @(Get-ComputerRestorePoint -ErrorAction Stop | Where-Object { "$($_.Description)" -like '*created by WinUtil*' })
+        if ($rp.Count) {
+            $rpDate = try { ([Management.ManagementDateTimeConverter]::ToDateTime(($rp | Select-Object -Last 1).CreationTime)).ToString("MM'/'dd'/'yyyy") } catch { '' }
+            $existing = $tools | Where-Object { $_.name -eq 'Chris Titus WinUtil' } | Select-Object -First 1
+            $txt = "WinUtil restore point$(if ($rpDate) { " from $rpDate" })"
+            if ($existing) { $existing.detail += "; $txt" } else { $tools.Add([pscustomobject]@{ name = 'Chris Titus WinUtil'; detail = $txt }) }
+        }
+    } catch { }
+    if ((Test-Path "$env:SystemRoot\AtlasModules") -or (Test-Path "$env:SystemRoot\AtlasDesktop")) {
+        $tools.Add([pscustomobject]@{ name = 'AtlasOS'; detail = 'Atlas system folder found - heavily modified Windows' })
+    }
+    if (${env:ProgramFiles(x86)} -and (Test-Path "${env:ProgramFiles(x86)}\Revision Tool")) {
+        $tools.Add([pscustomobject]@{ name = 'ReviOS'; detail = 'Revision Tool installed - heavily modified Windows' })
+    }
+
+    # ---- Services set to Disabled (Start = 4). None of these are disabled on stock Windows. ----
+    # wuauserv is left out - the Windows Update tab already reports it.
+    $svcChecks = @(
+        @('BITS',                  'Background Intelligent Transfer (BITS)', 'err',  "Windows Update and Store downloads fail"),
+        @('UsoSvc',                'Update Orchestrator',                    'err',  "Windows Update can't scan for or install updates"),
+        @('WaaSMedicSvc',          'Windows Update Medic',                   'warn', "Windows can't repair its own update components"),
+        @('TrustedInstaller',      'Windows Modules Installer',              'err',  "Updates and optional features can't install"),
+        @('CryptSvc',              'Cryptographic Services',                 'err',  "Updates, Store and signed installers fail"),
+        @('DoSvc',                 'Delivery Optimization',                  'warn', "Store and some update downloads stall"),
+        @('WinDefend',             'Microsoft Defender Antivirus',           'err',  "No built-in antivirus"),
+        @('SecurityHealthService', 'Windows Security Service',               'warn', "Windows Security app shows nothing"),
+        @('wscsvc',                'Security Center',                        'warn', "Windows can't track antivirus/firewall status"),
+        @('mpssvc',                'Windows Defender Firewall',              'err',  "No firewall, and some apps and Store installs fail"),
+        @('AppXSvc',               'AppX Deployment Service',                'warn', "Store apps can't install or update"),
+        @('ClipSVC',               'Client License Service',                 'warn', "Store apps may refuse to open"),
+        @('InstallService',        'Microsoft Store Install Service',        'warn', "Store installs fail"),
+        @('Audiosrv',              'Windows Audio',                          'err',  "No sound"),
+        @('EventLog',              'Windows Event Log',                      'err',  "No event logs - crash history in this report will be missing"),
+        @('Winmgmt',               'Windows Management Instrumentation',     'err',  "Many apps and this report can't read system info"),
+        @('WSearch',               'Windows Search',                         'info', "Start menu and Explorer search slow or broken"),
+        @('SysMain',               'SysMain (Superfetch)',                   'info', "Usually harmless; slower app launches on hard drives"),
+        @('Spooler',               'Print Spooler',                          'info', "Printing won't work"),
+        @('W32Time',               'Windows Time',                           'info', "Clock can drift, which breaks sign-ins and secure websites")
+    )
+    foreach ($s in $svcChecks) {
+        $start = Get-PchhRegValue "HKLM:\SYSTEM\CurrentControlSet\Services\$($s[0])" 'Start'
+        if ($null -ne $start -and [int]$start -eq 4) { & $add 'Disabled services' $s[1] 'Disabled' $s[2] $s[3] }
+    }
+
+    # ---- Policies (normal on work/school PCs, unusual at home) ----
+    $wu = 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate'
+    if ((Get-PchhRegValue $wu 'DisableWindowsUpdateAccess') -eq 1) { & $add 'Updates & security' 'Windows Update access blocked by policy' 'On' 'err' "Updates can't be checked or installed" }
+    if ((Get-PchhRegValue "$wu\AU" 'NoAutoUpdate') -eq 1)          { & $add 'Updates & security' 'Automatic updates turned off by policy' 'On' 'warn' "Security updates only install if done by hand" }
+    if ((Get-PchhRegValue $wu 'TargetReleaseVersion') -eq 1)       { & $add 'Updates & security' 'Windows version pinned by policy' "$(Get-PchhRegValue $wu 'TargetReleaseVersionInfo')" 'info' "Feature updates held at this version" }
+    $def = 'HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender'
+    if ((Get-PchhRegValue $def 'DisableAntiSpyware') -eq 1)        { & $add 'Updates & security' 'Defender turned off by policy' 'On' 'warn' "Set by debloat/tweak tools; leaves no antivirus unless another is installed" }
+    if ((Get-PchhRegValue "$def\Real-Time Protection" 'DisableRealtimeMonitoring') -eq 1) { & $add 'Updates & security' 'Defender real-time protection off by policy' 'On' 'warn' "Files aren't scanned as they're opened" }
+    if ((Get-PchhRegValue 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\System' 'EnableSmartScreen') -eq 0) { & $add 'Updates & security' 'SmartScreen turned off by policy' 'Off' 'warn' "No warning before running unknown downloads" }
+    # Spectre/Meltdown mitigations: override value 3 turns both off
+    $mm = 'HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management'
+    $fso = Get-PchhRegValue $mm 'FeatureSettingsOverride'
+    if ($null -ne $fso -and (([int]$fso -band 3) -eq 3)) { & $add 'Updates & security' 'CPU security mitigations (Spectre/Meltdown) turned off' 'Off' 'warn' "Small speed gain, real security risk" }
+    if ((Get-PchhRegValue 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\DataCollection' 'AllowTelemetry') -eq 0) { & $add 'Privacy' 'Telemetry set to minimum by policy' '0' 'info' "Harmless - shown for reference" }
+
+    # ---- Boot & performance tweaks ----
+    try {
+        $bcd = @(& bcdedit.exe /enum '{current}' 2>$null)
+        $bcdSet = @()
+        foreach ($el in 'useplatformclock', 'useplatformtick', 'disabledynamictick', 'tscsyncpolicy', 'x2apicpolicy') {
+            $line = $bcd | Where-Object { $_ -match "^\s*$el\s+\S" } | Select-Object -First 1
+            if ($line -and ("$line" -match "^\s*$el\s+(\S+)")) { $bcdSet += "$el $($Matches[1])" }
+        }
+        if ($bcdSet.Count) {
+            $sev = if ($bcdSet -match '^useplatformclock') { 'warn' } else { 'info' }
+            & $add 'Boot & performance' 'Boot timer settings changed (bcdedit)' ($bcdSet -join ', ') $sev "Not set on stock Windows; useplatformclock in particular often causes stutter"
+        }
+    } catch { }
+    $psep = Get-PchhRegValue 'HKLM:\SYSTEM\CurrentControlSet\Control\PriorityControl' 'Win32PrioritySeparation'
+    if ($null -ne $psep -and [int]$psep -ne 2) { & $add 'Boot & performance' 'CPU scheduling priority changed (Win32PrioritySeparation)' ('0x{0:X}' -f [int]$psep) 'info' "Windows default is 0x2" }
+    $mmcss = 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile'
+    $nti = Get-PchhRegValue $mmcss 'NetworkThrottlingIndex'
+    if ($null -ne $nti) {
+        $ntiU = [int64]$nti; if ($ntiU -lt 0) { $ntiU += 4294967296 }   # DWORD 0xFFFFFFFF reads back as -1
+        if ($ntiU -ne 10) { & $add 'Boot & performance' 'Network throttling changed (NetworkThrottlingIndex)' ('0x{0:X}' -f $ntiU) 'info' "Windows default is 10" }
+    }
+    $sr = Get-PchhRegValue $mmcss 'SystemResponsiveness'
+    if ($null -ne $sr -and [int]$sr -ne 20) { & $add 'Boot & performance' 'Background CPU reserve changed (SystemResponsiveness)' "$sr" 'info' "Windows default is 20" }
+    if ((Get-PchhRegValue 'HKLM:\SYSTEM\CurrentControlSet\Control\Power' 'HibernateEnabled') -eq 0) { & $add 'Boot & performance' 'Hibernation turned off' 'Off' 'info' "Also turns off Fast Startup; harmless on desktops" }
+
+    # ---- Removed components ----
+    $wv2 = '{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}'
+    $hasWv2 = [bool]((Get-PchhRegValue "HKLM:\SOFTWARE\WOW6432Node\Microsoft\EdgeUpdate\Clients\$wv2" 'pv') -or
+                     (Get-PchhRegValue "HKLM:\SOFTWARE\Microsoft\EdgeUpdate\Clients\$wv2" 'pv') -or
+                     (Get-PchhRegValue "HKCU:\SOFTWARE\Microsoft\EdgeUpdate\Clients\$wv2" 'pv') -or
+                     (${env:ProgramFiles(x86)} -and (Test-Path "${env:ProgramFiles(x86)}\Microsoft\EdgeWebView\Application")))
+    if (-not $hasWv2) {
+        $sev = if ($build -ge 22000) { 'warn' } else { 'info' }
+        & $add 'Removed components' 'WebView2 Runtime missing' 'Not found' $sev "Breaks apps built on it - Widgets, Teams, Outlook (new) and many launchers"
+    }
+    $edgeFound = (${env:ProgramFiles(x86)} -and (Test-Path "${env:ProgramFiles(x86)}\Microsoft\Edge\Application\msedge.exe")) -or (Test-Path "$env:ProgramFiles\Microsoft\Edge\Application\msedge.exe")
+    if (-not $edgeFound) { & $add 'Removed components' 'Microsoft Edge removed' 'Not found' 'info' "Some Windows links and help pages won't open" }
+    if (-not $isLtsc) {
+        try {
+            $store = @(Get-AppxPackage -AllUsers -Name 'Microsoft.WindowsStore' -ErrorAction Stop)
+            if (-not $store.Count) { & $add 'Removed components' 'Microsoft Store removed' 'Not found' 'warn' "Store apps (Xbox, Game Pass, Photos updates) can't install or update" }
+        } catch { }
+    }
+
+    return [pscustomobject]@{ tools = @($tools); settings = @($settings) }
 }
 
 # Curated System event log entries (crash / hardware / storage / GPU / service failures)
@@ -4045,6 +4396,25 @@ function reliabilityexport {
         # Curated system events for the viewer
         Write-Host "      - Notable system events" -ForegroundColor DarkGray
         $sysEvents = @(Get-CuratedSystemEvents)
+
+        # RAM bit-flip check runs silently as part of crash analysis - it only prints when it finds something
+        $bitflip = $null
+        try { $bitflip = Get-PchhBitFlipHint -Days 60 } catch { }
+        if ($bitflip -and $bitflip.verdict -ne 'None') {
+            $bfColour = if ($bitflip.verdict -eq 'Likely') { 'Red' } else { 'Yellow' }
+            Write-Host "      ! $($bitflip.verdict) RAM fault - blue screen addresses differ by only a few bits (see Memory tab)" -ForegroundColor $bfColour
+        }
+
+        Write-Host "      - Tweaking tools and changed settings" -ForegroundColor DarkGray
+        $tweaks = $null
+        try { $tweaks = Get-PchhTweaks } catch { }
+        if ($tweaks) {
+            $twTools = @($tweaks.tools | ForEach-Object { $_.name })
+            $twBad   = @($tweaks.settings | Where-Object { $_.sev -eq 'err' -or $_.sev -eq 'warn' }).Count
+            if ($twTools.Count) { Write-Host "        Found: $($twTools -join ', ')" -ForegroundColor Yellow }
+            if ($twBad)         { Write-Host "        $twBad changed setting(s) worth checking (see Security tab)" -ForegroundColor Yellow }
+            if (-not $twTools.Count -and -not $twBad) { Write-Host "        None found" -ForegroundColor DarkGray }
+        }
 
         Write-Host "      - Drive S.M.A.R.T data" -ForegroundColor DarkGray
         # Raw ATA SMART attributes (SATA drives; NVMe reports via reliability counters instead)
@@ -4352,11 +4722,27 @@ function reliabilityexport {
 
         $hotfixes = @()
         try {
-            $hotfixes = @(Get-HotFix -ErrorAction Stop | Where-Object { $_.Description -notmatch 'Security Intelligence Update' -and $_.HotFixID -ne 'KB2267602' } | Sort-Object InstalledOn -Descending | ForEach-Object {
+            # Parse the raw InstallDate ourselves - Get-HotFix's own InstalledOn property throws on
+            # dates it can't read (non-US formats, hex FILETIMEs), which spams the console from Sort-Object.
+            $hfDate = {
+                param($hf)
+                $raw = "$($hf.InstallDate)".Trim()
+                if (-not $raw) { return $null }
+                if ($raw -match '^[0-9a-fA-F]{16}$') { try { return [DateTime]::FromFileTimeUtc([Convert]::ToInt64($raw, 16)) } catch { return $null } }
+                $d = [DateTime]::MinValue
+                foreach ($fmt in 'M/d/yyyy', 'yyyyMMdd', 'd/M/yyyy', 'yyyy-MM-dd') {
+                    if ([DateTime]::TryParseExact($raw, $fmt, [Globalization.CultureInfo]::InvariantCulture, [Globalization.DateTimeStyles]::None, [ref]$d)) { return $d }
+                }
+                if ([DateTime]::TryParse($raw, [ref]$d)) { return $d }
+                return $null
+            }
+            $hotfixes = @(Get-HotFix -ErrorAction Stop | Where-Object { $_.Description -notmatch 'Security Intelligence Update' -and $_.HotFixID -ne 'KB2267602' } | ForEach-Object {
+                [PSCustomObject]@{ id = "$($_.HotFixID)"; desc = "$($_.Description)"; when = (& $hfDate $_) }
+            } | Sort-Object { if ($_.when) { $_.when } else { [DateTime]::MinValue } } -Descending | ForEach-Object {
                 [PSCustomObject]@{
-                    id   = "$($_.HotFixID)"
-                    desc = "$($_.Description)"
-                    date = if ($_.InstalledOn) { $_.InstalledOn.ToString("MM'/'dd'/'yyyy") } else { "" }
+                    id   = $_.id
+                    desc = $_.desc
+                    date = if ($_.when) { $_.when.ToString("MM'/'dd'/'yyyy") } else { "" }
                 }
             })
         } catch { }
@@ -5281,12 +5667,14 @@ namespace PCHH {
         $smartJson = if ($smart.Count -gt 0) { (ConvertTo-Json @($smart) -Compress -Depth 3).Replace('</', '<\/') } else { '[]' }
         $dirtyJson = if ($dirtyVols.Count -gt 0) { (ConvertTo-Json @($dirtyVols) -Compress).Replace('</', '<\/') } else { '[]' }
         $diskLayoutJson = if ($diskLayout.Count -gt 0) { (ConvertTo-Json @($diskLayout) -Compress -Depth 4).Replace('</', '<\/') } else { '[]' }
+        $tweaksJson = if ($tweaks) { (ConvertTo-Json $tweaks -Compress -Depth 4).Replace('</', '<\/') } else { 'null' }
+        $bitflipJson = if ($bitflip) { (ConvertTo-Json $bitflip -Compress -Depth 5).Replace('</', '<\/') } else { 'null' }
         $specsRaw = Get-Content -Path $infofile -Raw -ErrorAction SilentlyContinue
         if ($null -eq $specsRaw) { $specsRaw = "" }
         $specsJson = (ConvertTo-Json "$specsRaw" -Compress).Replace('</', '<\/')
 
         $genStamp = (Get-Date).ToString("MM'/'dd'/'yyyy HH:mm")
-        $viewerHtml = $viewerTemplate.Replace('/*__VER__*/""', "`"$scriptVersion`"").Replace('/*__GEN__*/""', "`"$genStamp`"").Replace('/*__DATA__*/[]', $json).Replace('/*__SPECS__*/""', $specsJson).Replace('/*__DUMPS__*/[]', $dumpsJson).Replace('/*__SYSEVT__*/[]', $sysJson).Replace('/*__SMART__*/[]', $smartJson).Replace('/*__DIRTY__*/[]', $dirtyJson).Replace('/*__DISKLAYOUT__*/[]', $diskLayoutJson).Replace('/*__RAM__*/[]', $ramJson).Replace('/*__PROGRAMS__*/[]', $programsJson).Replace('/*__GPUS__*/[]', $gpusJson).Replace('/*__HAGS__*/null', $hagsJson).Replace('/*__ISLAPTOP__*/false', $isLaptopJson).Replace('/*__MONS__*/[]', $monsJson).Replace('/*__DISPLAYS__*/[]', $displaysJson).Replace('/*__PROCS__*/[]', $procsJson).Replace('/*__MEMUSE__*/null', $memuseJson).Replace('/*__NET__*/null', $netJson).Replace('/*__SECURITY__*/null', $securityJson).Replace('/*__HOTFIXES__*/[]', $hotfixesJson).Replace('/*__WINDOWSOLD__*/null', $windowsOldJson).Replace('/*__POWERPLAN__*/null', $powerPlanJson).Replace('/*__GENFLAGS__*/null', $generalFlagsJson).Replace('/*__CBS__*/null', $cbsJson).Replace('/*__WUHISTORY__*/[]', $wuHistoryJson).Replace('/*__WINUPDATE__*/null', $winUpdateJson).Replace('/*__DEVERR__*/[]', $devErrorsJson).Replace('/*__AUDIO__*/null', $audioJson).Replace('/*__USB__*/[]', $usbJson).Replace('/*__CAMERAS__*/[]', $camerasJson).Replace('/*__BATTERY__*/[]', $batteryJson).Replace('/*__RAMSLOTS__*/null', $ramSlotsJson)
+        $viewerHtml = $viewerTemplate.Replace('/*__VER__*/""', "`"$scriptVersion`"").Replace('/*__GEN__*/""', "`"$genStamp`"").Replace('/*__DATA__*/[]', $json).Replace('/*__SPECS__*/""', $specsJson).Replace('/*__DUMPS__*/[]', $dumpsJson).Replace('/*__SYSEVT__*/[]', $sysJson).Replace('/*__SMART__*/[]', $smartJson).Replace('/*__DIRTY__*/[]', $dirtyJson).Replace('/*__DISKLAYOUT__*/[]', $diskLayoutJson).Replace('/*__RAM__*/[]', $ramJson).Replace('/*__PROGRAMS__*/[]', $programsJson).Replace('/*__GPUS__*/[]', $gpusJson).Replace('/*__HAGS__*/null', $hagsJson).Replace('/*__ISLAPTOP__*/false', $isLaptopJson).Replace('/*__MONS__*/[]', $monsJson).Replace('/*__DISPLAYS__*/[]', $displaysJson).Replace('/*__PROCS__*/[]', $procsJson).Replace('/*__MEMUSE__*/null', $memuseJson).Replace('/*__NET__*/null', $netJson).Replace('/*__SECURITY__*/null', $securityJson).Replace('/*__HOTFIXES__*/[]', $hotfixesJson).Replace('/*__WINDOWSOLD__*/null', $windowsOldJson).Replace('/*__POWERPLAN__*/null', $powerPlanJson).Replace('/*__GENFLAGS__*/null', $generalFlagsJson).Replace('/*__CBS__*/null', $cbsJson).Replace('/*__WUHISTORY__*/[]', $wuHistoryJson).Replace('/*__WINUPDATE__*/null', $winUpdateJson).Replace('/*__DEVERR__*/[]', $devErrorsJson).Replace('/*__AUDIO__*/null', $audioJson).Replace('/*__USB__*/[]', $usbJson).Replace('/*__CAMERAS__*/[]', $camerasJson).Replace('/*__BATTERY__*/[]', $batteryJson).Replace('/*__RAMSLOTS__*/null', $ramSlotsJson).Replace('/*__BITFLIP__*/null', $bitflipJson).Replace('/*__TWEAKS__*/null', $tweaksJson)
         try {
             Set-Content -Path $reliability_html_path -Value $viewerHtml -Encoding UTF8
         } catch {
@@ -5306,7 +5694,15 @@ function compression {
     Write-Host ""
     Write-Host "[3/3] Compressing everything into one zip.." -ForegroundColor Blue
 
-    Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\CrashControl" -Name "DisplayParameters" -Value 1 -Type DWord -Force | Out-Null
+    # Makes future blue screens show their stop-code parameters on screen. Only changed if it isn't
+    # already on, and the user is told - this is the one setting the script changes.
+    try {
+        $crashCtl = "HKLM:\SYSTEM\CurrentControlSet\Control\CrashControl"
+        if ((Get-ItemProperty -Path $crashCtl -Name DisplayParameters -ErrorAction SilentlyContinue).DisplayParameters -ne 1) {
+            Set-ItemProperty -Path $crashCtl -Name "DisplayParameters" -Value 1 -Type DWord -Force -ErrorAction Stop | Out-Null
+            Write-Host "      - Turned on extra detail for future blue screens (one Windows setting, harmless)" -ForegroundColor DarkGray
+        }
+    } catch { }
 
     # wevtutil's export (epl) reads the log's on-disk file directly rather than needing exclusive
     # access to it, so this works even while the Event Log service has System/Application open -
@@ -5348,7 +5744,7 @@ function compression {
         Write-Host ""
 
         $errors.Compress = $true
-        functionerror
+        functionerror $_
     }
 
     Remove-Item -Path $infofile, $reliability_csv_path, $reliability_html_path -Force -Recurse -ErrorAction SilentlyContinue > $null 2>&1
@@ -5380,18 +5776,20 @@ function eof {
     endmessage
 }
 
-function functionerror {
+function functionerror($err) {
     Write-Host -NoNewline -ForegroundColor Red "$(xmark)"
 
-    if ($errors.Compress -eq "true") {
+    if ($errors.Compress) {
         Write-Host " There was an error during compression.."
     }
-    elseif ($errors.fileCreate -eq "true") {
-        Write-Host "There was an error while creating files.."
+    elseif ($errors.fileCreate) {
+        Write-Host " There was an error while creating files.."
     }
 
-    Write-Host -NoNewline -ForegroundColor White "Error:"
-    Write-Host " $_" -ForegroundColor Red
+    if ($err) {
+        Write-Host -NoNewline -ForegroundColor White "Error:"
+        Write-Host " $err" -ForegroundColor Red
+    }
 
     endmessage
 }
