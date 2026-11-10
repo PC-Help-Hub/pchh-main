@@ -698,7 +698,7 @@ body.dragging #drop{background:var(--info-c);color:var(--info-on-c)}
     <div class="nav-group">
       <div class="nav-group-title static"><span>Overview</span></div>
       <div class="nav-group-items">
-        <button class="tab on" data-tab="summary"><span class="material-symbols-outlined">dashboard</span><span class="tab-label">Summary</span></button>
+        <button class="tab on" data-tab="summary"><span class="material-symbols-outlined">dashboard</span><span class="tab-label">Overview</span></button>
       </div>
     </div>
     <div class="nav-group">
@@ -747,11 +747,11 @@ body.dragging #drop{background:var(--info-c);color:var(--info-on-c)}
 </aside>
 <main id="content">
 
-<h1 id="pageTitle">PCHH Triage <span id="pageTitleSub">- Summary</span></h1>
+<h1 id="pageTitle">PCHH Triage <span id="pageTitleSub">- Overview</span></h1>
 
 <div id="summaryView" class="view">
   <div id="summaryHead">
-    <div id="summaryCrumb"><span class="crumb">Overview <span class="material-symbols-outlined" style="font-size:16px">chevron_right</span> <b>Summary</b></span>
+    <div id="summaryCrumb"><span class="crumb"><b>Overview</b></span>
       <div id="summaryActions">
         <div class="m3-btn" id="copySpecsBtn"><span class="material-symbols-outlined" style="font-size:18px">content_copy</span>Copy</div>
       </div>
@@ -883,6 +883,8 @@ const USBDEVS = /*__USB__*/[];
 const CAMERAS = /*__CAMERAS__*/[];
 const BITFLIP = /*__BITFLIP__*/null;
 const TWEAKS = /*__TWEAKS__*/null;
+const VIRT = /*__VIRT__*/null;
+const GAMING = /*__GAMING__*/null;
 const VER = /*__VER__*/"";
 const GEN = /*__GEN__*/"";
 
@@ -1323,9 +1325,12 @@ function renderSpecs(){
   });
   let anyCrc=false;
   SMART.forEach(d=>{ if(smartProbs(d).length)anyBad=true; else if(smartCrcProbs(d).length)anyCrc=true; });
-  const statusCls=anyBad?'err':((anyLow||anyCrc)?'warn':'ok');
-  const warnCountHere=(anyLow?1:0)+(anyBad?1:0)+(anyCrc?1:0);
-  const statusText=anyBad?'SMART warning on this component':(anyCrc&&!anyLow)?'CRC errors on a drive':((anyLow||anyCrc)?warnCountHere+' warning'+(warnCountHere>1?'s':'')+' on this component':'No problems found');
+  const hddSysDisk=DISKLAYOUT.find(dk=>(dk.partitions||[]).some(p=>p.letter==='C:'));
+  const hddSysSm=hddSysDisk?SMART.find(d=>String(d.disk)===String(hddSysDisk.disk)):null;
+  const winOnHdd=!!(hddSysSm&&/^hdd$/i.test(hddSysSm.media||''));
+  const statusCls=anyBad?'err':((anyLow||anyCrc||winOnHdd)?'warn':'ok');
+  const warnCountHere=(anyLow?1:0)+(anyBad?1:0)+(anyCrc?1:0)+(winOnHdd?1:0);
+  const statusText=anyBad?'SMART warning on this component':(anyCrc&&!anyLow&&!winOnHdd)?'CRC errors on a drive':(warnCountHere===1&&winOnHdd)?'Windows is on a hard drive':(warnCountHere?warnCountHere+' warning'+(warnCountHere>1?'s':'')+' on this component':'No problems found');
   const drivesBadgeEl=document.getElementById('drivesTabBadge');
   if(drivesBadgeEl){ if(warnCountHere){drivesBadgeEl.textContent=warnCountHere;drivesBadgeEl.className='tab-badge'+(anyBad?'':' warn');drivesBadgeEl.style.display='';} else {drivesBadgeEl.style.display='none';} }
 
@@ -1335,6 +1340,11 @@ function renderSpecs(){
     '<div class="dp-status '+statusCls+'"><span class="status-dot"></span>'+esc(statusText)+'</div></div></div>';
 
   h+='<div class="dp-content">';
+
+  if(winOnHdd){
+    h+='<div class="dp-banner" onclick="return goFaq(\'windows-on-hdd\')" style="margin-top:0"><span class="material-symbols-outlined">warning</span>'+
+      '<div class="dp-banner-text">Windows is installed on a hard drive ('+esc(hddSysSm.name)+') \u2014 an SSD is the biggest speed upgrade for this PC</div><span class="dp-banner-link">Explain \u2192</span></div>';
+  }
 
   if(drivesWithSize.length){
     h+='<div><div class="dp-section-label">Volumes</div><div class="vol-grid">';
@@ -1678,6 +1688,7 @@ const FAQ_DATA=[
 {id:'dirty-bit',q:"Dirty Bit",a:"This means Windows flagged a drive as not having been cleanly unmounted, usually caused by the same unexpected shutdown or crash reported elsewhere in this report. It's a marker for Windows to check that drive's filesystem for errors next time it gets the chance.<br><br>On its own it isn't necessarily a sign of a failing drive, and is used as an indication that something might be wrong.",tools:[]},
 {id:'device-manager-errors',q:"Device Manager Errors",a:"Windows found a piece of hardware but couldn't properly load a driver for it, or the device itself reported a problem. This usually means a missing, outdated, or corrupted driver. Occasionally it's a genuine hardware fault.",tools:["AMD Drivers & Support","NVIDIA Drivers & Support","Intel Drivers & Support"]},
 {id:'mbr-secureboot',q:"MBR Partitioning",a:"Windows drives use one of two partitioning styles: MBR or the newer GPT. Secure Boot, a feature that helps stop malware loading before Windows starts, requires GPT.<br><br>If the main drive (the one with Windows installed on it) is MBR, Secure Boot can't be turned on without converting the drive or doing a clean reinstall of Windows, which is a bigger job and best not attempted without guidance.",tools:[]},
+{id:'windows-on-hdd',q:"Windows Installed on a Hard Drive (HDD)",a:"Windows is running from a traditional spinning hard drive. Hard drives are many times slower than SSDs at the small, random reads Windows does constantly, so on an HDD you'll typically see slow boots, long pauses after login, 100% disk usage in Task Manager, slow updates and apps that take ages to open - even on an otherwise powerful PC.<br><br>Moving Windows to an SSD is the single biggest speed upgrade for this PC, and SSDs are cheap. Options:<ul style='margin:8px 0 8px 20px;padding:0'><li>If an SSD is already in this PC, Windows can be moved (cloned) onto it, or reinstalled onto it</li><li>Otherwise, add a SATA SSD or an NVMe SSD (if the motherboard has an M.2 slot) and clone or reinstall</li><li>Keep the hard drive for bulk storage - games, photos, videos</li></ul>Hybrid drives (SSHDs) show as HDDs and behave mostly like one, so they're flagged too.",tools:["CrystalDiskInfo"]},
 {id:'windows-on-slower-drive',q:"Windows Installed on a Slower Drive",a:"This PC has an NVMe drive - the fastest common type of storage, connecting directly over the motherboard's high-speed PCIe lanes - but Windows itself is installed on a different, slower drive (SATA SSD or hard drive) instead.<br><br>SATA SSDs are still fast for everyday use, but NVMe is typically several times quicker for boot times, app loading, and anything that reads/writes a lot of small files. If the NVMe drive has enough free space, migrating Windows over to it (via cloning software or a fresh install) would give a noticeable speed improvement, particularly for boot time and load screens.",tools:[]},
 {id:'unallocated-space',q:"Unallocated Disk Space",a:"Part of this drive's physical capacity isn't assigned to any partition at all - it's not free space inside a drive letter that Windows can use, it's simply invisible and unusable until a partition is created or extended into it."
   +"<br><br>This most commonly happens after replacing a drive with a bigger one: cloning software or an in-place Windows install (choosing 'Keep personal files and apps' during setup) carries the old, smaller partition layout across onto the new drive without automatically resizing anything to fill it. The result is a drive that reports its full new capacity, but where Windows itself only ever sees the old, smaller amount."
@@ -1690,6 +1701,8 @@ const FAQ_DATA=[
 {id:'windows-10',q:"Windows 10 End of Support",a:"Windows 10 reached end of support on 14 October 2025. It still works, but it no longer gets free security updates, so newly found vulnerabilities stay unpatched. Game, driver and app support for Windows 10 is also being dropped over time.<br><br>The fix is upgrading to Windows 11, which is free on eligible PCs (Settings &gt; Windows Update, or Microsoft's Installation Assistant). Windows 11 needs TPM 2.0, Secure Boot and a supported CPU (roughly Intel 8th gen / AMD Ryzen 2000 series or newer). TPM and Secure Boot status are on this report's Security page, and both can usually be turned on in the BIOS.<br><br>If the PC can't run Windows 11, Microsoft's Extended Security Updates (ESU) programme for home PCs keeps security updates coming until October 2027. It's paid in most regions, and free in the European Economic Area with a Microsoft account.",tools:["Windows 11 Download"]},
 {id:'wu-failed',q:"Failed Windows Updates",a:"One or more recent update attempts failed partway through rather than installing cleanly. This can happen for lots of reasons: a bad download, low disk space, corrupted update files, or a conflict with other software.<br><br>It can sometimes leave a PC feeling unstable or repeatedly nagging about the same update.",tools:["Windows 11 Download"]},
 {id:'cores-vs-threads',q:"Cores vs Threads",a:"A CPU core is a physical processing unit - more cores generally means more work can genuinely happen at the same time. Threads (via Intel Hyper-Threading or AMD SMT) let each core handle two instruction streams instead of one, which improves throughput in well-threaded workloads but doesn't double real performance the way an extra physical core would.<br><br>An '8C/16T' CPU has 8 physical cores presenting 16 logical processors to Windows. Task Manager and this report both count threads (logical processors) unless stated otherwise.",tools:[]},
+{id:'gaming-settings',q:"Gaming Settings",a:"These are the Windows settings that most often come up in gaming performance questions. Most are best left at their defaults.<ul style='margin:8px 0 8px 20px;padding:0'><li><b>Hardware-accelerated GPU scheduling (HAGS)</b> - usually best on with a modern GPU; needed for DLSS Frame Generation</li><li><b>Game Mode</b> - best left on; it stops Windows Update and background tasks interrupting games</li><li><b>Background recording</b> - Game Bar constantly records the last few minutes; turning it off can give back a few FPS</li><li><b>Fullscreen optimisations</b> - turning these off globally is an old tweak that rarely helps on current Windows and can cause alt-tab or overlay issues</li><li><b>Per-app GPU choice</b> - on laptops and PCs with two GPUs, a game set to 'Power saving' runs on the weak integrated GPU. Change it in Settings &rarr; System &rarr; Display &rarr; Graphics</li><li><b>Multiplane overlay (MPO)</b> - turning it off is a known fix for flickering on some setups, but it can raise CPU/GPU load</li><li><b>GPU timeout recovery (TDR)</b> - with it off, a GPU hang freezes the whole PC instead of the screen briefly going black and recovering</li></ul>",tools:[]},
+{id:'virtualization-vbs',q:"Virtualisation & Core Isolation (VBS)",a:"Modern Windows can run a small hypervisor underneath itself. It's what Hyper-V, WSL2, Windows Sandbox, Android apps and some emulators use, and it also powers <b>virtualisation-based security (VBS)</b> - features like <b>Memory integrity</b> (Windows Security &rarr; Device security &rarr; Core isolation) that stop malware tampering with the kernel.<br><br>Common problems this card shows:<ul style='margin:8px 0 8px 20px;padding:0'><li><b>Features on but the hypervisor isn't running</b> - WSL2, Docker, Sandbox or Android apps will fail to start. Usually CPU virtualisation (Intel VT-x / AMD SVM) is off in the BIOS, or a tweak set <code>bcdedit /set hypervisorlaunchtype off</code> (undo with <code>bcdedit /set hypervisorlaunchtype auto</code> and restart)</li><li><b>Hypervisor errors</b> - often a BIOS setting or an outdated BIOS; updating the BIOS fixes many</li><li><b>Memory integrity won't turn on</b> - usually an old, incompatible driver; Windows Security lists which one</li></ul>VBS and memory integrity can cost a few percent of gaming performance. Turning them off is a trade-off, not a fix - leave them on unless there's a measured reason not to.",tools:[]},
 {id:'cpu-virtualization',q:"CPU Virtualisation (VT-x / AMD-V)",a:"This is hardware-level support for running virtual machines efficiently, built into the CPU itself. It needs to be enabled in the BIOS/UEFI (often labelled Intel VT-x, AMD-V, or SVM Mode) before Windows features that rely on it - Hyper-V, WSL2, Android emulators, VirtualBox/VMware with hardware acceleration - will work.<br><br>Enabling it is not overclocking and carries no risk. If a VM or emulator refuses to start with an error mentioning virtualization, this is almost always the cause.",tools:[]},
 {id:'tweak-tools',q:"Tweaking Tools Detected",a:"This PC shows traces left behind by a Windows tweaking or 'debloat' tool, such as Chris Titus WinUtil, or a modified Windows like AtlasOS or ReviOS. These are only named when the tool leaves something unique behind (its own log files, restore point or system folder), so the detection is reliable.<br><br>Using these tools isn't wrong, and many of their changes are harmless. It's flagged because some options switch off services that updates, the Store, security or games depend on - so it's useful to know when chasing a problem that doesn't make sense otherwise.<br><br>Most tools can undo their own changes (WinUtil has 'Undo selected tweaks'), or a restore point from before the tool ran can be used. AtlasOS and ReviOS change Windows too deeply to fully undo - a clean reinstall is the reliable fix if problems persist.",tools:[]},
 {id:'tweaked-settings',q:"Changed System Settings",a:"These are settings that are different from how Windows ships and are known to cause problems. The report can't tell who changed them - a tweaking tool, a guide, an app, or a work/school policy - so it only lists the setting and what it affects.<br><br><b>Red</b> items break core things like Windows Update, the Store or security and are worth fixing first. <b>Yellow</b> items reduce safety or commonly cause odd problems. Grey items are listed for reference and are usually fine.<br><br>Disabled services can be set back in services.msc (most should be 'Manual' or 'Automatic'). Policy settings live in the Group Policy editor or registry. If a tweaking tool was used, its own undo option is the cleanest way back.",tools:["Autoruns"]},
@@ -1702,7 +1715,7 @@ const FAQ_DATA=[
 {id:'bitlocker-on',q:"BitLocker Enabled",a:"One or more drives are encrypted with BitLocker. This isn't a problem &mdash; it's just worth knowing about, since it affects a few things:<ul style='margin:8px 0 8px 20px;padding:0'><li>Before a wipe, reset, reinstall, or drive removal: without the recovery key, an encrypted drive that gets locked out cannot be read or recovered.</li><li>Before a <b>BIOS/UEFI update</b>, or any change to boot order, Secure Boot, or the TPM: these can change the measurements BitLocker checks at startup and trigger a recovery key prompt on the next boot. Suspending BitLocker first (Control Panel &gt; BitLocker Drive Encryption &gt; Suspend protection) avoids this, and it resumes automatically after the next restart.</li></ul>If a wipe, reset, or BIOS update is planned, confirm the recovery key is backed up somewhere accessible (Microsoft account, Active Directory, or a printed/saved copy) before proceeding.",tools:[]},
 {id:'firewall-disabled',q:"Firewall Disabled",a:"Windows Firewall isn't active on one or more network profiles (Domain, Private, or Public), leaving the system more exposed to unwanted network connections.",tools:[]},
 {id:'defender-threats',q:"Defender Threat Detections",a:"Windows Defender has previously found and acted on something it identified as malware, a virus, or another threat on this PC. This is historical. It doesn't necessarily mean anything is currently infected, but repeated or recent detections are worth taking seriously.",tools:[]},
-{id:'defender-exclusions',q:"Risky Defender Exclusions",a:"An exclusion tells Windows Defender to skip scanning a specific file, folder, or file type. Excluding a game folder is common and usually fine.<br><br>Excluding an entire drive, a broad system folder, or all .exe files is far more dangerous, since it means malware placed there would never be scanned at all. Check the Security tab for exactly what's excluded.",tools:[]},
+{id:'defender-exclusions',q:"Risky Defender Exclusions",a:"An exclusion tells Windows Defender to skip scanning a specific file, folder, or file type. Excluding a game folder is common and usually fine.<br><br>Excluding an entire drive, a broad system folder, all .exe files, or a Windows program like PowerShell is far more dangerous - malware placed there (or launched that way) is never scanned. Malware also adds its own exclusions to hide, so an entry nobody remembers adding is a red flag.<br><br>The Security tab lists every exclusion, risky ones first. To remove one: Windows Security &rarr; Virus &amp; threat protection &rarr; Manage settings &rarr; Exclusions. If an exclusion keeps coming back after removal, treat the PC as infected.",tools:["Autoruns"]},
 {id:'rdp-enabled',q:"Remote Desktop (RDP) Enabled",a:"Remote Desktop lets someone log into this PC over the network as if sitting at it. It's useful for legitimate remote access, but it's also a common target for attackers, especially if the PC is reachable from the internet or has a weak password.<br><br>The signed-in account type matters here too: a local account only needs its own password, while a Microsoft or Entra ID account can be backed by MFA. If this wasn't set up intentionally, it's worth disabling. If it's needed, make sure Network Level Authentication is required and the account used has a strong password.",tools:[]},
 {id:'hosts-redirect',q:"Hosts File Redirects",a:"The hosts file is a small system text file that can override where certain web addresses point. This flag means an update- or security-related address, like Windows Update or an antivirus vendor, has been redirected elsewhere. Sometimes this is done deliberately to block updates, but it's also a technique malware uses to stop antivirus software updating itself.<br><br>It's also common to find the hosts file modified when the user (or someone else) has installed cracked software, since some software relies on connecting to license server websites to 'check' that they're licensed.",tools:[]},
 {id:'startup-flagged',q:"Flagged Startup Entries",a:"These are programs set to launch automatically with Windows that either run from a Temp folder or don't have a valid digital signature. Neither is automatically a problem. Plenty of legitimate small or hobbyist tools are unsigned, but it's exactly the pattern malware persistence uses, so anything unfamiliar here is worth a closer look.",tools:[]},
@@ -1807,6 +1820,32 @@ function anchorLink(tabId,anchorId,faqId,html){
   const main='<a href="#" onclick="return goAnchor(\''+tabId+'\',\''+anchorId+'\')" style="color:inherit;text-decoration:underline;text-decoration-style:dotted;text-underline-offset:3px;cursor:pointer">'+html+'</a>';
   const info=faqId?' <a href="#" onclick="return goFaq(\''+faqId+'\')" title="What does this mean?" style="color:var(--faint);text-decoration:none;cursor:pointer;font-size:12px">(?)</a>':'';
   return main+info;
+}
+// Virtualisation / VBS. Codes from Win32_DeviceGuard.
+const VBS_SERVICES={1:'Credential Guard',2:'Memory integrity (HVCI)',3:'System Guard Secure Launch',4:'SMM firmware measurement',5:'Kernel stack protection',6:'Kernel stack protection (audit)',7:'Hypervisor-enforced paging translation'};
+const VIRT_FEATURES={'Microsoft-Hyper-V-All':'Hyper-V','VirtualMachinePlatform':'Virtual Machine Platform (WSL2, Android apps)','HypervisorPlatform':'Windows Hypervisor Platform','Microsoft-Windows-Subsystem-Linux':'Windows Subsystem for Linux','Containers-DisposableClientVM':'Windows Sandbox'};
+function gamingIssues(){
+  const out=[];
+  if(!GAMING)return out;
+  if(GAMING.tdrLevel===0)out.push({sev:'warn',text:'GPU timeout recovery (TDR) is turned off - a GPU hang freezes the whole PC instead of recovering'});
+  const saving=(GAMING.gpuPrefs||[]).filter(p=>p.pref==='Power saving');
+  if(GPUS.length>1&&saving.length)out.push({sev:'warn',text:saving.length+' app'+(saving.length>1?'s':'')+' set to the power-saving GPU: '+saving.slice(0,3).map(p=>p.app).join(', ')+(saving.length>3?' +'+(saving.length-3)+' more':'')});
+  return out;
+}
+function virtIssues(){
+  const out=[];
+  if(!VIRT)return out;
+  const feats=VIRT.features||[];
+  const needHv=feats.filter(f=>f!=='Microsoft-Windows-Subsystem-Linux');   // WSL1 alone doesn't need the hypervisor
+  if(needHv.length&&VIRT.hvPresent===false){
+    const names=needHv.map(f=>(VIRT_FEATURES[f]||f).replace(/ \(.*\)$/,'')).join(', ');
+    if(VIRT.fwVirt===false)out.push({sev:'warn',faq:'cpu-virtualization',text:names+' turned on, but CPU virtualisation is off in the BIOS'});
+    else if(/^off$/i.test(VIRT.launchType||''))out.push({sev:'warn',faq:'virtualization-vbs',text:names+' turned on, but the hypervisor is switched off (bcdedit hypervisorlaunchtype Off)'});
+    else out.push({sev:'warn',faq:'virtualization-vbs',text:names+' turned on, but the hypervisor isn\'t running'});
+  }
+  const errs=(VIRT.hvErrors||[]).filter(e=>e.lvl==='Error');
+  if(errs.length)out.push({sev:'warn',faq:'virtualization-vbs',text:'Hypervisor reported '+errs.length+' error'+(errs.length>1?'s':'')+' in the last 30 days'});
+  return out;
 }
 function flagLink(faqId,html){
   return '<a href="#" class="faq-link" onclick="return goFaq(\''+faqId+'\')" style="color:inherit;text-decoration:underline;text-decoration-style:dotted;text-underline-offset:3px;cursor:pointer">'+html+'</a>';
@@ -2219,8 +2258,15 @@ function renderSummary(){
   }
   const sysDisk=DISKLAYOUT.find(dk=>dk.partitions.some(p=>p.letter==='C:'));
   if(sysDisk&&sysDisk.style&&sysDisk.style.toUpperCase()==='MBR')notes.push(dataLink('drives','mbr-secureboot','<span class="y">System disk uses MBR partitioning (Secure Boot requires GPT)</span>'));
-  const sysDiskBus=sysDisk?(SMART.find(d=>String(d.disk)===String(sysDisk.disk))||{}).bus:null;
-  if(sysDiskBus&&!/nvme/i.test(sysDiskBus)&&SMART.some(d=>/nvme/i.test(d.bus||''))){
+  const sysDiskSm=sysDisk?SMART.find(d=>String(d.disk)===String(sysDisk.disk)):null;
+  const sysDiskBus=sysDiskSm?sysDiskSm.bus:null;
+  // Only an explicit 'HDD' counts - NVMe/RAID/USB drives often report 'Unspecified'. SSHDs report HDD
+  // and behave mostly like one, so they're flagged too.
+  const sysOnHdd=!!(sysDiskSm&&/^hdd$/i.test(sysDiskSm.media||''));
+  if(sysOnHdd){
+    const otherFast=SMART.some(d=>d!==sysDiskSm&&(/^ssd$/i.test(d.media||'')||/nvme/i.test(d.bus||'')));
+    notes.push(dataLink('drives','windows-on-hdd','<span class="y">Windows is installed on a hard drive (HDD)'+(otherFast?', but an SSD is also in this PC':'')+'</span>'));
+  }else if(sysDiskBus&&!/nvme/i.test(sysDiskBus)&&SMART.some(d=>/nvme/i.test(d.bus||''))){
     notes.push(dataLink('drives','windows-on-slower-drive','<span class="y">Windows is on '+esc(sysDiskBus)+', not the faster NVMe drive also in this PC</span>'));
   }
   // Large unallocated space usually means a partition never got extended after moving to a bigger
@@ -2298,6 +2344,8 @@ function renderSummary(){
       else notes.push(dataLink('security','defender-threats','<span style="color:var(--dim)">'+SECURITY.threats.length+' past threat detection'+(SECURITY.threats.length>1?'s':'')+', all handled by Windows Defender</span>'));
     }
     if(SECURITY.exclFlags&&SECURITY.exclFlags.length)notes.push(dataLink('security','defender-exclusions','<span class="y"><b>'+SECURITY.exclFlags.length+'</b> risky Defender exclusion'+(SECURITY.exclFlags.length>1?'s':'')+'</span>'));
+    gamingIssues().forEach(i=>notes.push(dataLink('gpu','gaming-settings','<span class="y">'+esc(i.text)+'</span>')));
+    virtIssues().forEach(i=>notes.push(dataLink('security',i.faq,'<span class="y">'+esc(i.text)+'</span>')));
     ((TWEAKS&&TWEAKS.settings)||[]).filter(t=>t.sev==='err'||t.sev==='warn').forEach(t=>notes.push(dataLink('security','tweaked-settings','<span class="'+(t.sev==='err'?'r':'y')+'">'+esc(t.label)+(t.cat==='Disabled services'?' service disabled':'')+'</span>')));
     ((TWEAKS&&TWEAKS.tools)||[]).forEach(t=>notes.push(dataLink('security','tweak-tools','Signs of '+esc(t.name)+' <span style="color:var(--faint)">('+esc(t.detail)+')</span>')));
     if(SECURITY.hostsFlags&&SECURITY.hostsFlags.length)notes.push(dataLink('security','hosts-redirect','<span class="y">Hosts file redirects a known update/security domain</span>'));
@@ -2735,7 +2783,7 @@ function renderSecurity(){
   const secureBoot=specVal(sp.info,'Secure Boot State'), uac=specVal(sp.info,'UAC');
   const d=SECURITY&&SECURITY.defender;
 
-  if(!SECURITY&&!TWEAKS&&!tpmStatus&&!secureBoot&&!uac){
+  if(!SECURITY&&!TWEAKS&&!VIRT&&!tpmStatus&&!secureBoot&&!uac){
     v.innerHTML='<div class="dp-head"><div class="dp-crumb"><span class="crumb">Software <span class="material-symbols-outlined" style="font-size:16px">chevron_right</span> <b>Security</b></span></div>'+
       '<div class="dp-title-row"><div><div class="dp-title">Security</div></div></div></div>'+
       '<div class="dp-body" style="grid-template-columns:1fr"><div class="dp-card"><div class="dp-empty">No security data embedded.</div></div></div>';
@@ -2785,6 +2833,7 @@ function renderSecurity(){
     const avOn=(SECURITY.avProducts||[]).filter(a=>a.enabled);
     if(avOn.length>1)secIssues.push({sev:'warn',text:'Multiple real-time antivirus products active: '+avOn.map(a=>a.name).join(', '),card:'Antivirus'});
   }
+  virtIssues().forEach(i=>secIssues.push({sev:i.sev,text:i.text,card:'Virtualisation & core isolation'}));
   ((TWEAKS&&TWEAKS.settings)||[]).filter(t=>t.sev==='err'||t.sev==='warn').forEach(t=>
     secIssues.push({sev:t.sev,text:t.label+(t.cat==='Disabled services'?' service disabled':''),card:'System tweaks'}));
   const critCount=secIssues.filter(i=>i.sev==='err').length, warnCount=secIssues.length-critCount;
@@ -2821,6 +2870,28 @@ function renderSecurity(){
     if(tpmStatus)c+='<dt>'+flagLink('tpm','TPM')+'</dt><dd style="color:'+(tpmStatus==='Enabled'?'var(--ok)':'var(--err)')+'">'+esc(tpmStatus)+(tpmVersion?' <span style="color:var(--faint)">('+esc(tpmVersion)+')</span>':'')+'</dd>';
     if(secureBoot)c+='<dt>'+flagLink('secure-boot','Secure Boot')+'</dt><dd style="color:'+(secureBoot==='Enabled'?'var(--ok)':'var(--dim)')+'">'+esc(secureBoot)+'</dd>';
     if(uac)c+='<dt>User Account Control (UAC)</dt><dd style="color:'+(uac==='Enabled'?'var(--ok)':'var(--err)')+'">'+esc(uac)+'</dd>';
+    cards.push(c+'</div></div>');
+  }
+  if(VIRT){
+    const vi=virtIssues();
+    const hv=VIRT.hvPresent, fw=VIRT.fwVirt, lt=VIRT.launchType||'';
+    const vbsTxt=VIRT.vbs===2?'Running':VIRT.vbs===1?'Enabled, not running':VIRT.vbs===0?'Off':'';
+    const run=(VIRT.running||[]).map(n=>VBS_SERVICES[n]||('Service '+n));
+    const feats=(VIRT.features||[]).map(f=>VIRT_FEATURES[f]||f);
+    let c='<div class="dp-card"><div class="dp-card-head"><div class="dp-card-title">'+flagLink('virtualization-vbs','Virtualisation &amp; core isolation')+'</div></div>';
+    vi.forEach(i=>{c+='<div class="dp-flag-row" style="margin-bottom:8px"><span class="material-symbols-outlined">warning</span><span>'+esc(i.text)+'</span></div>';});
+    c+='<div class="dp-kv">';
+    if(hv!=null)c+='<dt>Hypervisor</dt><dd style="color:'+(hv?'var(--ok)':'var(--dim)')+'">'+(hv?'Running':'Not running')+'</dd>';
+    if(hv||fw!=null)c+='<dt>'+flagLink('cpu-virtualization','CPU virtualisation (BIOS)')+'</dt><dd style="color:'+(hv||fw?'var(--ok)':'var(--dim)')+'">'+(hv?'Enabled (in use)':fw?'Enabled':'Disabled')+'</dd>';
+    if(lt&&!/^auto$/i.test(lt))c+='<dt>Hypervisor launch (bcdedit)</dt><dd style="color:var(--warn)">'+esc(lt)+'</dd>';
+    if(vbsTxt)c+='<dt>Virtualisation-based security</dt><dd style="color:'+(VIRT.vbs===2?'var(--ok)':'var(--dim)')+'">'+vbsTxt+'</dd>';
+    if(VIRT.vbs!=null){
+      const miOn=(VIRT.running||[]).includes(2), miCfg=(VIRT.configured||[]).includes(2);
+      c+='<dt>Memory integrity (core isolation)</dt><dd style="color:'+(miOn?'var(--ok)':miCfg?'var(--warn)':'var(--dim)')+'">'+(miOn?'On':miCfg?'Turned on, not running':'Off')+'</dd>';
+    }
+    if(VIRT.vbs!=null)c+='<dt>Running</dt><dd>'+(run.length?run.map(esc).join('<br>'):'<span style="color:var(--dim)">Nothing</span>')+'</dd>';
+    c+='<dt>Windows features</dt><dd>'+(feats.length?feats.map(esc).join('<br>'):'<span style="color:var(--dim)">None turned on</span>')+'</dd>';
+    (VIRT.hvErrors||[]).slice(0,3).forEach(e=>{c+='<dt>Hypervisor '+esc(e.lvl.toLowerCase())+' <span style="color:var(--faint)">'+esc(e.t)+'</span></dt><dd style="font-size:13px;color:'+(e.lvl==='Error'?'var(--err)':'var(--warn)')+'">'+esc(e.msg||('Event '+e.id))+'</dd>';});
     cards.push(c+'</div></div>');
   }
   if(SECURITY&&SECURITY.avProducts&&SECURITY.avProducts.length){
@@ -2877,14 +2948,18 @@ function renderSecurity(){
     cards.push('<div class="dp-card"><div class="dp-card-head"><div class="dp-card-title">Threat detections</div></div><div class="dp-empty" style="color:var(--ok)">\u2713 No threats recorded by Windows Defender.</div></div>');
   }
   if(SECURITY&&SECURITY.exclusions&&SECURITY.exclusions.length){
-    const flagged=SECURITY.exclFlags||[];
-    let c='<div class="dp-card"><div class="dp-card-head"><div class="dp-card-title">Defender exclusions</div><span class="dp-card-count">'+SECURITY.exclusions.length+' entr'+(SECURITY.exclusions.length===1?'y':'ies')+'</span></div>';
-    if(flagged.length)c+='<div class="dp-card-note">Anything listed here is not scanned. '+flagged.length+' entr'+(flagged.length===1?'y was':'ies were')+' flagged as risky.</div>';
-    c+='<div style="display:flex;flex-direction:column;gap:8px">';
-    flagged.slice(0,6).forEach(f=>{c+='<div class="dp-flag-row"><span class="material-symbols-outlined">warning</span><span class="mono">'+esc(f)+'</span></div>';});
-    const shown=Math.min(6,flagged.length);
-    const restCount=SECURITY.exclusions.length-shown;
-    if(restCount>0)c+='<div class="dp-plain-row">'+restCount+' more exclusion'+(restCount===1?'':'s')+'</div>';
+    // Every exclusion is shown - malware often adds its own, and unflagged entries can still matter.
+    // Older reports only have plain strings, so fall back to those.
+    const list=(SECURITY.exclList&&SECURITY.exclList.length)?[...SECURITY.exclList].sort((a,b)=>(b.why?1:0)-(a.why?1:0))
+      :SECURITY.exclusions.map(x=>{const m=/^([^:]+):\s*(.*)$/.exec(x)||[];return {t:m[1]||'',v:m[2]||x,why:''};});
+    const nRisky=list.filter(x=>x.why).length;
+    const row=x=>x.why
+      ?'<div class="dp-flag-row" style="align-items:flex-start"><span class="material-symbols-outlined">warning</span><div><span style="color:var(--faint);margin-right:6px">'+esc(x.t)+'</span><span class="mono">'+esc(x.v)+'</span><div style="color:var(--warn);opacity:.85;margin-top:2px">'+esc(x.why)+'</div></div></div>'
+      :'<div class="dp-plain-row"><span style="color:var(--faint);margin-right:6px">'+esc(x.t)+'</span><span class="mono" style="color:var(--text)">'+esc(x.v)+'</span></div>';
+    let c='<div class="dp-card"><div class="dp-card-head"><div class="dp-card-title">Defender exclusions</div><span class="dp-card-count">'+list.length+' entr'+(list.length===1?'y':'ies')+(nRisky?' \u00b7 '+nRisky+' risky':'')+'</span></div>'+
+      '<div class="dp-card-note">Anything listed here is not scanned by Windows Defender.'+(nRisky?' Risky entries are shown first.':'')+'</div>';
+    c+='<div style="display:flex;flex-direction:column;gap:8px">'+list.slice(0,12).map(row).join('');
+    if(list.length>12)c+='<details><summary style="cursor:pointer;color:var(--info);font-size:13px;padding:4px 2px">Show '+(list.length-12)+' more</summary><div style="display:flex;flex-direction:column;gap:8px;margin-top:8px">'+list.slice(12).map(row).join('')+'</div></details>';
     cards.push(c+'</div></div>');
   }
   if(typeof (SECURITY&&SECURITY.hostsCustom)==='number'){
@@ -3005,8 +3080,9 @@ function renderGPU(){
   const ageTxt=n=>n==null?'':n<31?n+' day'+(n===1?'':'s')+' old':n<365?Math.floor(n/30)+' month'+(Math.floor(n/30)===1?'':'s')+' old':Math.floor(n/365)+' year'+(Math.floor(n/365)===1?'':'s')+' old';
 
   const gpuSubParts=[GPUS.length?GPUS.length+' adapter'+(GPUS.length===1?'':'s'):'',displays.length?displays.length+' display'+(displays.length===1?'':'s'):''].filter(Boolean);
-  const issues=(mismatchActive?1:0)+(basicGpu?1:0);
-  const gpuStatusCls=basicGpu?'err':mismatchActive?'warn':'ok';
+  const gIssues=gamingIssues();
+  const issues=(mismatchActive?1:0)+(basicGpu?1:0)+gIssues.length;
+  const gpuStatusCls=basicGpu?'err':(mismatchActive||gIssues.length)?'warn':'ok';
   const gpuBadgeEl=document.getElementById('gpuTabBadge');
   if(gpuBadgeEl){ if(issues){gpuBadgeEl.textContent=issues;gpuBadgeEl.className='tab-badge'+(basicGpu?'':' warn');gpuBadgeEl.style.display='';} else {gpuBadgeEl.style.display='none';} }
   const gpuStatusText=issues?issues+' warning'+(issues>1?'s':'')+' on this component':'No problems found';
@@ -3077,10 +3153,28 @@ function renderGPU(){
     h+='</div></div>';
   }
 
-  if(HAGS){
-    h+='<div><div class="dp-section-label">Settings</div><div class="vol-grid"><div class="dp-card"><div class="dp-kv">'+
-      '<dt>Hardware-accelerated GPU scheduling</dt><dd>'+esc(HAGS)+'</dd>'+
-      '</div></div></div></div>';
+  if(HAGS||GAMING){
+    const G=GAMING||{}, dx=G.dx||{};
+    const onOff=(v,def)=>v==='Default'?'<span style="color:var(--dim)">Default ('+def+')</span>':esc(v);
+    const dxRow=(key,label)=>dx[key]!=null?'<dt>'+label+'</dt><dd>'+(dx[key]===1?'On':'Off')+'</dd>':'';
+    let c='<div class="dp-card"><div class="dp-card-head"><div class="dp-card-title">'+flagLink('gaming-settings','Gaming settings')+'</div></div>';
+    gamingIssues().forEach(i=>{c+='<div class="dp-flag-row" style="margin-bottom:8px"><span class="material-symbols-outlined">warning</span><span>'+esc(i.text)+'</span></div>';});
+    c+='<div class="dp-kv">';
+    if(HAGS)c+='<dt>Hardware-accelerated GPU scheduling</dt><dd>'+esc(HAGS)+'</dd>';
+    if(GAMING){
+      c+='<dt>Game Mode</dt><dd>'+onOff(G.gameMode,'on')+'</dd>';
+      c+='<dt>Game Bar captures</dt><dd>'+(G.dvrPolicyOff?'Off (by policy)':onOff(G.dvrCapture,'on'))+'</dd>';
+      c+='<dt>Background recording</dt><dd'+(G.dvrBackground==='On'?' style="color:var(--warn)" title="Records constantly in the background - costs some performance"':'')+'>'+onOff(G.dvrBackground,'off')+(G.dvrBackground==='On'?' <span style="color:var(--faint)">(costs some FPS)</span>':'')+'</dd>';
+      c+='<dt>Fullscreen optimisations</dt><dd>'+(G.fsoGlobalOff?'<span style="color:var(--warn)">Off for all games (tweak)</span>':'<span style="color:var(--dim)">Default</span>')+
+        ((G.fsoApps||[]).length?'<br><span style="color:var(--faint);font-size:13px">Off for: '+G.fsoApps.slice(0,6).map(esc).join(', ')+(G.fsoApps.length>6?' +'+(G.fsoApps.length-6)+' more':'')+'</span>':'')+'</dd>';
+      c+=dxRow('SwapEffectUpgradeEnable','Optimisations for windowed games')+dxRow('VRROptimizeEnable','Variable refresh rate')+dxRow('AutoHDREnable','Auto HDR');
+      if(G.mpoOff)c+='<dt>Multiplane overlay (MPO)</dt><dd style="color:var(--warn)">Off (registry tweak)</dd>';
+      if(G.tdrLevel!=null||G.tdrDelay!=null)c+='<dt>GPU timeout recovery (TDR)</dt><dd'+(G.tdrLevel===0?' style="color:var(--warn)"':'')+'>'+(G.tdrLevel===0?'Off':'Changed')+
+        (G.tdrDelay!=null?' <span style="color:var(--faint)">(timeout '+G.tdrDelay+'s, default 2s)</span>':'')+'</dd>';
+      const prefs=G.gpuPrefs||[];
+      if(prefs.length)c+='<dt>Per-app GPU choice</dt><dd style="font-size:13px">'+prefs.slice(0,8).map(p=>esc(p.app)+' <span style="color:'+(p.pref==='Power saving'&&GPUS.length>1?'var(--warn)':'var(--faint)')+'">'+esc(p.pref)+'</span>').join('<br>')+(prefs.length>8?'<br>+'+(prefs.length-8)+' more':'')+'</dd>';
+    }
+    h+='<div><div class="dp-section-label">Settings</div><div class="vol-grid">'+c+'</div></div></div></div>';
   }
 
   h+='</div>';
@@ -3865,7 +3959,10 @@ function fileadd {
     if ($cpuAddressWidth) { specs "CPU Architecture: ${cpuAddressWidth}-bit" }
     if ($cpuL2KB -and $cpuL2KB -gt 0) { specs "CPU L2 Cache: $([math]::Round($cpuL2KB / 1024, 1)) MB" }
     if ($cpuL3KB -and $cpuL3KB -gt 0) { specs "CPU L3 Cache: $([math]::Round($cpuL3KB / 1024, 1)) MB" }
-    if ($null -ne $cpuVirtEnabled) { specs "CPU Virtualization: $(if ($cpuVirtEnabled) { 'Enabled' } else { 'Disabled' })" }
+    # VirtualizationFirmwareEnabled reads False while a hypervisor is running, so check that first
+    $hvRunning = try { [bool](Get-CimInstance Win32_ComputerSystem -ErrorAction Stop).HypervisorPresent } catch { $false }
+    if ($hvRunning) { specs "CPU Virtualization: Enabled (in use by Windows)" }
+    elseif ($null -ne $cpuVirtEnabled) { specs "CPU Virtualization: $(if ($cpuVirtEnabled) { 'Enabled' } else { 'Disabled' })" }
     if ($osInstallDate) { specs "Windows Install Date: $osInstallDate" }
     if ($uacEnabled) { specs "UAC: $uacEnabled" }
     if ($powerPlan) { specs "Active Power Plan: $powerPlan" }
@@ -4140,6 +4237,98 @@ function Get-PchhBitFlipHint {
 }
 
 # ---------------------------------------------------------------------------
+# Gaming-related Windows settings (Graphics tab). Read-only.
+# HKCU = the account running the script - normally the user, since they elevate their own account.
+# App names are reduced to the .exe name only (no paths).
+# ---------------------------------------------------------------------------
+function Get-PchhGaming {
+    $leaf = { param($p) ("$p" -split '[\\/]')[-1] }
+    $r = [ordered]@{ gameMode = ''; dvrCapture = ''; dvrBackground = ''; dvrPolicyOff = $false; fsoGlobalOff = $false; fsoApps = @(); dx = @{}; gpuPrefs = @(); mpoOff = $false; tdrLevel = $null; tdrDelay = $null }
+
+    $gm = Get-PchhRegValue 'HKCU:\Software\Microsoft\GameBar' 'AutoGameModeEnabled'
+    $r.gameMode = if ($null -eq $gm) { 'Default' } elseif ([int]$gm -eq 0) { 'Off' } else { 'On' }
+
+    $cap = Get-PchhRegValue 'HKCU:\Software\Microsoft\Windows\CurrentVersion\GameDVR' 'AppCaptureEnabled'
+    $dvr = Get-PchhRegValue 'HKCU:\System\GameConfigStore' 'GameDVR_Enabled'
+    $r.dvrCapture = if (($null -ne $cap -and [int]$cap -eq 0) -or ($null -ne $dvr -and [int]$dvr -eq 0)) { 'Off' } elseif ($null -ne $cap -or $null -ne $dvr) { 'On' } else { 'Default' }
+    $bg = Get-PchhRegValue 'HKCU:\Software\Microsoft\Windows\CurrentVersion\GameDVR' 'HistoricalCaptureEnabled'
+    $r.dvrBackground = if ($null -eq $bg) { 'Default' } elseif ([int]$bg -eq 0) { 'Off' } else { 'On' }
+    $r.dvrPolicyOff = ((Get-PchhRegValue 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\GameDVR' 'AllowGameDVR') -eq 0)
+
+    # Fullscreen optimisations: FSEBehaviorMode 2 = turned off for everything (a common tweak)
+    $r.fsoGlobalOff = ((Get-PchhRegValue 'HKCU:\System\GameConfigStore' 'GameDVR_FSEBehaviorMode') -eq 2)
+    $fso = @()
+    foreach ($hive in 'HKCU:', 'HKLM:') {
+        try {
+            $k = Get-Item "$hive\Software\Microsoft\Windows NT\CurrentVersion\AppCompatFlags\Layers" -ErrorAction Stop
+            foreach ($n in $k.GetValueNames()) { if ("$($k.GetValue($n))" -match 'DISABLEDXMAXIMIZEDWINDOWEDMODE') { $fso += (& $leaf $n) } }
+        } catch { }
+    }
+    $r.fsoApps = @($fso | Sort-Object -Unique)
+
+    # Graphics settings page: global toggles + per-app GPU choice
+    try {
+        $k = Get-Item 'HKCU:\Software\Microsoft\DirectX\UserGpuPreferences' -ErrorAction Stop
+        $dx = @{}
+        foreach ($pair in ("$($k.GetValue('DirectXUserGlobalSettings'))" -split ';')) {
+            if ($pair -match '^\s*(\w+)\s*=\s*(\d+)') { $dx[$Matches[1]] = [int]$Matches[2] }
+        }
+        $r.dx = $dx
+        $r.gpuPrefs = @(foreach ($n in $k.GetValueNames()) {
+            if ($n -eq 'DirectXUserGlobalSettings') { continue }
+            if ("$($k.GetValue($n))" -match 'GpuPreference=(\d)') {
+                $pref = 'Let Windows decide'
+                if ($Matches[1] -eq '1') { $pref = 'Power saving' } elseif ($Matches[1] -eq '2') { $pref = 'High performance' }
+                [pscustomobject]@{ app = (& $leaf $n); pref = $pref }
+            }
+        })
+    } catch { }
+
+    # MPO off (OverlayTestMode 5) - a common flicker fix; TDR changes alter how GPU hangs are recovered
+    $r.mpoOff = ((Get-PchhRegValue 'HKLM:\SOFTWARE\Microsoft\Windows\Dwm' 'OverlayTestMode') -eq 5)
+    $gd = 'HKLM:\SYSTEM\CurrentControlSet\Control\GraphicsDrivers'
+    $tl = Get-PchhRegValue $gd 'TdrLevel'; if ($null -ne $tl) { $r.tdrLevel = [int]$tl }
+    $td = Get-PchhRegValue $gd 'TdrDelay'; if ($null -ne $td) { $r.tdrDelay = [int]$td }
+    return [pscustomobject]$r
+}
+
+# ---------------------------------------------------------------------------
+# Virtualisation / VBS / core isolation. Read-only.
+# Note: Win32_Processor.VirtualizationFirmwareEnabled reads False whenever a hypervisor is already
+# running (Windows hides it from the CPU query), so HypervisorPresent wins when reporting BIOS state.
+# ---------------------------------------------------------------------------
+function Get-PchhVirtualization {
+    $r = [ordered]@{ hvPresent = $null; fwVirt = $null; launchType = ''; vbs = $null; running = @(); configured = @(); features = @(); hvErrors = @() }
+    try { $r.hvPresent = [bool](Get-CimInstance Win32_ComputerSystem -ErrorAction Stop).HypervisorPresent } catch { }
+    try { $r.fwVirt = [bool](@(Get-CimInstance Win32_Processor -ErrorAction Stop)[0].VirtualizationFirmwareEnabled) } catch { }
+    # hypervisorlaunchtype missing from bcdedit = Windows default (Auto)
+    try {
+        $line = @(& bcdedit.exe /enum '{current}' 2>$null) | Where-Object { $_ -match '^\s*hypervisorlaunchtype\s+\S' } | Select-Object -First 1
+        if ($line -and ("$line" -match '^\s*hypervisorlaunchtype\s+(\S+)')) { $r.launchType = $Matches[1] }
+    } catch { }
+    try {
+        $dg = Get-CimInstance -Namespace 'root\Microsoft\Windows\DeviceGuard' -ClassName Win32_DeviceGuard -ErrorAction Stop
+        $r.vbs        = [int]$dg.VirtualizationBasedSecurityStatus
+        $r.running    = @($dg.SecurityServicesRunning    | Where-Object { $_ } | ForEach-Object { [int]$_ })
+        $r.configured = @($dg.SecurityServicesConfigured | Where-Object { $_ } | ForEach-Object { [int]$_ })
+    } catch { }
+    # Win32_OptionalFeature is much faster than Get-WindowsOptionalFeature. InstallState 1 = enabled.
+    try {
+        $names = 'Microsoft-Hyper-V-All', 'VirtualMachinePlatform', 'HypervisorPlatform', 'Microsoft-Windows-Subsystem-Linux', 'Containers-DisposableClientVM'
+        $filter = ($names | ForEach-Object { "Name='$_'" }) -join ' OR '
+        $r.features = @(Get-CimInstance Win32_OptionalFeature -Filter $filter -ErrorAction Stop | Where-Object { $_.InstallState -eq 1 } | ForEach-Object { "$($_.Name)" })
+    } catch { }
+    try {
+        $r.hvErrors = @(Get-WinEvent -FilterHashtable @{ LogName = 'System'; ProviderName = 'Microsoft-Windows-Hyper-V-Hypervisor'; Level = 2, 3; StartTime = (Get-Date).AddDays(-30) } -MaxEvents 5 -ErrorAction Stop | ForEach-Object {
+            $msg = ("$($_.Message)" -split "`r?`n" | Where-Object { $_.Trim() } | Select-Object -First 1)
+            if ("$msg".Length -gt 220) { $msg = "$msg".Substring(0, 220) + '...' }
+            [pscustomobject]@{ t = $_.TimeCreated.ToString("MM'/'dd'/'yyyy HH:mm"); id = "$($_.Id)"; lvl = if ($_.Level -eq 2) { 'Error' } else { 'Warning' }; msg = "$msg" }
+        })
+    } catch { }
+    return [pscustomobject]$r
+}
+
+# ---------------------------------------------------------------------------
 # Tweaking tools + changed settings. Read-only, no network, no paths or usernames in the output.
 #   tools    : traces only that tool leaves behind - safe to name the tool
 #   settings : non-default settings that cause support problems - cause unknown, never blamed on a tool
@@ -4404,6 +4593,14 @@ function reliabilityexport {
             $bfColour = if ($bitflip.verdict -eq 'Likely') { 'Red' } else { 'Yellow' }
             Write-Host "      ! $($bitflip.verdict) RAM fault - blue screen addresses differ by only a few bits (see Memory tab)" -ForegroundColor $bfColour
         }
+
+        Write-Host "      - Gaming settings (Game Mode, Game Bar, fullscreen optimisations, GPU preferences)" -ForegroundColor DarkGray
+        $gaming = $null
+        try { $gaming = Get-PchhGaming } catch { }
+
+        Write-Host "      - Virtualisation and core isolation" -ForegroundColor DarkGray
+        $virt = $null
+        try { $virt = Get-PchhVirtualization } catch { }
 
         Write-Host "      - Tweaking tools and changed settings" -ForegroundColor DarkGray
         $tweaks = $null
@@ -5083,20 +5280,83 @@ function reliabilityexport {
             $genericize = { param($p) if ("$p") { "$p" -replace [regex]::Escape("$env:USERPROFILE"), "%USERPROFILE%" -replace 'C:\\Users\\[^\\]+', "C:\Users\<user>" } else { "$p" } }
             $exclusions = @()
             $exclFlags = @()
+            $exclList = New-Object System.Collections.Generic.List[object]
+            # Each exclusion is listed; 'why' is set only when it matches a known risky pattern
+            $addExcl = { param($t, $v, $why) $exclList.Add([pscustomobject]@{ t = $t; v = $v; why = "$why" }) }
+            # Privacy: always strip usernames (any drive), OneDrive org names and server names.
+            # Risky entries keep the full (cleaned) path so helpers can fix them; everything else is
+            # cut to drive + last folder, enough to tell "game library" from "odd hidden folder".
+            $cleanPath = {
+                param($p)
+                $c = & $genericize $p
+                $c = $c -replace '(?i)\\Users\\(?!<user>)[^\\]+', '\Users\<user>'
+                $c = $c -replace '(?i)OneDrive - [^\\]+', 'OneDrive - <org>'
+                $c = $c -replace '^\\\\[^\\]+', '\\<server>'
+                return $c
+            }
+            $shortPath = {
+                param($c)
+                $parts = @("$c".TrimEnd('\') -split '\\' | Where-Object { $_ -ne '' })
+                if ("$c" -match '^\\\\') { if ($parts.Count -gt 2) { return "\\$($parts[0])\...\$($parts[-1])" } else { return "$c" } }
+                if ($parts.Count -gt 2) { return "$($parts[0])\...\$($parts[-1])" }
+                return "$c"
+            }
+            $maskIp = {
+                param($ip)
+                if ("$ip" -match '^(\d+)\.(\d+)\.\d+\.\d+(/\d+)?$') { return "$($Matches[1]).$($Matches[2]).x.x$($Matches[3])" }
+                if ("$ip" -match ':') { return (("$ip" -split ':')[0..1] -join ':') + ':...' }
+                return 'x.x.x.x'
+            }
+            $sysProcs = 'powershell|pwsh|cmd|wscript|cscript|mshta|rundll32|regsvr32|msiexec|explorer|svchost|conhost|schtasks|certutil|bitsadmin|wmic'
             try {
                 $mpPref = Get-MpPreference -ErrorAction Stop
-                foreach ($p in $mpPref.ExclusionPath) {
-                    $g = & $genericize $p
+                foreach ($p in @($mpPref.ExclusionPath)) {
+                    if (-not "$p" -or "$p" -match '^N/A') { continue }   # 'N/A: Must be an administrator...' placeholder
+                    $g = & $cleanPath $p
+                    $why = $null
+                    if     ($p -match '^[A-Za-z]:\\?$')                                                  { $why = 'Entire drive excluded' }
+                    elseif ($p -match '\*')                                                                { $why = 'Wildcard path excluded' }
+                    elseif ($p -match '(?i)^([A-Za-z]:\\(Users|Windows|ProgramData|Program Files( \(x86\))?)|%windir%|%systemroot%|%programdata%)\\?$') { $why = 'Whole system folder excluded' }
+                    # Anything inside the Windows folder - home PCs have no reason to exclude there, malware does
+                    elseif ($p -match '(?i)^([A-Za-z]:\\Windows|%windir%|%systemroot%)\\(System32|SysWOW64|SysNative)(\\|$)') { $why = 'Inside System32/SysWOW64 - core Windows folder' }
+                    elseif ($p -match '(?i)^([A-Za-z]:\\Windows|%windir%|%systemroot%)\\')  { $why = 'Inside the Windows folder' }
+                    elseif ($p -match '(?i)\\(Temp|Tmp)(\\|$)' -or $p -match '(?i)^%te?mp%')  { $why = 'Temp folder excluded - malware often runs from here' }
+                    elseif ($p -match '(?i)\\AppData(\\(Local|Roaming|LocalLow))?\\?$')       { $why = 'Broad user folder excluded' }
+                    elseif ($p -match '(?i)\\Start Menu\\Programs\\Startup(\\|$)')             { $why = 'Startup folder excluded - programs that launch with Windows from here are not scanned' }
+                    elseif ($p -match '(?i)\\Users\\Public(\\|$)')                             { $why = 'Public user folder excluded' }
+                    elseif ($p -match '(?i)\\(Downloads|Desktop|Documents)\\?$')               { $why = 'Common download/user folder excluded' }
+                    if (-not $why) { $g = & $shortPath $g }
                     $exclusions += "Path: $g"
-                    if ($p -match '^[A-Za-z]:\\?$') { $exclFlags += "Entire drive excluded: $g" }
-                    elseif ($p -match '\\(Temp|AppData\\Roaming)\\?$') { $exclFlags += "Broad system folder excluded: $g" }
+                    & $addExcl 'Path' $g $why
                 }
-                foreach ($e in $mpPref.ExclusionExtension) {
-                    $exclusions += "Extension: .$e"
-                    if ($e -match '^(exe|dll|scr|bat|ps1)$') { $exclFlags += "Executable file type excluded: .$e" }
+                foreach ($e in @($mpPref.ExclusionExtension)) {
+                    if (-not "$e" -or "$e" -match '^N/A') { continue }
+                    $ext = "$e".TrimStart('.', '*')
+                    $exclusions += "Extension: .$ext"
+                    $why = if ($ext -match '^(exe|dll|scr|com|bat|cmd|ps1|psm1|vbs|vbe|js|jse|wsf|hta|msi|lnk|jar|sys)$') { 'Executable/script file type excluded' } else { $null }
+                    & $addExcl 'Extension' ".$ext" $why
                 }
-                foreach ($pr in $mpPref.ExclusionProcess) { $exclusions += "Process: $(& $genericize $pr)" }
+                foreach ($pr in @($mpPref.ExclusionProcess)) {
+                    if (-not "$pr" -or "$pr" -match '^N/A') { continue }
+                    $g = & $cleanPath $pr
+                    $leaf = ("$pr" -split '\\')[-1]
+                    $why = if ($leaf -match "^($sysProcs)(\.exe)?$") { 'Windows system process excluded - anything it runs is not scanned' }
+                           elseif ($pr -match '\*') { 'Wildcard process excluded' }
+                           elseif ($pr -match '(?i)^([A-Za-z]:\\Windows|%windir%|%systemroot%)\\') { 'Program inside the Windows folder excluded' }
+                           elseif ($pr -match '(?i)\\(Temp|Tmp)\\' -or $pr -match '(?i)^%te?mp%') { 'Program in a Temp folder excluded' }
+                           else { $null }
+                    if (-not $why) { $g = & $shortPath $g }
+                    $exclusions += "Process: $g"
+                    & $addExcl 'Process' $g $why
+                }
+                foreach ($ip in @($mpPref.ExclusionIpAddress)) {
+                    if (-not "$ip" -or "$ip" -match '^N/A') { continue }
+                    $ipShown = & $maskIp $ip
+                    $exclusions += "IP: $ipShown"
+                    & $addExcl 'IP address' $ipShown $null
+                }
             } catch { }
+            $exclFlags = @($exclList | Where-Object { $_.why } | ForEach-Object { "$($_.why): $($_.v)" })
 
             # Hosts file: count custom entries, flag known-domain redirects
             $hostsCustom = 0
@@ -5328,6 +5588,7 @@ function reliabilityexport {
                 threats          = $threats
                 exclusions       = $exclusions
                 exclFlags        = $exclFlags
+                exclList         = @($exclList)
                 hostsCustom      = $hostsCustom
                 hostsFlags       = $hostsFlags
                 startupFlags     = $startupFlags
@@ -5667,6 +5928,8 @@ namespace PCHH {
         $smartJson = if ($smart.Count -gt 0) { (ConvertTo-Json @($smart) -Compress -Depth 3).Replace('</', '<\/') } else { '[]' }
         $dirtyJson = if ($dirtyVols.Count -gt 0) { (ConvertTo-Json @($dirtyVols) -Compress).Replace('</', '<\/') } else { '[]' }
         $diskLayoutJson = if ($diskLayout.Count -gt 0) { (ConvertTo-Json @($diskLayout) -Compress -Depth 4).Replace('</', '<\/') } else { '[]' }
+        $gamingJson = if ($gaming) { (ConvertTo-Json $gaming -Compress -Depth 4).Replace('</', '<\/') } else { 'null' }
+        $virtJson = if ($virt) { (ConvertTo-Json $virt -Compress -Depth 4).Replace('</', '<\/') } else { 'null' }
         $tweaksJson = if ($tweaks) { (ConvertTo-Json $tweaks -Compress -Depth 4).Replace('</', '<\/') } else { 'null' }
         $bitflipJson = if ($bitflip) { (ConvertTo-Json $bitflip -Compress -Depth 5).Replace('</', '<\/') } else { 'null' }
         $specsRaw = Get-Content -Path $infofile -Raw -ErrorAction SilentlyContinue
@@ -5674,7 +5937,7 @@ namespace PCHH {
         $specsJson = (ConvertTo-Json "$specsRaw" -Compress).Replace('</', '<\/')
 
         $genStamp = (Get-Date).ToString("MM'/'dd'/'yyyy HH:mm")
-        $viewerHtml = $viewerTemplate.Replace('/*__VER__*/""', "`"$scriptVersion`"").Replace('/*__GEN__*/""', "`"$genStamp`"").Replace('/*__DATA__*/[]', $json).Replace('/*__SPECS__*/""', $specsJson).Replace('/*__DUMPS__*/[]', $dumpsJson).Replace('/*__SYSEVT__*/[]', $sysJson).Replace('/*__SMART__*/[]', $smartJson).Replace('/*__DIRTY__*/[]', $dirtyJson).Replace('/*__DISKLAYOUT__*/[]', $diskLayoutJson).Replace('/*__RAM__*/[]', $ramJson).Replace('/*__PROGRAMS__*/[]', $programsJson).Replace('/*__GPUS__*/[]', $gpusJson).Replace('/*__HAGS__*/null', $hagsJson).Replace('/*__ISLAPTOP__*/false', $isLaptopJson).Replace('/*__MONS__*/[]', $monsJson).Replace('/*__DISPLAYS__*/[]', $displaysJson).Replace('/*__PROCS__*/[]', $procsJson).Replace('/*__MEMUSE__*/null', $memuseJson).Replace('/*__NET__*/null', $netJson).Replace('/*__SECURITY__*/null', $securityJson).Replace('/*__HOTFIXES__*/[]', $hotfixesJson).Replace('/*__WINDOWSOLD__*/null', $windowsOldJson).Replace('/*__POWERPLAN__*/null', $powerPlanJson).Replace('/*__GENFLAGS__*/null', $generalFlagsJson).Replace('/*__CBS__*/null', $cbsJson).Replace('/*__WUHISTORY__*/[]', $wuHistoryJson).Replace('/*__WINUPDATE__*/null', $winUpdateJson).Replace('/*__DEVERR__*/[]', $devErrorsJson).Replace('/*__AUDIO__*/null', $audioJson).Replace('/*__USB__*/[]', $usbJson).Replace('/*__CAMERAS__*/[]', $camerasJson).Replace('/*__BATTERY__*/[]', $batteryJson).Replace('/*__RAMSLOTS__*/null', $ramSlotsJson).Replace('/*__BITFLIP__*/null', $bitflipJson).Replace('/*__TWEAKS__*/null', $tweaksJson)
+        $viewerHtml = $viewerTemplate.Replace('/*__VER__*/""', "`"$scriptVersion`"").Replace('/*__GEN__*/""', "`"$genStamp`"").Replace('/*__DATA__*/[]', $json).Replace('/*__SPECS__*/""', $specsJson).Replace('/*__DUMPS__*/[]', $dumpsJson).Replace('/*__SYSEVT__*/[]', $sysJson).Replace('/*__SMART__*/[]', $smartJson).Replace('/*__DIRTY__*/[]', $dirtyJson).Replace('/*__DISKLAYOUT__*/[]', $diskLayoutJson).Replace('/*__RAM__*/[]', $ramJson).Replace('/*__PROGRAMS__*/[]', $programsJson).Replace('/*__GPUS__*/[]', $gpusJson).Replace('/*__HAGS__*/null', $hagsJson).Replace('/*__ISLAPTOP__*/false', $isLaptopJson).Replace('/*__MONS__*/[]', $monsJson).Replace('/*__DISPLAYS__*/[]', $displaysJson).Replace('/*__PROCS__*/[]', $procsJson).Replace('/*__MEMUSE__*/null', $memuseJson).Replace('/*__NET__*/null', $netJson).Replace('/*__SECURITY__*/null', $securityJson).Replace('/*__HOTFIXES__*/[]', $hotfixesJson).Replace('/*__WINDOWSOLD__*/null', $windowsOldJson).Replace('/*__POWERPLAN__*/null', $powerPlanJson).Replace('/*__GENFLAGS__*/null', $generalFlagsJson).Replace('/*__CBS__*/null', $cbsJson).Replace('/*__WUHISTORY__*/[]', $wuHistoryJson).Replace('/*__WINUPDATE__*/null', $winUpdateJson).Replace('/*__DEVERR__*/[]', $devErrorsJson).Replace('/*__AUDIO__*/null', $audioJson).Replace('/*__USB__*/[]', $usbJson).Replace('/*__CAMERAS__*/[]', $camerasJson).Replace('/*__BATTERY__*/[]', $batteryJson).Replace('/*__RAMSLOTS__*/null', $ramSlotsJson).Replace('/*__BITFLIP__*/null', $bitflipJson).Replace('/*__TWEAKS__*/null', $tweaksJson).Replace('/*__VIRT__*/null', $virtJson).Replace('/*__GAMING__*/null', $gamingJson)
         try {
             Set-Content -Path $reliability_html_path -Value $viewerHtml -Encoding UTF8
         } catch {
