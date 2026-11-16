@@ -46,9 +46,9 @@ $random = Get-Random -Minimum 1 -Maximum 5000
 $minidump = "$env:SystemRoot\minidump"
 $source = "$env:SystemRoot\minidump\*.dmp"
 
-$desktop = [Environment]::GetFolderPath("Desktop")
+$outRoot = "$env:SystemDrive\"
 
-$File = "$desktop\PCHH-Triage"
+$File = "${outRoot}PCHH-Triage"
 $infofile = "$File\specs-programs.txt"
 
 $ziptar = "$File\PCHH-Triage_$random.zip"
@@ -3809,7 +3809,7 @@ function dmpcheck {
     Write-Host "==================================================" -ForegroundColor DarkGreen
     Write-Host ""
     Write-Host "This collects crash logs, specs and diagnostics into" -ForegroundColor Gray
-    Write-Host "a single zip on your Desktop. This can take time, please be patient." -ForegroundColor Gray
+    Write-Host "a single zip in C:\PCHH-Triage. This can take time, please be patient." -ForegroundColor Gray
     Write-Host ""
     Write-Host "[1/3] Collecting system specs.." -ForegroundColor Blue
 
